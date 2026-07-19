@@ -12,6 +12,8 @@ internal sealed class RemoteAgent
     private readonly ISingleAppInstanceLock _singleAppInstanceLock;
     private readonly ExecutorOptions _options;
     private readonly IHandlerDispatcher<RelayCommand, RelayCommandResult> _handler;
+    private readonly DbConnectionFactory _dbConnectionFactory;
+    private readonly IReadOnlyList<IRepository> _repositories;
 
     private readonly Channel<RelayCommand> _channel = Channel.CreateUnbounded<RelayCommand>(
         new UnboundedChannelOptions { SingleReader = false, SingleWriter = true }
@@ -25,7 +27,9 @@ internal sealed class RemoteAgent
         ISingleAppInstanceLock singleAppInstanceLock,
         IOptions<ExecutorOptions> options,
         IHandlerDispatcher<RelayCommand, RelayCommandResult> handler,
-        RelayCommandStore commandIdStore
+        RelayCommandStore commandIdStore,
+        DbConnectionFactory dbConnectionFactory,
+        IEnumerable<IRepository> repositories
     )
     {
         _relay = relay;
@@ -34,6 +38,8 @@ internal sealed class RemoteAgent
         _options = options.Value;
         _handler = handler;
         _commandStore = commandIdStore;
+        _dbConnectionFactory = dbConnectionFactory;
+        _repositories = repositories.ToList();
     }
 
     public async Task Start(CancellationToken cancellationToken)
@@ -43,6 +49,13 @@ internal sealed class RemoteAgent
             _logger.ZLogInformation($"There's already a running instance, exiting...");
 
             return;
+        }
+
+        _dbConnectionFactory.Initialize();
+
+        foreach (var repository in _repositories)
+        {
+            repository.Initialize();
         }
 
         _logger.ZLogInformation($"Running daemon");

@@ -18,7 +18,10 @@ internal sealed class RelayJsonPayloadSerializer : IRelayPayloadSerializer, IRpc
         JsonSerializer.Deserialize(
             payload,
             (JsonTypeInfo<T>)_jsonSerializerOptions.GetTypeInfo(typeof(T))
-        ) ?? throw new JsonException($"Deserializing into {typeof(T).Name} resulted in null");
+        )
+        ?? throw new JsonException(
+            $"Deserializing into {typeof(T).FullName ?? typeof(T).Name} resulted in null"
+        );
 
     public string Serialize<T>(T value) =>
         JsonSerializer.Serialize(value, _jsonSerializerOptions.GetTypeInfo(typeof(T)));

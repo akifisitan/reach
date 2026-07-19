@@ -2,7 +2,7 @@ using Polly;
 using Polly.Retry;
 using Reach.Local.Shared;
 using Reach.Plugin.Abstractions;
-using Reach.Relay.Abstractions;
+using Reach.Shared;
 using ZLogger.Formatters;
 
 namespace Reach.Local.Server;
@@ -20,8 +20,6 @@ internal static class ServiceCollectionExtensions
 
         services.AddAppOptions(configuration);
 
-        services.AddSingleton<DbConnectionFactory>();
-
         services.AddSingleton<IRepository>(sp => sp.GetRequiredService<IEventQueueRepository>());
         services.AddSingleton<IEventQueueRepository, EventQueueRepository>();
         services
@@ -31,12 +29,6 @@ internal static class ServiceCollectionExtensions
                 x.MaxTryCount = 4;
                 x.TableName = "relay_command_result_queue";
             });
-
-        services.AddSingleton<IRelayCursorStorage>(sp =>
-            sp.GetRequiredService<RelayCursorRepository>()
-        );
-        services.AddSingleton<IRepository>(sp => sp.GetRequiredService<RelayCursorRepository>());
-        services.AddSingleton<RelayCursorRepository>();
 
         services
             .AddOptions<DbConnectionFactoryOptions>()
@@ -100,16 +92,7 @@ internal static class ServiceCollectionExtensions
                 .SetMinimumLevel(minimumLogLevel)
                 .AddZLoggerConsole(options =>
                 {
-                    options.UsePlainTextFormatter(
-                        static (PlainTextZLoggerFormatter formatter) =>
-                        {
-                            formatter.SetPrefixFormatter(
-                                $"[{0:local-longdate}][{1:short}] ",
-                                (in MessageTemplate template, in LogInfo logInfo) =>
-                                    template.Format(logInfo.Timestamp, logInfo.LogLevel)
-                            );
-                        }
-                    );
+                    options.UsePlainTextFormatter(ConfigureFormatter);
                 })
                 .AddZLoggerFile(
                     AppPaths.LogFilePath,

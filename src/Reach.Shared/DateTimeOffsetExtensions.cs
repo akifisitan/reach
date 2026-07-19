@@ -1,8 +1,8 @@
 using System.Globalization;
 
-namespace Reach.Local.Server;
+namespace Reach.Shared;
 
-internal static class DateTimeOffsetExtensions
+public static class DateTimeOffsetExtensions
 {
     extension(DateTimeOffset date)
     {

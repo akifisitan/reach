@@ -1,11 +1,10 @@
 using System.Data.Common;
 using Dapper;
 using Microsoft.Data.Sqlite;
-using Microsoft.Extensions.Options;
 
-namespace Reach.Local.Server;
+namespace Reach.Shared;
 
-internal sealed class DbConnectionFactory
+public sealed class DbConnectionFactory
 {
     private readonly string _dbPath;
     private readonly ILogger<DbConnectionFactory> _logger;
@@ -61,7 +60,7 @@ internal sealed class DbConnectionFactory
     }
 }
 
-internal sealed class DbConnectionFactoryOptions
+public sealed class DbConnectionFactoryOptions
 {
     public required string DbPath { get; set; }
 }

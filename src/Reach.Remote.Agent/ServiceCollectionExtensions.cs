@@ -20,6 +20,13 @@ internal static class ServiceCollectionExtensions
 
         services.AddAppOptions(configuration);
 
+        services
+            .AddOptions<DbConnectionFactoryOptions>()
+            .Configure(x =>
+            {
+                x.DbPath = Path.Combine(AppPaths.AppDataLocalBasePath, "db", "reach.db");
+            });
+
         services.AddHostedService<RemoteAgentHostedService>();
 
         return services;

@@ -12,11 +12,29 @@ public static class ServiceCollectionExtensions
     {
         services.AddPluginAbstractions();
 
-        services.AddSingleton<IRelayPayloadSerializer>(CreateSerializer);
-        services.AddSingleton<IRpcPayloadSerializer>(CreateSerializer);
+        services.AddSingleton(CreateSerializer);
+        services.AddSingleton<IRelayPayloadSerializer>(sp =>
+            sp.GetRequiredService<RelayJsonPayloadSerializer>()
+        );
+        services.AddSingleton<IRpcPayloadSerializer>(sp =>
+            sp.GetRequiredService<RelayJsonPayloadSerializer>()
+        );
         services.AddSingleton<ISingleAppInstanceLock, SingleAppInstanceLock>();
 
         services.AddLocalFileRelay();
+
+        services.AddSingleton<DbConnectionFactory>();
+        services.AddSingleton<IRelayCursorStorage>(sp =>
+            sp.GetRequiredService<RelayCursorRepository>()
+        );
+        services.AddSingleton<IRepository>(sp => sp.GetRequiredService<RelayCursorRepository>());
+        services.AddSingleton<RelayCursorRepository>();
+        services
+            .AddOptions<RelayCursorRepositoryOptions>()
+            .Configure(x =>
+            {
+                x.TableName = "relay_cursor_settings";
+            });
 
         services
             .AddOptions<LocalFileRelayOptions>()
@@ -33,6 +51,9 @@ public static class ServiceCollectionExtensions
 
                 x.LocalToRemoteFilePath = Path.Combine(basePath, "relay_local_to_remote.jsonl");
                 x.RemoteToLocalFilePath = Path.Combine(basePath, "relay_remote_to_local.jsonl");
+
+                File.AppendAllText(x.LocalToRemoteFilePath, string.Empty);
+                File.AppendAllText(x.RemoteToLocalFilePath, string.Empty);
             });
 
         //services

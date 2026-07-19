@@ -177,7 +177,7 @@ internal sealed class LogSearchStartHandler
 
             _logger.ZLogInformation($"[{command.Id}] Posting {command} to remote");
 
-            _searchResultStore.Insert(payload.CorrelationId); // insert, if it fails because of duplicate, error saying to check the status as it already exists
+            _searchResultStore.Insert(payload.CorrelationId); // TODO: insert, if it fails because of duplicate, error saying to check the status as it already exists
 
             var result = await _relay.PostToRemote(command, cancellationToken);
 
@@ -185,9 +185,9 @@ internal sealed class LogSearchStartHandler
 
             _logger.ZLogInformation($"[{command.Id}] Posting successful {result.PollId.Value}");
 
-            if (Random.Shared.Next(0, 0) == 0)
+            if (Random.Shared.Next(0, 2) == 1)
             {
-                throw new InvalidOperationException("wwowowowowowow");
+                throw new Exception("Threw an error just for testing");
             }
 
             return new LogSearchStartResult.Success(payload.CorrelationId);
@@ -251,9 +251,9 @@ internal sealed class SearchFileCommandResultHandler
     {
         _logger.ZLogInformation($"Doing something with command: {result.Id}");
 
-        if (Random.Shared.Next(0, 2) == 0)
+        if (Random.Shared.Next(0, 2) == 1)
         {
-            throw new Exception($"Oh no an error occurred");
+            throw new Exception($"Threw an error for testing");
         }
 
         if (!_searchResultStore.TrySetAsComplete(result))

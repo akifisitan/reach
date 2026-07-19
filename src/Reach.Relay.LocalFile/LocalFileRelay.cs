@@ -154,7 +154,9 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
 
         if (cursor.CurrentIndex > lines.Length)
         {
-            throw new InvalidOperationException();
+            throw new InvalidOperationException(
+                $"Current index: {cursor.CurrentIndex} is larger than file length: {lines.Length}"
+            );
         }
 
         List<Storage> result = [];

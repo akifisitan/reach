@@ -59,7 +59,10 @@ public static class PluginJsonExtensions
         };
 
         typeInfo.PolymorphismOptions.DerivedTypes.Add(
-            new JsonDerivedType(typeof(TDerived), typeof(TDerived).Name) // could read from map of sorts in the future
+            new JsonDerivedType(
+                typeof(TDerived),
+                typeof(TDerived).FullName ?? typeof(TDerived).Name
+            ) // could read from map of sorts in the future
         );
     }
 }

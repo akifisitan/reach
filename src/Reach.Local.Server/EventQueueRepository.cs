@@ -2,6 +2,7 @@ using Dapper;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
 using Reach.Plugin.Abstractions;
+using Reach.Shared;
 
 namespace Reach.Local.Server;
 
