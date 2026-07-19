@@ -1,0 +1,16 @@
+[
+  {
+    "Name": "LocalServerWithRemoteDaemon",
+    "Projects": [
+      {
+        "Path": "src/Reach.Local.Server/Reach.Local.Server.csproj",
+        "Action": "Start",
+        "DebugTarget": "Reach.Local.Server"
+      },
+      {
+        "Path": "src/Reach.Remote.Agent/Reach.Remote.Agent.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]

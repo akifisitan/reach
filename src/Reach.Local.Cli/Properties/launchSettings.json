@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+  "profiles": {
+    "Reach.Local.Cli Help": {
+      "commandName": "Project",
+      "commandLineArgs": "--help"
+    },
+    "Reach.Local.Cli Search": {
+      "commandName": "Project",
+      "commandLineArgs": "search --help"
+    },
+    "Reach.Local.Cli Search Start": {
+      "commandName": "Project",
+      "commandLineArgs": "search start --query \"hello\" --server-name \"myserver\""
+    },
+    "Reach.Local.Cli Search Status": {
+      "commandName": "Project",
+      "commandLineArgs": "search status --correlation-id bc3173d1c4024628a0330d6cb17c6dd1"
+    }
+  }
+}

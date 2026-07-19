@@ -1,0 +1,18 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+  </Folder>
+  <Project Path="src/Reach.Local.Cli/Reach.Local.Cli.csproj" />
+  <Project Path="src/Reach.Local.Server/Reach.Local.Server.csproj" />
+  <Project Path="src/Reach.Local.Shared/Reach.Local.Shared.csproj" />
+  <Project Path="src/Reach.Remote.Agent/Reach.Remote.Agent.csproj" />
+  <Project Path="src/Reach.Shared/Reach.Shared.csproj" />
+  <Project Path="src/Reach.Relay.Abstractions/Reach.Relay.Abstractions.csproj" />
+  <Project Path="src/Reach.Relay.Confluence/Reach.Relay.Confluence.csproj" />
+  <Project Path="src/Reach.Relay.LocalFile/Reach.Relay.LocalFile.csproj" />
+  <Project Path="src/Reach.Plugin.Abstractions/Reach.Plugin.Abstractions.csproj" />
+  <Project Path="src/Reach.Plugin.LogSearch/Reach.Plugin.LogSearch.csproj" />
+  <Project Path="src/Reach.Plugin.FindRequest/Reach.Plugin.FindRequest.csproj" />
+</Solution>

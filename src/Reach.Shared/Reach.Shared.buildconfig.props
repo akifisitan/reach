@@ -1,0 +1,5 @@
+<Project>
+  <PropertyGroup>
+    <BaseUrl>https://jira.myhost</BaseUrl>
+  </PropertyGroup>
+</Project>

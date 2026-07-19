@@ -1,0 +1,19 @@
+<Project>
+  <ItemGroup>
+    <BuildConfigLines Include="namespace Reach.Shared%3B" />
+    <BuildConfigLines Include="internal static class BuildConfig" />
+    <BuildConfigLines Include="{" />
+    <BuildConfigLines Include="public const string BaseUrl = &quot;$(BaseUrl)&quot;%3B" />
+    <BuildConfigLines Include="}" />
+  </ItemGroup>
+  <Target Name="GenerateBuildConfig" BeforeTargets="CoreCompile">
+    <WriteLinesToFile
+      File="$(IntermediateOutputPath)BuildConfig.g.cs"
+      Overwrite="true"
+      Lines="@(BuildConfigLines)"
+    />
+  </Target>
+  <ItemGroup>
+    <Compile Include="$(IntermediateOutputPath)BuildConfig.g.cs" />
+  </ItemGroup>
+</Project>
