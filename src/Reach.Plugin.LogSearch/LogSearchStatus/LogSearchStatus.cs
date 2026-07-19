@@ -137,53 +137,42 @@ internal sealed partial class LogSearchStatusJsonRegistration : IJsonTypeInfoReg
 
     public void Configure(JsonTypeInfo jsonTypeInfo)
     {
-        jsonTypeInfo.RegisterDerivedWithTypeNameAsDiscriminator<
-            RpcPayload,
-            LogSearchStatusPayload
-        >();
-        jsonTypeInfo.RegisterDerivedWithTypeNameAsDiscriminator<RpcResult, LogSearchStatusResult>();
+        jsonTypeInfo.RegisterDerivedType<RpcPayload, LogSearchStatusPayload>(
+            "LogSearchStatusPayload"
+        );
+        jsonTypeInfo.RegisterDerivedType<RpcResult, LogSearchStatusResult>("LogSearchStatusResult");
 
-        jsonTypeInfo.RegisterDerivedWithTypeNameAsDiscriminator<
-            RpcResult,
-            LogSearchStatusResult.NotFound
-        >();
-        jsonTypeInfo.RegisterDerivedWithTypeNameAsDiscriminator<
-            RpcResult,
-            LogSearchStatusResult.Ongoing
-        >();
-        jsonTypeInfo.RegisterDerivedWithTypeNameAsDiscriminator<
-            RpcResult,
-            LogSearchStatusResult.Success
-        >();
-        jsonTypeInfo.RegisterDerivedWithTypeNameAsDiscriminator<
-            RpcResult,
-            LogSearchStatusResult.Expired
-        >();
-        jsonTypeInfo.RegisterDerivedWithTypeNameAsDiscriminator<
-            RpcResult,
-            LogSearchStatusResult.Error
-        >();
+        jsonTypeInfo.RegisterDerivedType<RpcResult, LogSearchStatusResult.NotFound>(
+            "LogSearchStatusResult.NotFound"
+        );
+        jsonTypeInfo.RegisterDerivedType<RpcResult, LogSearchStatusResult.Ongoing>(
+            "LogSearchStatusResult.Ongoing"
+        );
+        jsonTypeInfo.RegisterDerivedType<RpcResult, LogSearchStatusResult.Success>(
+            "LogSearchStatusResult.Success"
+        );
+        jsonTypeInfo.RegisterDerivedType<RpcResult, LogSearchStatusResult.Expired>(
+            "LogSearchStatusResult.Expired"
+        );
+        jsonTypeInfo.RegisterDerivedType<RpcResult, LogSearchStatusResult.Error>(
+            "LogSearchStatusResult.Error"
+        );
 
-        jsonTypeInfo.RegisterDerivedWithTypeNameAsDiscriminator<
-            LogSearchStatusResult,
-            LogSearchStatusResult.NotFound
-        >();
-        jsonTypeInfo.RegisterDerivedWithTypeNameAsDiscriminator<
-            LogSearchStatusResult,
-            LogSearchStatusResult.Ongoing
-        >();
-        jsonTypeInfo.RegisterDerivedWithTypeNameAsDiscriminator<
-            LogSearchStatusResult,
-            LogSearchStatusResult.Success
-        >();
-        jsonTypeInfo.RegisterDerivedWithTypeNameAsDiscriminator<
-            LogSearchStatusResult,
-            LogSearchStatusResult.Expired
-        >();
-        jsonTypeInfo.RegisterDerivedWithTypeNameAsDiscriminator<
-            LogSearchStatusResult,
-            LogSearchStatusResult.Error
-        >();
+        jsonTypeInfo.RegisterDerivedType<LogSearchStatusResult, LogSearchStatusResult.NotFound>(
+            "LogSearchStatusResult.NotFound"
+        );
+        jsonTypeInfo.RegisterDerivedType<LogSearchStatusResult, LogSearchStatusResult.Ongoing>(
+            "LogSearchStatusResult.Ongoing"
+        );
+        jsonTypeInfo.RegisterDerivedType<LogSearchStatusResult, LogSearchStatusResult.Success>(
+            "LogSearchStatusResult.Success"
+        );
+        jsonTypeInfo.RegisterDerivedType<LogSearchStatusResult, LogSearchStatusResult.Expired>(
+            "LogSearchStatusResult.Expired"
+        );
+        jsonTypeInfo.RegisterDerivedType<LogSearchStatusResult, LogSearchStatusResult.Error>(
+            "LogSearchStatusResult.Error"
+        );
     }
 
     [JsonSerializable(typeof(LogSearchStatusPayload))]

@@ -1,4 +1,3 @@
-using System.CommandLine;
 using System.Text.Json.Serialization.Metadata;
 using Reach.Relay.Abstractions;
 
@@ -9,12 +8,22 @@ namespace Reach.Plugin.Abstractions;
 // could do this at build time or at runtime
 // if we do it at build time it would be very coupled, but we kinda do want that?
 // could have a validator that checks if everything resolves from di?
+// how do we improve dx so go to reference finds the correct handler? can we?
 
-internal abstract class PluginHandler<TRelayCommand, TRelayCommandResult, TRpcPayload, TRpcResult>
-    where TRelayCommand : RelayCommand<TRelayCommandResult>
-    where TRelayCommandResult : RelayCommandResult
+internal abstract class Plugin<
+    TCliCommandPayload,
+    TRpcPayload,
+    TRelayCommand,
+    TCliCommandResult,
+    TRpcResult,
+    TRelayCommandResult
+>
+    where TCliCommandPayload : CliCommandPayload
     where TRpcPayload : RpcPayload
+    where TRelayCommand : RelayCommand
+    where TCliCommandResult : CliCommandResult
     where TRpcResult : RpcResult
+    where TRelayCommandResult : RelayCommandResult
 {
     public void Register(JsonTypeInfo typeInfo)
     {
@@ -24,43 +33,26 @@ internal abstract class PluginHandler<TRelayCommand, TRelayCommandResult, TRpcPa
     }
 
     protected abstract void Register();
+    protected abstract void ConfigurePolymorphism(JsonTypeInfo typeInfo);
 
-    // map rpc payload to relay command before writing to remote
-    public abstract TRelayCommand MapToRelayCommand(TRpcPayload payload);
+    // Local | Cli | Handles user cli invocation. Calls Task<TRpcResult> Handle(TRpcPayload payload) via local proxy
+    public abstract Task<TCliCommandResult> Handle(
+        CliCommandPayload command,
+        CancellationToken cancellationToken
+    );
 
-    // map write to remote result to RpcResult
-    public abstract RpcResult Map(TRpcPayload payload);
-
-    // Local | Cli | Handles what will happen when the cli is invoked by the user
-    public abstract Task Handle(ParseResult parseResult, CancellationToken cancellationToken);
-
-    // Local | Server | Handles communication between cli and server
+    // Local | Server | Handles RpcPayload sent by the local cli. May or may not send a RelayCommand to remote
     public abstract Task<TRpcResult> Handle(
         TRpcPayload payload,
         CancellationToken cancellationToken
     );
 
-    // Remote | Agent | Handles what will happen when the command is received on the remote
+    // Remote | Agent | Handles RelayCommand sent from the local server. Sends a RelayCommandResult to local
     public abstract Task<TRelayCommandResult> Handle(
         TRelayCommand command,
         CancellationToken cancellationToken
     );
 
-    // Local | Server | Handles what will happen when the command result is received from remote
+    // Local | Server | Handles RelayCommandResult sent from the remote agent
     public abstract Task Handle(TRelayCommandResult result, CancellationToken cancellationToken);
-
-    private static void ConfigurePolymorphism(JsonTypeInfo typeInfo)
-    {
-        typeInfo.RegisterDerivedWithTypeNameAsDiscriminator<RelayCommand, TRelayCommand>();
-        typeInfo.RegisterDerivedWithTypeNameAsDiscriminator<
-            RelayCommand<TRelayCommandResult>,
-            TRelayCommand
-        >();
-        typeInfo.RegisterDerivedWithTypeNameAsDiscriminator<
-            RelayCommandResult,
-            TRelayCommandResult
-        >();
-        typeInfo.RegisterDerivedWithTypeNameAsDiscriminator<RpcPayload, TRpcPayload>();
-        typeInfo.RegisterDerivedWithTypeNameAsDiscriminator<RpcResult, TRpcResult>();
-    }
 }

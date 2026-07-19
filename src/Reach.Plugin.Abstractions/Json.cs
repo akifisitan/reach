@@ -41,8 +41,9 @@ public static class PluginJsonExtensions
         return jsonSerializerOptions;
     }
 
-    public static void RegisterDerivedWithTypeNameAsDiscriminator<TBase, TDerived>(
-        this JsonTypeInfo typeInfo
+    public static void RegisterDerivedType<TBase, TDerived>(
+        this JsonTypeInfo typeInfo,
+        string typeDiscriminator
     )
         where TDerived : TBase
     {
@@ -61,8 +62,9 @@ public static class PluginJsonExtensions
         typeInfo.PolymorphismOptions.DerivedTypes.Add(
             new JsonDerivedType(
                 typeof(TDerived),
-                typeof(TDerived).FullName ?? typeof(TDerived).Name
-            ) // could read from map of sorts in the future
+                typeDiscriminator
+            //?? typeof(TDerived).FullName ?? typeof(TDerived).Name
+            )
         );
     }
 }

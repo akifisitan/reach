@@ -275,34 +275,28 @@ internal sealed partial class LogSearchStartJsonRegistration : IJsonTypeInfoRegi
 
     public void Configure(JsonTypeInfo jsonTypeInfo)
     {
-        jsonTypeInfo.RegisterDerivedWithTypeNameAsDiscriminator<
-            RpcPayload,
-            LogSearchStartPayload
-        >();
-        jsonTypeInfo.RegisterDerivedWithTypeNameAsDiscriminator<RpcResult, LogSearchStartResult>();
-        jsonTypeInfo.RegisterDerivedWithTypeNameAsDiscriminator<
-            RpcResult,
-            LogSearchStartResult.Success
-        >();
-        jsonTypeInfo.RegisterDerivedWithTypeNameAsDiscriminator<
-            RpcResult,
-            LogSearchStartResult.Error
-        >();
+        jsonTypeInfo.RegisterDerivedType<RpcPayload, LogSearchStartPayload>(
+            "LogSearchStartPayload"
+        );
+        jsonTypeInfo.RegisterDerivedType<RpcResult, LogSearchStartResult>("LogSearchStartResult");
+        jsonTypeInfo.RegisterDerivedType<RpcResult, LogSearchStartResult.Success>(
+            "LogSearchStartResult.Success"
+        );
+        jsonTypeInfo.RegisterDerivedType<RpcResult, LogSearchStartResult.Error>(
+            "LogSearchStartResult.Error"
+        );
 
-        jsonTypeInfo.RegisterDerivedWithTypeNameAsDiscriminator<
-            LogSearchStartResult,
-            LogSearchStartResult.Success
-        >();
-        jsonTypeInfo.RegisterDerivedWithTypeNameAsDiscriminator<
-            LogSearchStartResult,
-            LogSearchStartResult.Error
-        >();
+        jsonTypeInfo.RegisterDerivedType<LogSearchStartResult, LogSearchStartResult.Success>(
+            "LogSearchStartResult.Success"
+        );
+        jsonTypeInfo.RegisterDerivedType<LogSearchStartResult, LogSearchStartResult.Error>(
+            "LogSearchStartResult.Error"
+        );
 
-        jsonTypeInfo.RegisterDerivedWithTypeNameAsDiscriminator<RelayCommand, SearchFileCommand>();
-        jsonTypeInfo.RegisterDerivedWithTypeNameAsDiscriminator<
-            RelayCommandResult,
-            SearchFileCommandResult
-        >();
+        jsonTypeInfo.RegisterDerivedType<RelayCommand, SearchFileCommand>("SearchFileCommand");
+        jsonTypeInfo.RegisterDerivedType<RelayCommandResult, SearchFileCommandResult>(
+            "SearchFileCommandResult"
+        );
     }
 
     [JsonSerializable(typeof(LogSearchStartPayload))]
@@ -344,7 +338,7 @@ internal sealed record SearchFileCommand(
     string ServerName,
     DateTimeOffset StartTime,
     DateTimeOffset EndTime
-) : RelayCommand(nameof(SearchFileCommand), Id);
+) : RelayCommand("SearchFileCommand", Id);
 
 internal sealed record SearchFileCommandResult(string Content, RelayCommand Command)
     : RelayCommandResult(Guid.NewGuid().ToString("N"), Command);

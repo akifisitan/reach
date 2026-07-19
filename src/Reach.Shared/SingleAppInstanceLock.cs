@@ -51,9 +51,9 @@ internal sealed class SingleAppInstanceLock : ISingleAppInstanceLock, IDisposabl
         }
         catch (IOException ex)
         {
-            _logger.LogError(
+            _logger.ZLogError(
                 ex,
-                "An error occurred while trying to open lockfile. This might mean another process is already running"
+                $"An error occurred while trying to open lockfile. This might mean another process is already running"
             );
 
             return false;

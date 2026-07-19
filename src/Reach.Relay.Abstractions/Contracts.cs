@@ -6,9 +6,6 @@ public abstract record RelayCommand(string Kind, string Id)
     public DateTimeOffset CreatedAt { get; } = DateTimeOffset.Now;
 }
 
-public abstract record RelayCommand<TResult>(string Kind, string Id) : RelayCommand(Kind, Id)
-    where TResult : RelayCommandResult;
-
 public abstract record RelayCommandResult(string Id, RelayCommand Command)
 {
     public string Version { get; } = "1";
