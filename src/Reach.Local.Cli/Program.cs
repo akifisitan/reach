@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Reach.Local.Cli;
+using Reach.Plugin.Abstractions;
 
 var builder = Host.CreateApplicationBuilder(args);
 
@@ -14,6 +15,8 @@ builder.Configuration.AddJsonFile("config.debug.json", optional: true, reloadOnC
 builder.Services.AddApplication(builder.Configuration);
 
 using var host = builder.Build();
+
+host.Services.ValidatePluginGraph();
 
 var cli = host.Services.GetRequiredService<LocalCliExecutor>();
 

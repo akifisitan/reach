@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Reach.Plugin.Abstractions;
 using Reach.Plugin.LogSearch;
 using Reach.Relay.Abstractions;
@@ -12,7 +13,10 @@ public static class ServiceCollectionExtensions
     {
         services.AddPluginAbstractions();
 
-        services.AddSingleton(CreateSerializer);
+        services.AddSingleton(CreateJsonSerializerOptions);
+        services.AddSingleton<RelayJsonPayloadSerializer>(sp => new RelayJsonPayloadSerializer(
+            sp.GetRequiredService<JsonSerializerOptions>()
+        ));
         services.AddSingleton<IRelayPayloadSerializer>(sp =>
             sp.GetRequiredService<RelayJsonPayloadSerializer>()
         );
@@ -79,10 +83,8 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    private static RelayJsonPayloadSerializer CreateSerializer(IServiceProvider sp) =>
-        new(
-            PluginJsonExtensions.CreateJsonSerializerOptions(
-                sp.GetServices<IJsonTypeInfoRegistration>().ToList()
-            )
+    private static JsonSerializerOptions CreateJsonSerializerOptions(IServiceProvider sp) =>
+        PluginJsonExtensions.CreateJsonSerializerOptions(
+            sp.GetServices<IJsonTypeInfoRegistration>().ToList()
         );
 }

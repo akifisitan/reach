@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using Reach.Plugin.Abstractions;
 using Reach.Remote.Agent;
 
 var builder = Host.CreateApplicationBuilder(args);
@@ -14,5 +15,7 @@ builder.Configuration.AddJsonFile("config.debug.json", optional: true, reloadOnC
 builder.Services.AddApplication(builder.Configuration);
 
 using var host = builder.Build();
+
+host.Services.ValidatePluginGraph();
 
 host.Run();

@@ -1,6 +1,4 @@
 using System.CommandLine;
-using System.Text.Json.Serialization;
-using System.Text.Json.Serialization.Metadata;
 using Reach.Plugin.Abstractions;
 using Reach.Relay.Abstractions;
 
@@ -44,7 +42,6 @@ internal sealed class SearchStartCliCommand
         {
             Description = "End time",
             Required = false,
-
             DefaultValueFactory = x => DateTimeOffset.Now,
         };
 
@@ -53,25 +50,14 @@ internal sealed class SearchStartCliCommand
         searchStartCommand.Add(startTimeOption);
         searchStartCommand.Add(endTimeOption);
 
-        searchStartCommand.SetAction(
-            async (parseResult, cancellationToken) =>
-            {
-                var query = parseResult.GetRequiredValue(queryOption);
-                var serverName = parseResult.GetRequiredValue(serverNameOption);
-                var startTime = parseResult.GetRequiredValue(startTimeOption);
-                var endTime = parseResult.GetRequiredValue(endTimeOption);
-
-                var payload = new SearchStartCliCommandPayload(
-                    query,
-                    serverName,
-                    startTime,
-                    endTime
-                );
-
-                var result = await _handler.Handle(payload, cancellationToken);
-
-                return result.StatusCode;
-            }
+        searchStartCommand.SetPayloadAction(
+            parseResult => new SearchStartCliCommandPayload(
+                parseResult.GetRequiredValue(queryOption),
+                parseResult.GetRequiredValue(serverNameOption),
+                parseResult.GetRequiredValue(startTimeOption),
+                parseResult.GetRequiredValue(endTimeOption)
+            ),
+            _handler
         );
     }
 }
@@ -275,27 +261,13 @@ internal sealed partial class LogSearchStartJsonRegistration : IJsonTypeInfoRegi
 
     public void Configure(JsonTypeInfo jsonTypeInfo)
     {
-        jsonTypeInfo.RegisterDerivedType<RpcPayload, LogSearchStartPayload>(
-            "LogSearchStartPayload"
-        );
-        jsonTypeInfo.RegisterDerivedType<RpcResult, LogSearchStartResult>("LogSearchStartResult");
-        jsonTypeInfo.RegisterDerivedType<RpcResult, LogSearchStartResult.Success>(
-            "LogSearchStartResult.Success"
-        );
-        jsonTypeInfo.RegisterDerivedType<RpcResult, LogSearchStartResult.Error>(
-            "LogSearchStartResult.Error"
-        );
-
-        jsonTypeInfo.RegisterDerivedType<LogSearchStartResult, LogSearchStartResult.Success>(
-            "LogSearchStartResult.Success"
-        );
-        jsonTypeInfo.RegisterDerivedType<LogSearchStartResult, LogSearchStartResult.Error>(
-            "LogSearchStartResult.Error"
-        );
-
-        jsonTypeInfo.RegisterDerivedType<RelayCommand, SearchFileCommand>("SearchFileCommand");
-        jsonTypeInfo.RegisterDerivedType<RelayCommandResult, SearchFileCommandResult>(
-            "SearchFileCommandResult"
+        jsonTypeInfo.RegisterDerivedType<RpcPayload, LogSearchStartPayload>("logSearch.start");
+        jsonTypeInfo.RegisterWireRecord<RelayCommand, SearchFileCommand>();
+        jsonTypeInfo.RegisterWireRecord<RelayCommandResult, SearchFileCommandResult>();
+        jsonTypeInfo.RegisterResultFamily<RpcResult, LogSearchStartResult>(
+            "logSearch.start.result",
+            (typeof(LogSearchStartResult.Success), "logSearch.start.result.success"),
+            (typeof(LogSearchStartResult.Error), "logSearch.start.result.error")
         );
     }
 
@@ -338,7 +310,14 @@ internal sealed record SearchFileCommand(
     string ServerName,
     DateTimeOffset StartTime,
     DateTimeOffset EndTime
-) : RelayCommand("SearchFileCommand", Id);
+) : RelayCommand(Id), IWireRecord
+{
+    public static string Kind => "searchFile";
+}
 
 internal sealed record SearchFileCommandResult(string Content, RelayCommand Command)
-    : RelayCommandResult(Guid.NewGuid().ToString("N"), Command);
+    : RelayCommandResult(Guid.NewGuid().ToString("N"), Command),
+        IWireRecord
+{
+    public static string Kind => "searchFile.result";
+}

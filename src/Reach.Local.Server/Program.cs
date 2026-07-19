@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Hosting;
 using Reach.Local.Server;
+using Reach.Plugin.Abstractions;
 
 var builder = Host.CreateApplicationBuilder(args);
 
@@ -15,5 +16,7 @@ builder.Services.AddApplication(builder.Configuration);
 builder.Services.AddHostedService<LocalServerHostedService>();
 
 using var host = builder.Build();
+
+host.Services.ValidatePluginGraph();
 
 host.Run();

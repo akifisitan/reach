@@ -12,34 +12,27 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<FileSearcher>();
         services.AddSingleton<SearchResultStore>();
 
-        // 1 or more ICliCommand
         services.AddSingleton<ICliCommand, SearchCliCommand>();
 
-        // 1 or more IJsonTypeInfoRegistration
-        // 1 or more Handler registration
-        // Handler is either 2
-        // IHandler<CliCommandPayload, CliCommandResult>
-        // IHandler<RpcPayload, RpcResult>
-        // or 4
-        // IHandler<CliCommandPayload, CliCommandResult>
-        // IHandler<RpcPayload, RpcResult>
-        // IHandler<RelayCommand, RelayCommandResult>
-        // IHandler<RelayCommandResult, Unit>
-
         // LogSearchStart
-        services.AddSingleton<SearchStartCliCommand>();
-        services.AddSingleton<IJsonTypeInfoRegistration, LogSearchStartJsonRegistration>();
-        services.AddHandlers<
-            SearchStartCliCommandHandler,
-            LogSearchStartHandler,
-            SearchFileCommandHandler,
-            SearchFileCommandResultHandler
-        >();
+        services.AddPluginFeature(feature =>
+            feature
+                .WithCliCommand<SearchStartCliCommand>()
+                .WithJson<LogSearchStartJsonRegistration>()
+                .WithCliCommandHandler<SearchStartCliCommandHandler>()
+                .WithRpcHandler<LogSearchStartHandler>()
+                .WithRelayCommandHandler<SearchFileCommandHandler>()
+                .WithRelayCommandResultHandler<SearchFileCommandResultHandler>()
+        );
 
         // LogSearchStatus
-        services.AddSingleton<SearchStatusCliCommand>();
-        services.AddSingleton<IJsonTypeInfoRegistration, LogSearchStatusJsonRegistration>();
-        services.AddHandlers<SearchStatusCliCommandHandler, LogSearchStatusHandler>();
+        services.AddPluginFeature(feature =>
+            feature
+                .WithCliCommand<SearchStatusCliCommand>()
+                .WithJson<LogSearchStatusJsonRegistration>()
+                .WithCliCommandHandler<SearchStatusCliCommandHandler>()
+                .WithRpcHandler<LogSearchStatusHandler>()
+        );
 
         return services;
     }

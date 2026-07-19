@@ -1,8 +1,5 @@
 using System.CommandLine;
-using System.Text.Json.Serialization;
-using System.Text.Json.Serialization.Metadata;
 using Reach.Plugin.Abstractions;
-using Reach.Plugin.LogSearch.LogSearchStart;
 
 namespace Reach.Plugin.LogSearch.LogSearchStatus;
 
@@ -29,17 +26,11 @@ internal sealed class SearchStatusCliCommand
 
         searchStatusCommand.Add(correlationIdOption);
 
-        searchStatusCommand.SetAction(
-            async (parseResult, cancellationToken) =>
-            {
-                var correlationId = parseResult.GetRequiredValue(correlationIdOption);
-
-                var payload = new SearchStatusCliCommandPayload(correlationId);
-
-                var result = await _handler.Handle(payload, cancellationToken);
-
-                return result.StatusCode;
-            }
+        searchStatusCommand.SetPayloadAction(
+            parseResult => new SearchStatusCliCommandPayload(
+                parseResult.GetRequiredValue(correlationIdOption)
+            ),
+            _handler
         );
     }
 }
@@ -119,7 +110,7 @@ internal sealed class LogSearchStatusHandler
 
         if (storedValue.Result is not null)
         {
-            return new LogSearchStatusResult.Success(storedValue.Result);
+            return new LogSearchStatusResult.Success(new(storedValue.Result.Content));
         }
 
         //if (storedValue.Result is SomeErrorType)
@@ -137,41 +128,14 @@ internal sealed partial class LogSearchStatusJsonRegistration : IJsonTypeInfoReg
 
     public void Configure(JsonTypeInfo jsonTypeInfo)
     {
-        jsonTypeInfo.RegisterDerivedType<RpcPayload, LogSearchStatusPayload>(
-            "LogSearchStatusPayload"
-        );
-        jsonTypeInfo.RegisterDerivedType<RpcResult, LogSearchStatusResult>("LogSearchStatusResult");
-
-        jsonTypeInfo.RegisterDerivedType<RpcResult, LogSearchStatusResult.NotFound>(
-            "LogSearchStatusResult.NotFound"
-        );
-        jsonTypeInfo.RegisterDerivedType<RpcResult, LogSearchStatusResult.Ongoing>(
-            "LogSearchStatusResult.Ongoing"
-        );
-        jsonTypeInfo.RegisterDerivedType<RpcResult, LogSearchStatusResult.Success>(
-            "LogSearchStatusResult.Success"
-        );
-        jsonTypeInfo.RegisterDerivedType<RpcResult, LogSearchStatusResult.Expired>(
-            "LogSearchStatusResult.Expired"
-        );
-        jsonTypeInfo.RegisterDerivedType<RpcResult, LogSearchStatusResult.Error>(
-            "LogSearchStatusResult.Error"
-        );
-
-        jsonTypeInfo.RegisterDerivedType<LogSearchStatusResult, LogSearchStatusResult.NotFound>(
-            "LogSearchStatusResult.NotFound"
-        );
-        jsonTypeInfo.RegisterDerivedType<LogSearchStatusResult, LogSearchStatusResult.Ongoing>(
-            "LogSearchStatusResult.Ongoing"
-        );
-        jsonTypeInfo.RegisterDerivedType<LogSearchStatusResult, LogSearchStatusResult.Success>(
-            "LogSearchStatusResult.Success"
-        );
-        jsonTypeInfo.RegisterDerivedType<LogSearchStatusResult, LogSearchStatusResult.Expired>(
-            "LogSearchStatusResult.Expired"
-        );
-        jsonTypeInfo.RegisterDerivedType<LogSearchStatusResult, LogSearchStatusResult.Error>(
-            "LogSearchStatusResult.Error"
+        jsonTypeInfo.RegisterDerivedType<RpcPayload, LogSearchStatusPayload>("logSearch.status");
+        jsonTypeInfo.RegisterResultFamily<RpcResult, LogSearchStatusResult>(
+            "logSearch.status.result",
+            (typeof(LogSearchStatusResult.NotFound), "logSearch.status.result.notFound"),
+            (typeof(LogSearchStatusResult.Ongoing), "logSearch.status.result.ongoing"),
+            (typeof(LogSearchStatusResult.Success), "logSearch.status.result.success"),
+            (typeof(LogSearchStatusResult.Expired), "logSearch.status.result.expired"),
+            (typeof(LogSearchStatusResult.Error), "logSearch.status.result.error")
         );
     }
 
@@ -191,13 +155,15 @@ internal sealed record SearchStatusCliCommandResult(int StatusCode) : CliCommand
 
 internal sealed record LogSearchStatusPayload(string CorrelationId) : RpcPayload;
 
+internal sealed record LogSearchStatusSuccessResult(string Content);
+
 internal abstract record LogSearchStatusResult : RpcResult
 {
     public sealed record NotFound : LogSearchStatusResult;
 
     public sealed record Ongoing : LogSearchStatusResult;
 
-    public sealed record Success(SearchFileCommandResult Value) : LogSearchStatusResult;
+    public sealed record Success(LogSearchStatusSuccessResult Value) : LogSearchStatusResult;
 
     public sealed record Expired : LogSearchStatusResult;
 
