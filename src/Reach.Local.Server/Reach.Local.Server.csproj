@@ -19,6 +19,7 @@
     <PackageReference Include="FluentValidation" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Reach.DurableQueue\Reach.DurableQueue.csproj" />
     <ProjectReference Include="..\Reach.Shared\Reach.Shared.csproj" />
     <ProjectReference Include="..\Reach.Local.Shared\Reach.Local.Shared.csproj" />
   </ItemGroup>

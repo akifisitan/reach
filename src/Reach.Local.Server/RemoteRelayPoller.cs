@@ -1,5 +1,6 @@
 using Polly;
 using Polly.Registry;
+using Reach.DurableQueue;
 using Reach.Relay.Abstractions;
 
 namespace Reach.Local.Server;
@@ -8,20 +9,22 @@ internal sealed class RemoteRelayPoller
 {
     private readonly ILocalRelay _relay;
     private readonly ILogger<RemoteRelayPoller> _logger;
-    private readonly IEventQueue _eventQueue;
+    private readonly IDurableQueue<RelayCommandResult> _eventQueue;
     private readonly ResiliencePipeline _defaultRetry;
 
     public RemoteRelayPoller(
         ILocalRelay relay,
         ILogger<RemoteRelayPoller> logger,
-        IEventQueue eventQueue,
+        IDurableQueue<RelayCommandResult> eventQueue,
         ResiliencePipelineProvider<string> resiliencePipelineProvider
     )
     {
         _relay = relay;
         _logger = logger;
         _eventQueue = eventQueue;
-        _defaultRetry = resiliencePipelineProvider.GetPipeline(AppConstants.DefaultRetryPolicy);
+        _defaultRetry = resiliencePipelineProvider.GetPipeline(
+            DurableQueueConstants.DefaultRetryPolicy
+        );
     }
 
     public async Task Start(CancellationToken cancellationToken)
@@ -43,12 +46,12 @@ internal sealed class RemoteRelayPoller
                         await _defaultRetry.ExecuteAsync(
                             async ct =>
                             {
-                                await _eventQueue.QueueWork(result, ct);
+                                await _eventQueue.Enqueue(result, ct);
                             },
                             cancellationToken
                         );
                     }
-                    catch (AppErrors.AlreadyProcessed)
+                    catch (AlreadyQueuedException)
                     {
                         _logger.ZLogInformation($"Skipping already queued value");
                     }

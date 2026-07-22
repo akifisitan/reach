@@ -1,5 +1,5 @@
 using Microsoft.Extensions.Options;
-using Reach.Plugin.Abstractions;
+using Reach.Persistence;
 using Reach.Shared;
 
 namespace Reach.Local.Server;
@@ -11,7 +11,7 @@ internal sealed class LocalServer
     private readonly LocalPipeRpcServer _localRpcServer;
     private readonly ServerExecutorOptions _options;
     private readonly DbConnectionFactory _dbConnectionFactory;
-    private readonly IReadOnlyList<IRepository> _repositories;
+    private readonly IReadOnlyList<IDbInitializable> _repositories;
     private readonly RemoteRelayPoller _remoteRelayPoller;
     private readonly EventQueueProcessor _eventQueueProcessor;
 
@@ -21,7 +21,7 @@ internal sealed class LocalServer
         LocalPipeRpcServer localServer,
         IOptions<ServerExecutorOptions> options,
         DbConnectionFactory dbConnectionFactory,
-        IEnumerable<IRepository> repositories,
+        IEnumerable<IDbInitializable> repositories,
         RemoteRelayPoller remoteRelayPoller,
         EventQueueProcessor eventQueueProcessor
     )

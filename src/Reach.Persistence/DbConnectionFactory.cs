@@ -2,7 +2,7 @@ using System.Data.Common;
 using Dapper;
 using Microsoft.Data.Sqlite;
 
-namespace Reach.Shared;
+namespace Reach.Persistence;
 
 public sealed class DbConnectionFactory
 {

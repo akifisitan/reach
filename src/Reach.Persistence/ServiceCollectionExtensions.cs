@@ -1,0 +1,26 @@
+using Reach.Relay.Abstractions;
+
+namespace Reach.Persistence;
+
+public static class ServiceCollectionExtensions
+{
+    public static IServiceCollection AddPersistence(this IServiceCollection services)
+    {
+        services.AddSingleton<DbConnectionFactory>();
+        services.AddSingleton<IRelayCursorStorage>(sp =>
+            sp.GetRequiredService<RelayCursorRepository>()
+        );
+        services.AddSingleton<IDbInitializable>(sp =>
+            sp.GetRequiredService<RelayCursorRepository>()
+        );
+        services.AddSingleton<RelayCursorRepository>();
+        services
+            .AddOptions<RelayCursorRepositoryOptions>()
+            .Configure(x =>
+            {
+                x.TableName = "relay_cursor_settings";
+            });
+
+        return services;
+    }
+}

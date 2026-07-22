@@ -18,12 +18,9 @@
     <PackageReference Include="ZLogger" />
     <PackageReference Include="Polly.Extensions" />
     <PackageReference Include="FluentValidation" />
-    <PackageReference Include="Microsoft.Data.Sqlite.Core" />
-    <PackageReference Include="Dapper" />
-    <PackageReference Include="Dapper.AOT" />
-    <PackageReference Include="SQLitePCLRaw.bundle_winsqlite3" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Reach.Persistence\Reach.Persistence.csproj" />
     <ProjectReference Include="..\Reach.Relay.Abstractions\Reach.Relay.Abstractions.csproj" />
     <!-- Shared contains 1 relay + n plugins -->
     <!-- Relay -->

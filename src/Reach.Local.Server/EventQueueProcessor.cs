@@ -1,5 +1,6 @@
 using Polly;
 using Polly.Registry;
+using Reach.DurableQueue;
 using Reach.Plugin.Abstractions;
 using Reach.Relay.Abstractions;
 
@@ -8,13 +9,13 @@ namespace Reach.Local.Server;
 internal sealed class EventQueueProcessor
 {
     private readonly ILogger<EventQueueProcessor> _logger;
-    private readonly IEventQueue _eventQueue;
+    private readonly IDurableQueue<RelayCommandResult> _eventQueue;
     private readonly IHandlerDispatcher<RelayCommandResult, Unit> _handler;
     private readonly ResiliencePipeline _defaultRetry;
 
     public EventQueueProcessor(
         ILogger<EventQueueProcessor> logger,
-        IEventQueue eventQueue,
+        IDurableQueue<RelayCommandResult> eventQueue,
         IHandlerDispatcher<RelayCommandResult, Unit> handler,
         ResiliencePipelineProvider<string> resiliencePipelineProvider
     )
@@ -22,7 +23,9 @@ internal sealed class EventQueueProcessor
         _logger = logger;
         _eventQueue = eventQueue;
         _handler = handler;
-        _defaultRetry = resiliencePipelineProvider.GetPipeline(AppConstants.DefaultRetryPolicy);
+        _defaultRetry = resiliencePipelineProvider.GetPipeline(
+            DurableQueueConstants.DefaultRetryPolicy
+        );
     }
 
     public async Task Start(bool isForRetry, CancellationToken cancellationToken)
@@ -75,11 +78,11 @@ internal sealed class EventQueueProcessor
                     {
                         if (isSuccess)
                         {
-                            await _eventQueue.SetAsSuccess(value, ct);
+                            await _eventQueue.Complete(value, ct);
                         }
                         else
                         {
-                            await _eventQueue.SetAsFailed(value, ct);
+                            await _eventQueue.Fail(value, ct);
                         }
                     },
                     cancellationToken

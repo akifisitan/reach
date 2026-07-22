@@ -1,8 +1,7 @@
-using Polly;
-using Polly.Retry;
+using Reach.DurableQueue;
 using Reach.Local.Shared;
-using Reach.Plugin.Abstractions;
-using Reach.Shared;
+using Reach.Persistence;
+using Reach.Relay.Abstractions;
 using ZLogger.Formatters;
 
 namespace Reach.Local.Server;
@@ -20,15 +19,14 @@ internal static class ServiceCollectionExtensions
 
         services.AddAppOptions(configuration);
 
-        services.AddSingleton<IRepository>(sp => sp.GetRequiredService<IEventQueueRepository>());
-        services.AddSingleton<IEventQueueRepository, EventQueueRepository>();
-        services
-            .AddOptions<EventQueueRepositoryOptions>()
-            .Configure(x =>
+        services.AddDurableQueue<RelayCommandResult>(
+            x => x.Id,
+            x =>
             {
                 x.MaxTryCount = 4;
                 x.TableName = "relay_command_result_queue";
-            });
+            }
+        );
 
         services
             .AddOptions<DbConnectionFactoryOptions>()
@@ -42,7 +40,6 @@ internal static class ServiceCollectionExtensions
         services.AddSingleton<LocalPipeRpcServer>();
         services.AddSingleton<EventQueueProcessor>();
         services.AddSingleton<RemoteRelayPoller>();
-        services.AddSingleton<IEventQueue, EventQueue>();
         services
             .AddOptions<ServerExecutorOptions>()
             .Configure(x =>
@@ -50,21 +47,6 @@ internal static class ServiceCollectionExtensions
                 x.ConsumerCount = 1;
                 x.RetryConsumerCount = 1;
             });
-
-        services.AddResiliencePipeline(
-            AppConstants.DefaultRetryPolicy,
-            x =>
-            {
-                x.AddRetry(
-                    new RetryStrategyOptions
-                    {
-                        UseJitter = true,
-                        MaxRetryAttempts = 3,
-                        Delay = TimeSpan.FromMilliseconds(500),
-                    }
-                );
-            }
-        );
 
         return services;
     }

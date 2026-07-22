@@ -1,4 +1,7 @@
 using Microsoft.Extensions.Configuration;
+using Reach.DurableQueue;
+using Reach.Persistence;
+using Reach.Relay.Abstractions;
 using Reach.Shared;
 using ZLogger.Formatters;
 
@@ -16,9 +19,17 @@ internal static class ServiceCollectionExtensions
         services.AddAppLogging();
 
         services.AddSingleton<RemoteAgent>();
-        services.AddSingleton<RelayCommandStore>();
 
         services.AddAppOptions(configuration);
+
+        services.AddDurableQueue<RelayCommand>(
+            x => x.Id,
+            x =>
+            {
+                x.MaxTryCount = 4;
+                x.TableName = "relay_command_queue";
+            }
+        );
 
         services
             .AddOptions<DbConnectionFactoryOptions>()
@@ -26,6 +37,9 @@ internal static class ServiceCollectionExtensions
             {
                 x.DbPath = Path.Combine(AppPaths.AppDataLocalBasePath, "db", "reach.db");
             });
+
+        services.AddSingleton<CommandQueueProcessor>();
+        services.AddSingleton<LocalRelayPoller>();
 
         services.AddHostedService<RemoteAgentHostedService>();
 
@@ -46,6 +60,7 @@ internal static class ServiceCollectionExtensions
             .Configure(x =>
             {
                 x.ConsumerCount = 1;
+                x.RetryConsumerCount = 1;
             });
 
         return services;

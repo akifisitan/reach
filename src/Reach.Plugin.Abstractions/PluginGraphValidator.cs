@@ -18,11 +18,7 @@ public static class PluginGraphValidator
 
         var descriptors = services.GetServices<PluginHandlerDescriptor>().ToList();
 
-        var jsonSerializerOptions =
-            services.GetService<JsonSerializerOptions>()
-            ?? PluginJsonExtensions.CreateJsonSerializerOptions(
-                services.GetServices<IJsonTypeInfoRegistration>().ToList()
-            );
+        var jsonSerializerOptions = services.GetRequiredService<JsonSerializerOptions>();
 
         var errors = new List<string>();
 

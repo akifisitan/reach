@@ -14,6 +14,4 @@ internal static class AppConstants
 
     public static readonly string AppVersion =
         FileVersionInfo.GetVersionInfo(Environment.ProcessPath!).ProductVersion ?? "Unknown";
-
-    public const string DefaultRetryPolicy = "default-retry";
 }

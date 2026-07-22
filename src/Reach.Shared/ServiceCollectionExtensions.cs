@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Reach.Persistence;
 using Reach.Plugin.Abstractions;
 using Reach.Plugin.LogSearch;
 using Reach.Relay.Abstractions;
@@ -14,7 +15,7 @@ public static class ServiceCollectionExtensions
         services.AddPluginAbstractions();
 
         services.AddSingleton(CreateJsonSerializerOptions);
-        services.AddSingleton<RelayJsonPayloadSerializer>(sp => new RelayJsonPayloadSerializer(
+        services.AddSingleton(sp => new RelayJsonPayloadSerializer(
             sp.GetRequiredService<JsonSerializerOptions>()
         ));
         services.AddSingleton<IRelayPayloadSerializer>(sp =>
@@ -27,18 +28,7 @@ public static class ServiceCollectionExtensions
 
         services.AddLocalFileRelay();
 
-        services.AddSingleton<DbConnectionFactory>();
-        services.AddSingleton<IRelayCursorStorage>(sp =>
-            sp.GetRequiredService<RelayCursorRepository>()
-        );
-        services.AddSingleton<IRepository>(sp => sp.GetRequiredService<RelayCursorRepository>());
-        services.AddSingleton<RelayCursorRepository>();
-        services
-            .AddOptions<RelayCursorRepositoryOptions>()
-            .Configure(x =>
-            {
-                x.TableName = "relay_cursor_settings";
-            });
+        services.AddPersistence();
 
         services
             .AddOptions<LocalFileRelayOptions>()

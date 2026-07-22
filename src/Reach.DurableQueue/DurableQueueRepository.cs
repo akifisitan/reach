@@ -1,34 +1,32 @@
 using Dapper;
 using Microsoft.Data.Sqlite;
-using Microsoft.Extensions.Options;
-using Reach.Plugin.Abstractions;
-using Reach.Shared;
+using Reach.Persistence;
 
-namespace Reach.Local.Server;
+namespace Reach.DurableQueue;
 
-internal interface IEventQueueRepository : IRepository
+internal interface IDurableQueueRepository : IDbInitializable
 {
-    Task QueueWork(QueueWorkItem item, CancellationToken cancellationToken);
-    Task<WorkItem?> PickWork(CancellationToken cancellationToken);
-    Task<WorkItem?> PickWorkForRetry(CancellationToken cancellationToken);
-    Task UpdateWorkSuccess(string id, CancellationToken cancellationToken);
-    Task UpdateWorkFailed(string id, CancellationToken cancellationToken);
+    Task Enqueue(EnqueueRecord item, CancellationToken cancellationToken);
+    Task<QueueRecord?> Pick(CancellationToken cancellationToken);
+    Task<QueueRecord?> PickForRetry(CancellationToken cancellationToken);
+    Task Complete(string id, CancellationToken cancellationToken);
+    Task Fail(string id, CancellationToken cancellationToken);
 }
 
-internal sealed class EventQueueRepository : IEventQueueRepository
+internal sealed class DurableQueueRepository : IDurableQueueRepository
 {
     private readonly string _tableName;
     private readonly int _maxTryCount;
     private readonly DbConnectionFactory _dbConnectionFactory;
-    private readonly ILogger<EventQueueRepository> _logger;
+    private readonly ILogger<DurableQueueRepository> _logger;
 
     private const string TableColumns =
         "id,status,event_data,creation_time,try_count,last_try_time,next_try_time,completion_time";
 
-    public EventQueueRepository(
+    public DurableQueueRepository(
         DbConnectionFactory dbConnectionFactory,
-        ILogger<EventQueueRepository> logger,
-        IOptions<EventQueueRepositoryOptions> options
+        ILogger<DurableQueueRepository> logger,
+        IOptions<DurableQueueOptions> options
     )
     {
         _dbConnectionFactory = dbConnectionFactory;
@@ -62,7 +60,7 @@ internal sealed class EventQueueRepository : IEventQueueRepository
         );
     }
 
-    public async Task QueueWork(QueueWorkItem item, CancellationToken cancellationToken)
+    public async Task Enqueue(EnqueueRecord item, CancellationToken cancellationToken)
     {
         await using var connection = await _dbConnectionFactory.CreateConnection(cancellationToken);
 
@@ -76,7 +74,7 @@ internal sealed class EventQueueRepository : IEventQueueRepository
                 new
                 {
                     Id = item.Id,
-                    Status = WorkItemStatus.New,
+                    Status = QueueRecordStatus.New,
                     EventData = item.Data,
                     CreationTime = DateTimeOffset.Now.ToIsoString(),
                     TryCount = 0,
@@ -85,17 +83,17 @@ internal sealed class EventQueueRepository : IEventQueueRepository
         }
         catch (SqliteException ex) when (ex.SqliteErrorCode == 19)
         {
-            throw new AppErrors.AlreadyProcessed();
+            throw new AlreadyQueuedException();
         }
     }
 
-    public async Task<WorkItem?> PickWork(CancellationToken cancellationToken)
+    public async Task<QueueRecord?> Pick(CancellationToken cancellationToken)
     {
         await using var connection = await _dbConnectionFactory.CreateConnection(cancellationToken);
 
-        var result = await connection.QuerySingleOrDefaultAsync<DbWorkItem>(
+        var result = await connection.QuerySingleOrDefaultAsync<DbQueueRecord>(
             $"""
-            WITH next_work AS (
+            WITH next_record AS (
                 SELECT {TableColumns}
                 FROM {_tableName}
                 WHERE 1=1
@@ -107,28 +105,28 @@ internal sealed class EventQueueRepository : IEventQueueRepository
             )
             UPDATE {_tableName}
             SET status = $NextStatus, try_count = 1, last_try_time = $NextLastTryTime, next_try_time = NULL
-            WHERE id = (SELECT id FROM next_work)
+            WHERE id = (SELECT id FROM next_record)
             RETURNING {TableColumns};
             """,
             new
             {
-                Status = WorkItemStatus.New,
+                Status = QueueRecordStatus.New,
                 CreationTime = DateTimeOffset.Now.Subtract(TimeSpan.FromDays(1)).ToIsoString(),
-                NextStatus = WorkItemStatus.Processing,
+                NextStatus = QueueRecordStatus.Processing,
                 NextLastTryTime = DateTimeOffset.Now.ToIsoString(),
             }
         );
 
-        return result?.ToWorkItem();
+        return result?.ToQueueRecord();
     }
 
-    public async Task<WorkItem?> PickWorkForRetry(CancellationToken cancellationToken)
+    public async Task<QueueRecord?> PickForRetry(CancellationToken cancellationToken)
     {
         await using var connection = await _dbConnectionFactory.CreateConnection(cancellationToken);
 
-        var result = await connection.QuerySingleOrDefaultAsync<DbWorkItem>(
+        var result = await connection.QuerySingleOrDefaultAsync<DbQueueRecord>(
             $"""
-            WITH next_work AS (
+            WITH next_record AS (
                 SELECT id
                 FROM {_tableName}
                 WHERE 1=1
@@ -140,22 +138,22 @@ internal sealed class EventQueueRepository : IEventQueueRepository
             )
             UPDATE {_tableName}
             SET status = $UpdatedStatus, last_try_time = $UpdatedLastTryTime, try_count = try_count + 1
-            WHERE id = (SELECT id FROM next_work)
+            WHERE id = (SELECT id FROM next_record)
             RETURNING {TableColumns};
             """,
             new
             {
-                Status = WorkItemStatus.Error,
-                NextTryTime = DateTimeOffset.Now.ToIsoString(), // how are we going to handle entries from before?
-                UpdatedStatus = WorkItemStatus.Processing,
+                Status = QueueRecordStatus.Error,
+                NextTryTime = DateTimeOffset.Now.ToIsoString(),
+                UpdatedStatus = QueueRecordStatus.Processing,
                 UpdatedLastTryTime = DateTimeOffset.Now.ToIsoString(),
             }
         );
 
-        return result?.ToWorkItem();
+        return result?.ToQueueRecord();
     }
 
-    public async Task UpdateWorkSuccess(string id, CancellationToken cancellationToken)
+    public async Task Complete(string id, CancellationToken cancellationToken)
     {
         await using var connection = await _dbConnectionFactory.CreateConnection(cancellationToken);
 
@@ -168,19 +166,19 @@ internal sealed class EventQueueRepository : IEventQueueRepository
             new
             {
                 Id = id,
-                Status = WorkItemStatus.Success,
+                Status = QueueRecordStatus.Success,
                 CompletionTime = DateTimeOffset.Now.ToIsoString(),
             }
         );
     }
 
-    public async Task UpdateWorkFailed(string id, CancellationToken cancellationToken)
+    public async Task Fail(string id, CancellationToken cancellationToken)
     {
         await using var connection = await _dbConnectionFactory.CreateConnection(cancellationToken);
 
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
 
-        var item = await connection.QuerySingleAsync<DbWorkItem>(
+        var item = await connection.QuerySingleAsync<DbQueueRecord>(
             $"""
             SELECT {TableColumns}
             FROM {_tableName}
@@ -198,7 +196,7 @@ internal sealed class EventQueueRepository : IEventQueueRepository
                 SET status = $Status, next_try_time = NULL
                 WHERE id = $Id
                 """,
-                new { Id = id, Status = WorkItemStatus.Expired },
+                new { Id = id, Status = QueueRecordStatus.Expired },
                 transaction: transaction
             );
         }
@@ -213,7 +211,7 @@ internal sealed class EventQueueRepository : IEventQueueRepository
                 new
                 {
                     Id = id,
-                    Status = WorkItemStatus.Error,
+                    Status = QueueRecordStatus.Error,
                     NextTryTime = DateTimeOffset
                         .Now.Add(TimeSpan.FromSeconds(10 * item.TryCount))
                         .ToIsoString(),
@@ -226,9 +224,9 @@ internal sealed class EventQueueRepository : IEventQueueRepository
     }
 }
 
-internal sealed record DbWorkItem(
+internal sealed record DbQueueRecord(
     string Id,
-    WorkItemStatus Status,
+    QueueRecordStatus Status,
     string EventData,
     int TryCount,
     string CreationTime,
@@ -237,7 +235,7 @@ internal sealed record DbWorkItem(
     string? CompletionTime
 )
 {
-    public WorkItem ToWorkItem() =>
+    public QueueRecord ToQueueRecord() =>
         new(
             Id: Id,
             TryCount: TryCount,
@@ -256,9 +254,9 @@ internal sealed record DbWorkItem(
         );
 }
 
-internal sealed record WorkItem(
+internal sealed record QueueRecord(
     string Id,
-    WorkItemStatus Status,
+    QueueRecordStatus Status,
     string EventData,
     int TryCount,
     DateTimeOffset CreationTime,
@@ -267,7 +265,7 @@ internal sealed record WorkItem(
     DateTimeOffset? CompletionTime
 );
 
-internal enum WorkItemStatus
+internal enum QueueRecordStatus
 {
     New = 0,
     Processing = 1,
@@ -276,10 +274,4 @@ internal enum WorkItemStatus
     Expired = 4,
 }
 
-internal sealed record QueueWorkItem(string Id, string Data);
-
-internal sealed record EventQueueRepositoryOptions
-{
-    public required int MaxTryCount { get; set; } = 4;
-    public required string TableName { get; set; }
-}
+internal sealed record EnqueueRecord(string Id, string Data);

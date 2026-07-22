@@ -8,4 +8,5 @@ internal sealed record AppOptions
 internal sealed record ExecutorOptions
 {
     public int ConsumerCount { get; set; }
+    public int RetryConsumerCount { get; set; }
 }

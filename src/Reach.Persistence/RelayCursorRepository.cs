@@ -1,10 +1,9 @@
 using Dapper;
-using Reach.Plugin.Abstractions;
 using Reach.Relay.Abstractions;
 
-namespace Reach.Shared;
+namespace Reach.Persistence;
 
-internal sealed class RelayCursorRepository : IRelayCursorStorage, IRepository
+internal sealed class RelayCursorRepository : IRelayCursorStorage, IDbInitializable
 {
     private readonly DbConnectionFactory _dbConnectionFactory;
     private readonly ILogger<RelayCursorRepository> _logger;
