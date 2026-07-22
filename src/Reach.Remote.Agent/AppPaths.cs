@@ -1,3 +1,5 @@
+using Reach.Shared;
+
 namespace Reach.Remote.Agent;
 
 internal static class AppPaths
@@ -12,5 +14,10 @@ internal static class AppPaths
         AppDataLocalBasePath,
         "logs",
         $"{DateTime.Now:yyyy-MM-dd}.log"
+    );
+
+    public static readonly string LockFilePath = Path.Combine(
+        AppDataLocalBasePath,
+        $"{Constants.AppName}.remote.server.lock"
     );
 }

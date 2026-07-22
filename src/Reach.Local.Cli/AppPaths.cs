@@ -14,7 +14,7 @@ internal static class AppPaths
         $"{DateTime.Now:yyyy-MM-dd}.log"
     );
 
-    public static readonly string ServerExePath = Path.Combine(
+    public static readonly string ServerBinaryPath = Path.Combine(
         Environment.CurrentDirectory,
         "reachd.exe"
     );

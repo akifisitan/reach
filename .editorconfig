@@ -14,6 +14,8 @@ indent_size = 4
 
 # dotnet analyzers start
 
+# https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/style-rules
+
 # Remove unnecessary import
 dotnet_diagnostic.IDE0005.severity = warning
 # Collection initialization can be simplified
@@ -28,12 +30,15 @@ dotnet_diagnostic.IDE0290.severity = none
 dotnet_diagnostic.IDE0350.severity = silent
 # Namespace does not match folder structure
 dotnet_diagnostic.IDE0130.severity = silent
-# Use primary constructor
-dotnet_diagnostic.IDE0290.severity = silent
 # Use collection expression for fluent
 dotnet_diagnostic.IDE0305.severity = silent
 # Use inferred member names
 dotnet_diagnostic.IDE0037.severity = silent
+
+# Use file-scoped namespace
+dotnet_diagnostic.IDE0160.severity = error
+dotnet_diagnostic.IDE0161.severity = error
+csharp_style_namespace_declarations = file_scoped:error
 
 # https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/quality-rules/maintainability-warnings
 

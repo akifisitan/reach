@@ -44,7 +44,7 @@ internal sealed class RemoteAgent
 
     public async Task Start(CancellationToken cancellationToken)
     {
-        if (!_singleAppInstanceLock.TryAcquire("app.lock"))
+        if (!_singleAppInstanceLock.TryAcquire(AppPaths.LockFilePath))
         {
             _logger.ZLogInformation($"There's already a running instance, exiting...");
 

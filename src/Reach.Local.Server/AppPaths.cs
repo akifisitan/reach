@@ -13,4 +13,9 @@ internal static class AppPaths
         "logs",
         $"{DateTime.Now:yyyy-MM-dd}.log"
     );
+
+    public static readonly string LockFilePath = Path.Combine(
+        AppDataLocalBasePath,
+        $"{AppConstants.AppName}.local.server.lock"
+    );
 }

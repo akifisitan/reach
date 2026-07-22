@@ -43,7 +43,7 @@ internal static class ServiceCollectionExtensions
                         Environment.GetEnvironmentVariable(AppConstants.ShouldNotBootServerEnvVar),
                         out var shouldNotBootServer
                     ) && shouldNotBootServer;
-                x.ServerBinaryPath = AppPaths.ServerExePath;
+                x.ServerBinaryPath = AppPaths.ServerBinaryPath;
             });
 
         return services;

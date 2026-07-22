@@ -38,14 +38,7 @@ internal sealed class LocalServer
 
     public async Task Start(CancellationToken cancellationToken)
     {
-        if (
-            !_singleAppInstanceLock.TryAcquire(
-                Path.Combine(
-                    AppPaths.AppDataLocalBasePath,
-                    $"{AppConstants.AppName}.local.server.lock"
-                )
-            )
-        )
+        if (!_singleAppInstanceLock.TryAcquire(AppPaths.LockFilePath))
         {
             return;
         }
