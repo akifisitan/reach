@@ -1,5 +1,4 @@
-using Reach.Plugin.Abstractions;
-using Reach.Relay.Abstractions;
+using Reach.Relay;
 
 namespace Reach.Plugin.Example.Features.Echo;
 

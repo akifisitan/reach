@@ -2,7 +2,7 @@ using Polly;
 using Polly.Retry;
 using Reach.DurableQueue;
 using Reach.Persistence;
-using Reach.Relay.Abstractions;
+using Reach.Relay;
 using Reach.Shared;
 using ZLogger.Formatters;
 

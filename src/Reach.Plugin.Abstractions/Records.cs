@@ -1,3 +1,3 @@
-namespace Reach.Plugin.Abstractions;
+namespace Reach.Plugin;
 
 public sealed record Unit;

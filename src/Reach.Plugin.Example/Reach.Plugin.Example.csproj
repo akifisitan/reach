@@ -4,6 +4,9 @@
     <TargetFramework>net10.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="ZLogger" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Reach.Plugin.Abstractions\Reach.Plugin.Abstractions.csproj" />
     <ProjectReference Include="..\Reach.Plugin.Toolkit.ResultStore.Memory\Reach.Plugin.Toolkit.ResultStore.Memory.csproj" />
   </ItemGroup>

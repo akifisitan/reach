@@ -1,4 +1,4 @@
-namespace Reach.Plugin.Abstractions;
+namespace Reach.Plugin;
 
 public interface IRpcClient
 {

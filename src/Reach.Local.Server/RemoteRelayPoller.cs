@@ -1,7 +1,7 @@
 using Polly;
 using Polly.Registry;
 using Reach.DurableQueue;
-using Reach.Relay.Abstractions;
+using Reach.Relay;
 
 namespace Reach.Local.Server;
 

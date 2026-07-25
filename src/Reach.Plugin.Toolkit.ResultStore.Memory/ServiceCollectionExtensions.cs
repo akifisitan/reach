@@ -1,6 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
-using Reach.Plugin.Toolkit.ResultStore.Abstractions;
-using Reach.Relay.Abstractions;
+using Reach.Relay;
 
 namespace Reach.Plugin.Toolkit.ResultStore.Memory;
 

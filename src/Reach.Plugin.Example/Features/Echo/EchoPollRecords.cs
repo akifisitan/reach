@@ -1,5 +1,3 @@
-using Reach.Plugin.Abstractions;
-
 namespace Reach.Plugin.Example.Features.Echo;
 
 internal sealed record EchoPollPayload(string CorrelationId) : RpcPayload;

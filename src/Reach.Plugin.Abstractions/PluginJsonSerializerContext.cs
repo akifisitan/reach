@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
-using Reach.Relay.Abstractions;
+using Reach.Relay;
 
-namespace Reach.Plugin.Abstractions;
+namespace Reach.Plugin;
 
 [JsonSourceGenerationOptions()]
 [JsonSerializable(typeof(RpcPayload))]

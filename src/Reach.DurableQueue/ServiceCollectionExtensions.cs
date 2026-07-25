@@ -1,5 +1,5 @@
 using Reach.Persistence;
-using Reach.Relay.Abstractions;
+using Reach.Relay;
 
 namespace Reach.DurableQueue;
 

@@ -1,5 +1,3 @@
-using Reach.Plugin.Abstractions;
-
 namespace Reach.Plugin.Example.Features.Echo;
 
 internal sealed class EchoCommandHandler : RelayCommandHandler<EchoCommand, EchoCommandResult>

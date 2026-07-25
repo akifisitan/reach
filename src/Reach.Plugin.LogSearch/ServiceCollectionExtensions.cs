@@ -1,4 +1,3 @@
-using Reach.Plugin.Abstractions;
 using Reach.Plugin.LogSearch.Features.LogSearchStart;
 using Reach.Plugin.LogSearch.Features.LogSearchStatus;
 using Reach.Plugin.Toolkit.ResultStore.Sqlite;

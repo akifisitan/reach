@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Hosting;
 using Reach.Local.Server;
 using Reach.Persistence;
-using Reach.Plugin.Abstractions;
+using Reach.Plugin;
 using Reach.Shared;
 
 var builder = Host.CreateApplicationBuilder(args);

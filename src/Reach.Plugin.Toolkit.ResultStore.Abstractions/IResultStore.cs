@@ -1,6 +1,6 @@
-using Reach.Relay.Abstractions;
+using Reach.Relay;
 
-namespace Reach.Plugin.Toolkit.ResultStore.Abstractions;
+namespace Reach.Plugin.Toolkit.ResultStore;
 
 public interface IResultStore<TResult>
     where TResult : RelayCommandResult

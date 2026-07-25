@@ -1,5 +1,4 @@
 using System.CommandLine;
-using Reach.Plugin.Abstractions;
 
 namespace Reach.Plugin.Example.Features.Echo;
 

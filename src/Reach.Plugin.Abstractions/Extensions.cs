@@ -1,6 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
-
-namespace Reach.Plugin.Abstractions;
+namespace Reach.Plugin;
 
 public static class Extensions
 {

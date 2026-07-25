@@ -1,5 +1,5 @@
 using Reach.Local.Shared;
-using Reach.Plugin.Abstractions;
+using Reach.Plugin;
 using ZLogger.Formatters;
 
 namespace Reach.Local.Cli;

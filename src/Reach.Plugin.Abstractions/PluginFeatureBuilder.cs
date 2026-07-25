@@ -1,8 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
-using Microsoft.Extensions.DependencyInjection;
-using Reach.Relay.Abstractions;
+using Reach.Relay;
 
-namespace Reach.Plugin.Abstractions;
+namespace Reach.Plugin;
 
 /// <summary>
 /// Registers everything that makes up a single plugin feature (CLI command, JSON serialization
@@ -30,7 +29,7 @@ public sealed class PluginFeatureBuilder
 
         if (typeof(ICliCommand).IsAssignableFrom(typeof(TCliCommand)))
         {
-            _services.AddSingleton<ICliCommand>(serviceProvider =>
+            _services.AddSingleton(serviceProvider =>
                 (ICliCommand)serviceProvider.GetRequiredService<TCliCommand>()
             );
         }

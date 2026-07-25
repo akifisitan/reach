@@ -1,5 +1,3 @@
-using Reach.Plugin.Abstractions;
-
 namespace Reach.Plugin.LogSearch.Features.LogSearchStatus;
 
 internal sealed record SearchStatusCliCommandPayload(string CorrelationId) : CliCommandPayload;

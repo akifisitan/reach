@@ -1,6 +1,5 @@
 using Reach.Persistence;
-using Reach.Plugin.Toolkit.ResultStore.Abstractions;
-using Reach.Relay.Abstractions;
+using Reach.Relay;
 
 namespace Reach.Plugin.Toolkit.ResultStore.Sqlite;
 

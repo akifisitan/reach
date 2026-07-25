@@ -3,7 +3,6 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Web;
 using Polly;
-using Reach.Relay.Abstractions;
 
 namespace Reach.Relay.Confluence;
 

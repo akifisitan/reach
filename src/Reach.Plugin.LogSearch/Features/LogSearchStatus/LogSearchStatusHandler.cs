@@ -1,6 +1,5 @@
-using Reach.Plugin.Abstractions;
 using Reach.Plugin.LogSearch.Features.LogSearchStart;
-using Reach.Plugin.Toolkit.ResultStore.Abstractions;
+using Reach.Plugin.Toolkit.ResultStore;
 
 namespace Reach.Plugin.LogSearch.Features.LogSearchStatus;
 

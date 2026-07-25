@@ -1,5 +1,4 @@
 using Polly;
-using Reach.Relay.Abstractions;
 
 namespace Reach.Relay.Confluence;
 

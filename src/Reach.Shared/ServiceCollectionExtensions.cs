@@ -1,9 +1,9 @@
 using System.Text.Json;
 using Reach.Persistence;
-using Reach.Plugin.Abstractions;
+using Reach.Plugin;
 using Reach.Plugin.Example;
 using Reach.Plugin.LogSearch;
-using Reach.Relay.Abstractions;
+using Reach.Relay;
 using Reach.Relay.Confluence;
 using Reach.Relay.LocalFile;
 

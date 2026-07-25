@@ -1,4 +1,3 @@
-using Reach.Plugin.Abstractions;
 using Reach.Plugin.Example.Features.Echo;
 using Reach.Plugin.Toolkit.ResultStore.Memory;
 

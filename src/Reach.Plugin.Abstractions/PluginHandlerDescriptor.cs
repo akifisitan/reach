@@ -1,4 +1,4 @@
-namespace Reach.Plugin.Abstractions;
+namespace Reach.Plugin;
 
 /// <summary>
 /// Describes a registered handler. Captured at registration time so the plugin graph can be

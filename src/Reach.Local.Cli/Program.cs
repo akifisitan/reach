@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Hosting;
 using Reach.Local.Cli;
-using Reach.Plugin.Abstractions;
+using Reach.Plugin;
 
 var builder = Host.CreateApplicationBuilder(args);
 

@@ -1,4 +1,4 @@
-namespace Reach.Relay.Abstractions;
+namespace Reach.Relay;
 
 public interface ILocalRelay
 {

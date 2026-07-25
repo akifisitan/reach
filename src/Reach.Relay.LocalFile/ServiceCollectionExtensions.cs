@@ -1,5 +1,3 @@
-using Reach.Relay.Abstractions;
-
 namespace Reach.Relay.LocalFile;
 
 public static class ServiceCollectionExtensions

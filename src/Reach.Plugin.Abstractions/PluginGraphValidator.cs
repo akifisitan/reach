@@ -1,9 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
-using Microsoft.Extensions.DependencyInjection;
-using Reach.Relay.Abstractions;
+using Reach.Relay;
 
-namespace Reach.Plugin.Abstractions;
+namespace Reach.Plugin;
 
 /// <summary>
 /// Validates the plugin graph at startup so registration mistakes fail fast instead of at

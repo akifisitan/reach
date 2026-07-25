@@ -1,8 +1,8 @@
 using Polly;
 using Polly.Registry;
 using Reach.DurableQueue;
-using Reach.Plugin.Abstractions;
-using Reach.Relay.Abstractions;
+using Reach.Plugin;
+using Reach.Relay;
 
 namespace Reach.Local.Server;
 

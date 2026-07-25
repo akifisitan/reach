@@ -1,5 +1,5 @@
 using System.CommandLine;
-using Reach.Plugin.Abstractions;
+using Reach.Plugin;
 
 namespace Reach.Local.Cli;
 

@@ -1,9 +1,9 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
-using Reach.Relay.Abstractions;
+using Reach.Relay;
 
-namespace Reach.Plugin.Abstractions;
+namespace Reach.Plugin;
 
 public interface IJsonTypeInfoRegistration
 {

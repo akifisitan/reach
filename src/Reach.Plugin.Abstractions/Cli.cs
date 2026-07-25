@@ -1,6 +1,6 @@
 using System.CommandLine;
 
-namespace Reach.Plugin.Abstractions;
+namespace Reach.Plugin;
 
 public interface ICliCommand
 {

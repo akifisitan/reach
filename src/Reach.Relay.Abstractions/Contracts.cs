@@ -1,4 +1,4 @@
-namespace Reach.Relay.Abstractions;
+namespace Reach.Relay;
 
 /// <summary>
 /// A record that crosses a process boundary. <see cref="Kind" /> is the record's

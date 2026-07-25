@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Hosting;
 using Reach.Persistence;
-using Reach.Plugin.Abstractions;
+using Reach.Plugin;
 using Reach.Remote.Agent;
 using Reach.Shared;
 
