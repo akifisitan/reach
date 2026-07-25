@@ -1,7 +1,9 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using Reach.Persistence;
 using Reach.Plugin.Abstractions;
 using Reach.Remote.Agent;
+using Reach.Shared;
 
 var builder = Host.CreateApplicationBuilder(args);
 
@@ -16,6 +18,19 @@ builder.Services.AddApplication(builder.Configuration);
 
 using var host = builder.Build();
 
+var appLock = host.Services.GetRequiredService<ISingleAppInstanceLock>();
+
+if (!appLock.TryAcquire(AppPaths.LockFilePath))
+{
+    host.Services.GetRequiredService<ILoggerFactory>()
+        .CreateLogger("Program")
+        .ZLogInformation($"There's already a running instance, exiting...");
+
+    return;
+}
+
 host.Services.ValidatePluginGraph();
+
+host.Services.GetRequiredService<DatabaseInitializer>().Initialize();
 
 host.Run();

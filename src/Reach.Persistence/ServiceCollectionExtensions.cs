@@ -7,6 +7,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddPersistence(this IServiceCollection services)
     {
         services.AddSingleton<DbConnectionFactory>();
+        services.AddSingleton<DatabaseInitializer>();
         services.AddSingleton<IRelayCursorStorage>(sp =>
             sp.GetRequiredService<RelayCursorRepository>()
         );

@@ -1,5 +1,4 @@
 using System.Data.Common;
-using Dapper;
 using Microsoft.Data.Sqlite;
 
 namespace Reach.Persistence;
@@ -16,25 +15,6 @@ public sealed class DbConnectionFactory
     {
         _logger = logger;
         _dbPath = options.Value.DbPath;
-    }
-
-    public void Initialize()
-    {
-        _logger.ZLogDebug($"Initializing {nameof(DbConnectionFactory)}");
-
-        SQLitePCL.Batteries.Init();
-
-        Directory.CreateDirectory(Path.GetDirectoryName(_dbPath)!);
-
-        using var connection = new SqliteConnection($"Data Source={_dbPath}");
-
-        connection.Open();
-
-        connection.Execute(
-            """
-            PRAGMA journal_mode=WAL;
-            """
-        );
     }
 
     public DbConnection CreateConnection()

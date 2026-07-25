@@ -11,6 +11,13 @@ public static class ServiceCollectionExtensions
         Action<DurableQueueOptions> configure
     )
     {
+        if (services.Any(x => x.ServiceType == typeof(IDurableQueueRepository)))
+        {
+            throw new InvalidOperationException(
+                "Only one durable queue per process is currently supported."
+            );
+        }
+
         services.AddSingleton<IDbInitializable>(sp =>
             sp.GetRequiredService<IDurableQueueRepository>()
         );
