@@ -12,6 +12,9 @@
   <Project Path="src/Reach.Plugin.Abstractions/Reach.Plugin.Abstractions.csproj" />
   <Project Path="src/Reach.Plugin.Example/Reach.Plugin.Example.csproj" />
   <Project Path="src/Reach.Plugin.LogSearch/Reach.Plugin.LogSearch.csproj" />
+  <Project Path="src/Reach.Plugin.Toolkit.ResultStore.Abstractions/Reach.Plugin.Toolkit.ResultStore.Abstractions.csproj" />
+  <Project Path="src/Reach.Plugin.Toolkit.ResultStore.Memory/Reach.Plugin.Toolkit.ResultStore.Memory.csproj" />
+  <Project Path="src/Reach.Plugin.Toolkit.ResultStore.Sqlite/Reach.Plugin.Toolkit.ResultStore.Sqlite.csproj" />
   <Project Path="src/Reach.Relay.Abstractions/Reach.Relay.Abstractions.csproj" />
   <Project Path="src/Reach.Relay.Confluence/Reach.Relay.Confluence.csproj" />
   <Project Path="src/Reach.Relay.LocalFile/Reach.Relay.LocalFile.csproj" />

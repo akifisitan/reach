@@ -11,4 +11,6 @@ internal abstract record EchoPollResult : RpcResult
     public sealed record Ongoing : EchoPollResult;
 
     public sealed record Success(string Reply) : EchoPollResult;
+
+    public sealed record Error(string Message) : EchoPollResult;
 }

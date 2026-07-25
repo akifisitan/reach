@@ -1,4 +1,5 @@
 using Reach.Plugin.Abstractions;
+using Reach.Plugin.Toolkit.ResultStore.Abstractions;
 using Reach.Relay.Abstractions;
 
 namespace Reach.Plugin.Example.Features.Echo;
@@ -7,17 +8,17 @@ internal sealed class EchoRpcHandler : RpcHandler<EchoPayload, EchoResult>
 {
     private readonly ILogger<EchoRpcHandler> _logger;
     private readonly ILocalRelay _relay;
-    private readonly EchoResultStore _echoResultStore;
+    private readonly IResultStore<EchoCommandResult> _resultStore;
 
     public EchoRpcHandler(
         ILogger<EchoRpcHandler> logger,
         ILocalRelay relay,
-        EchoResultStore echoResultStore
+        IResultStore<EchoCommandResult> resultStore
     )
     {
         _logger = logger;
         _relay = relay;
-        _echoResultStore = echoResultStore;
+        _resultStore = resultStore;
     }
 
     protected override async Task<EchoResult> Handle(
@@ -31,7 +32,7 @@ internal sealed class EchoRpcHandler : RpcHandler<EchoPayload, EchoResult>
 
             _logger.ZLogInformation($"[{command.Id}] Posting {command} to remote");
 
-            _echoResultStore.Insert(payload.CorrelationId);
+            await _resultStore.Insert(payload.CorrelationId, cancellationToken);
 
             var result = await _relay.PostToRemote(command, cancellationToken);
 
@@ -39,9 +40,19 @@ internal sealed class EchoRpcHandler : RpcHandler<EchoPayload, EchoResult>
 
             return new EchoResult.Success(payload.CorrelationId);
         }
+        catch (ResultAlreadyExistsException ex)
+        {
+            _logger.ZLogError(ex, $"[{payload.CorrelationId}] Echo already exists");
+
+            return new EchoResult.Error(
+                $"An echo with correlation id '{payload.CorrelationId}' already exists. Check its status."
+            );
+        }
         catch (Exception ex)
         {
             _logger.ZLogError(ex, $"An error occurred");
+
+            await _resultStore.TrySetAsFailed(payload.CorrelationId, ex.Message, cancellationToken);
 
             return new EchoResult.Error(ex.Message);
         }

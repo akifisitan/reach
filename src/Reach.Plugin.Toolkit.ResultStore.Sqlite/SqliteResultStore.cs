@@ -1,32 +1,36 @@
-using System.Text.Json;
 using Dapper;
 using Microsoft.Data.Sqlite;
 using Reach.Persistence;
-using Reach.Plugin.LogSearch.Features.LogSearchStart;
+using Reach.Plugin.Toolkit.ResultStore.Abstractions;
+using Reach.Relay.Abstractions;
 
-namespace Reach.Plugin.LogSearch;
+namespace Reach.Plugin.Toolkit.ResultStore.Sqlite;
 
-internal sealed class SearchResultStore : IDbInitializable
+public sealed class SqliteResultStore<TResult> : IResultStore<TResult>, IDbInitializable
+    where TResult : RelayCommandResult
 {
     private readonly DbConnectionFactory _dbConnectionFactory;
-    private readonly ILogger<SearchResultStore> _logger;
+    private readonly ILogger<SqliteResultStore<TResult>> _logger;
+    private readonly IRelayPayloadSerializer _payloadSerializer;
     private readonly string _tableName;
 
     private const string TableColumns =
-        "correlation_id,status,result_json,error_message,creation_time,completion_time";
+        "correlation_id,status,result_data,error_message,creation_time,completion_time";
 
     public TimeSpan StalenessThreshold { get; }
 
-    public SearchResultStore(
+    public SqliteResultStore(
         DbConnectionFactory dbConnectionFactory,
-        ILogger<SearchResultStore> logger,
-        IOptions<SearchResultStoreOptions> options
+        ILogger<SqliteResultStore<TResult>> logger,
+        SqliteResultStoreOptions options,
+        IRelayPayloadSerializer payloadSerializer
     )
     {
         _dbConnectionFactory = dbConnectionFactory;
         _logger = logger;
-        _tableName = options.Value.TableName;
-        StalenessThreshold = options.Value.StalenessThreshold;
+        _tableName = options.TableName;
+        StalenessThreshold = options.StalenessThreshold;
+        _payloadSerializer = payloadSerializer;
     }
 
     public void EnsureCreated()
@@ -40,7 +44,7 @@ internal sealed class SearchResultStore : IDbInitializable
             CREATE TABLE IF NOT EXISTS {_tableName}(
                 correlation_id TEXT PRIMARY KEY,
                 status INTEGER NOT NULL,
-                result_json TEXT,
+                result_data TEXT,
                 error_message TEXT,
                 creation_time TEXT NOT NULL,
                 completion_time TEXT
@@ -49,7 +53,7 @@ internal sealed class SearchResultStore : IDbInitializable
         );
     }
 
-    public async Task Insert(string key, CancellationToken cancellationToken)
+    public async Task Insert(string correlationId, CancellationToken cancellationToken)
     {
         await using var connection = await _dbConnectionFactory.CreateConnection(cancellationToken);
 
@@ -57,68 +61,62 @@ internal sealed class SearchResultStore : IDbInitializable
         {
             await connection.ExecuteAsync(
                 $"""
-                INSERT INTO {_tableName}(correlation_id, status, result_json, error_message, creation_time, completion_time)
+                INSERT INTO {_tableName}(correlation_id, status, result_data, error_message, creation_time, completion_time)
                 VALUES ($CorrelationId, $Status, NULL, NULL, $CreationTime, NULL)
                 """,
                 new
                 {
-                    CorrelationId = key,
-                    Status = SearchStatus.Ongoing,
+                    CorrelationId = correlationId,
+                    Status = ResultStoreStatus.Ongoing,
                     CreationTime = DateTimeOffset.Now.ToIsoString(),
                 }
             );
         }
         catch (SqliteException ex) when (ex.SqliteErrorCode == 19)
         {
-            throw new SearchResultAlreadyExistsException(key);
+            throw new ResultAlreadyExistsException(correlationId);
         }
     }
 
-    public async Task<SearchResultStoreEntry?> GetValue(
-        string key,
+    public async Task<ResultStoreEntry<TResult>?> GetValue(
+        string correlationId,
         CancellationToken cancellationToken
     )
     {
         await using var connection = await _dbConnectionFactory.CreateConnection(cancellationToken);
 
-        var result = await connection.QuerySingleOrDefaultAsync<DbSearchResult>(
+        var result = await connection.QuerySingleOrDefaultAsync<DbResultStoreEntry>(
             $"""
             SELECT {TableColumns}
             FROM {_tableName}
             WHERE correlation_id = $CorrelationId
             LIMIT 1
             """,
-            new { CorrelationId = key }
+            new { CorrelationId = correlationId }
         );
 
-        return result?.ToSearchResultStoreEntry();
+        return result?.ToEntry(_payloadSerializer.Deserialize<TResult>);
     }
 
-    public async Task<bool> TrySetAsComplete(
-        SearchFileCommandResult result,
-        CancellationToken cancellationToken
-    )
+    public async Task<bool> TrySetAsComplete(TResult result, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(result);
 
-        string resultJson = JsonSerializer.Serialize(
-            result,
-            SearchResultStoreJsonSerializerContext.Default.SearchFileCommandResult
-        );
+        var data = _payloadSerializer.Serialize(result);
 
         await using var connection = await _dbConnectionFactory.CreateConnection(cancellationToken);
 
         var rows = await connection.ExecuteAsync(
             $"""
             UPDATE {_tableName}
-            SET status = $Status, result_json = $ResultJson, error_message = NULL, completion_time = $CompletionTime
+            SET status = $Status, result_data = $ResultJson, error_message = NULL, completion_time = $CompletionTime
             WHERE correlation_id = $CorrelationId
             """,
             new
             {
                 CorrelationId = result.CommandId,
-                Status = SearchStatus.Complete,
-                ResultJson = resultJson,
+                Status = ResultStoreStatus.Complete,
+                ResultJson = data,
                 CompletionTime = DateTimeOffset.Now.ToIsoString(),
             }
         );
@@ -143,7 +141,7 @@ internal sealed class SearchResultStore : IDbInitializable
             new
             {
                 CorrelationId = correlationId,
-                Status = SearchStatus.Failed,
+                Status = ResultStoreStatus.Failed,
                 ErrorMessage = error,
                 CompletionTime = DateTimeOffset.Now.ToIsoString(),
             }
@@ -153,54 +151,28 @@ internal sealed class SearchResultStore : IDbInitializable
     }
 }
 
-internal sealed record DbSearchResult(
+internal sealed record DbResultStoreEntry(
     string CorrelationId,
-    SearchStatus Status,
-    string? ResultJson,
+    ResultStoreStatus Status,
+    string? ResultData,
     string? ErrorMessage,
     string CreationTime,
     string? CompletionTime
 )
 {
-    public SearchResultStoreEntry ToSearchResultStoreEntry() =>
+    public ResultStoreEntry<TResult> ToEntry<TResult>(Func<string, TResult> deserializer)
+        where TResult : RelayCommandResult =>
         new()
         {
             Status = Status,
-            Result = ResultJson is { } resultJson
-                ? JsonSerializer.Deserialize(
-                    resultJson,
-                    SearchResultStoreJsonSerializerContext.Default.SearchFileCommandResult
-                )
-                : null,
+            Result = ResultData is { } resultData ? deserializer(resultData) : null,
             ErrorMessage = ErrorMessage,
             CreationTime = DateTimeOffset.FromIsoString(CreationTime),
         };
 }
 
-internal sealed record SearchResultStoreEntry
-{
-    public required SearchStatus Status { get; set; }
-    public SearchFileCommandResult? Result { get; set; }
-    public string? ErrorMessage { get; set; }
-    public DateTimeOffset CreationTime { get; set; }
-}
-
-internal enum SearchStatus
-{
-    NotFound = 0,
-    Ongoing = 1,
-    Complete = 2,
-    Failed = 3,
-}
-
-internal sealed class SearchResultAlreadyExistsException(string correlationId)
-    : Exception($"A search result already exists for correlation id '{correlationId}'");
-
-internal sealed record SearchResultStoreOptions
+public sealed record SqliteResultStoreOptions
 {
     public required string TableName { get; set; }
     public required TimeSpan StalenessThreshold { get; set; }
 }
-
-[JsonSerializable(typeof(SearchFileCommandResult))]
-internal sealed partial class SearchResultStoreJsonSerializerContext : JsonSerializerContext;

@@ -1,39 +1,46 @@
 using Reach.Plugin.Abstractions;
+using Reach.Plugin.Toolkit.ResultStore.Abstractions;
 
 namespace Reach.Plugin.Example.Features.Echo;
 
 internal sealed class EchoPollHandler : RpcHandler<EchoPollPayload, EchoPollResult>
 {
     private readonly ILogger<EchoPollHandler> _logger;
-    private readonly EchoResultStore _echoResultStore;
+    private readonly IResultStore<EchoCommandResult> _resultStore;
 
-    public EchoPollHandler(ILogger<EchoPollHandler> logger, EchoResultStore echoResultStore)
+    public EchoPollHandler(
+        ILogger<EchoPollHandler> logger,
+        IResultStore<EchoCommandResult> resultStore
+    )
     {
         _logger = logger;
-        _echoResultStore = echoResultStore;
+        _resultStore = resultStore;
     }
 
-    protected override Task<EchoPollResult> Handle(
+    protected override async Task<EchoPollResult> Handle(
         EchoPollPayload payload,
         CancellationToken cancellationToken
     )
     {
-        var storedValue = _echoResultStore.GetValue(payload.CorrelationId);
+        var storedValue = await _resultStore.GetValue(payload.CorrelationId, cancellationToken);
 
         if (storedValue is null)
         {
-            return Task.FromResult<EchoPollResult>(new EchoPollResult.NotFound());
+            return new EchoPollResult.NotFound();
         }
 
         if (storedValue.Result is not null)
         {
             _logger.ZLogInformation($"[{payload.CorrelationId}] Returning received echo");
 
-            return Task.FromResult<EchoPollResult>(
-                new EchoPollResult.Success(storedValue.Result.Reply)
-            );
+            return new EchoPollResult.Success(storedValue.Result.Reply);
         }
 
-        return Task.FromResult<EchoPollResult>(new EchoPollResult.Ongoing());
+        if (storedValue.Status is ResultStoreStatus.Failed)
+        {
+            return new EchoPollResult.Error(storedValue.ErrorMessage ?? "Echo failed");
+        }
+
+        return new EchoPollResult.Ongoing();
     }
 }

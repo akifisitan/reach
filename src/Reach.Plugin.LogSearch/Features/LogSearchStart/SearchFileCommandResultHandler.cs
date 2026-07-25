@@ -1,4 +1,5 @@
 using Reach.Plugin.Abstractions;
+using Reach.Plugin.Toolkit.ResultStore.Abstractions;
 
 namespace Reach.Plugin.LogSearch.Features.LogSearchStart;
 
@@ -6,15 +7,15 @@ internal sealed class SearchFileCommandResultHandler
     : RelayCommandResultHandler<SearchFileCommandResult>
 {
     private readonly ILogger<SearchFileCommandResultHandler> _logger;
-    private readonly SearchResultStore _searchResultStore;
+    private readonly IResultStore<SearchFileCommandResult> _resultStore;
 
     public SearchFileCommandResultHandler(
         ILogger<SearchFileCommandResultHandler> logger,
-        SearchResultStore searchResultStore
+        IResultStore<SearchFileCommandResult> resultStore
     )
     {
         _logger = logger;
-        _searchResultStore = searchResultStore;
+        _resultStore = resultStore;
     }
 
     protected override async Task<Unit> Handle(
@@ -29,7 +30,7 @@ internal sealed class SearchFileCommandResultHandler
             throw new Exception($"Threw an error for testing");
         }
 
-        if (!await _searchResultStore.TrySetAsComplete(result, cancellationToken))
+        if (!await _resultStore.TrySetAsComplete(result, cancellationToken))
         {
             _logger.ZLogError($"What happened to the existing value?");
 

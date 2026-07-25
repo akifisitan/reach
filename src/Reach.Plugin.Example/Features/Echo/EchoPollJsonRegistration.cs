@@ -13,7 +13,8 @@ internal sealed partial class EchoPollJsonRegistration : IJsonTypeInfoRegistrati
             "example.echoPoll.result",
             (typeof(EchoPollResult.NotFound), "example.echoPoll.result.notFound"),
             (typeof(EchoPollResult.Ongoing), "example.echoPoll.result.ongoing"),
-            (typeof(EchoPollResult.Success), "example.echoPoll.result.success")
+            (typeof(EchoPollResult.Success), "example.echoPoll.result.success"),
+            (typeof(EchoPollResult.Error), "example.echoPoll.result.error")
         );
     }
 
@@ -22,5 +23,6 @@ internal sealed partial class EchoPollJsonRegistration : IJsonTypeInfoRegistrati
     [JsonSerializable(typeof(EchoPollResult.NotFound))]
     [JsonSerializable(typeof(EchoPollResult.Ongoing))]
     [JsonSerializable(typeof(EchoPollResult.Success))]
+    [JsonSerializable(typeof(EchoPollResult.Error))]
     private sealed partial class EchoPollJsonSerializerContext : JsonSerializerContext;
 }

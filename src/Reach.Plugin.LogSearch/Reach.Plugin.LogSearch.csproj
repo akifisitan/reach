@@ -7,7 +7,7 @@
     <PackageReference Include="HtmlAgilityPack" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Reach.Persistence\Reach.Persistence.csproj" />
     <ProjectReference Include="..\Reach.Plugin.Abstractions\Reach.Plugin.Abstractions.csproj" />
+    <ProjectReference Include="..\Reach.Plugin.Toolkit.ResultStore.Sqlite\Reach.Plugin.Toolkit.ResultStore.Sqlite.csproj" />
   </ItemGroup>
 </Project>

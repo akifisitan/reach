@@ -1,4 +1,5 @@
 using Reach.Plugin.Abstractions;
+using Reach.Plugin.Toolkit.ResultStore.Abstractions;
 using Reach.Relay.Abstractions;
 
 namespace Reach.Plugin.LogSearch.Features.LogSearchStart;
@@ -8,17 +9,17 @@ internal sealed class LogSearchStartHandler
 {
     private readonly ILogger<LogSearchStartHandler> _logger;
     private readonly ILocalRelay _relay;
-    private readonly SearchResultStore _searchResultStore;
+    private readonly IResultStore<SearchFileCommandResult> _resultStore;
 
     public LogSearchStartHandler(
         ILogger<LogSearchStartHandler> logger,
         ILocalRelay relay,
-        SearchResultStore searchResultStore
+        IResultStore<SearchFileCommandResult> resultStore
     )
     {
         _logger = logger;
         _relay = relay;
-        _searchResultStore = searchResultStore;
+        _resultStore = resultStore;
     }
 
     protected override async Task<LogSearchStartResult> Handle(
@@ -38,12 +39,13 @@ internal sealed class LogSearchStartHandler
 
             _logger.ZLogInformation($"[{command.Id}] Posting {command} to remote");
 
-            await _searchResultStore.Insert(payload.CorrelationId, cancellationToken);
+            await _resultStore.Insert(payload.CorrelationId, cancellationToken);
 
             var result = await _relay.PostToRemote(command, cancellationToken);
 
             _logger.ZLogInformation($"[{command.Id}] Posting successful {result.PollId.Value}");
 
+            // TODO: inject random errors with Polly
             if (Random.Shared.Next(0, 2) == 1)
             {
                 throw new Exception("Threw an error just for testing");
@@ -51,7 +53,7 @@ internal sealed class LogSearchStartHandler
 
             return new LogSearchStartResult.Success(payload.CorrelationId);
         }
-        catch (SearchResultAlreadyExistsException ex)
+        catch (ResultAlreadyExistsException ex)
         {
             _logger.ZLogError(ex, $"[{payload.CorrelationId}] Search already exists");
 
@@ -63,11 +65,7 @@ internal sealed class LogSearchStartHandler
         {
             _logger.ZLogError(ex, $"An error occurred");
 
-            await _searchResultStore.TrySetAsFailed(
-                payload.CorrelationId,
-                ex.Message,
-                cancellationToken
-            );
+            await _resultStore.TrySetAsFailed(payload.CorrelationId, ex.Message, cancellationToken);
 
             return new LogSearchStartResult.Error(ex.Message);
         }

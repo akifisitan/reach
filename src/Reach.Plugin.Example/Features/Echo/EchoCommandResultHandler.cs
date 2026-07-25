@@ -1,23 +1,24 @@
 using Reach.Plugin.Abstractions;
+using Reach.Plugin.Toolkit.ResultStore.Abstractions;
 
 namespace Reach.Plugin.Example.Features.Echo;
 
 internal sealed class EchoCommandResultHandler : RelayCommandResultHandler<EchoCommandResult>
 {
-    private readonly EchoResultStore _echoResultStore;
+    private readonly IResultStore<EchoCommandResult> _resultStore;
 
-    public EchoCommandResultHandler(EchoResultStore echoResultStore)
+    public EchoCommandResultHandler(IResultStore<EchoCommandResult> resultStore)
     {
-        _echoResultStore = echoResultStore;
+        _resultStore = resultStore;
     }
 
-    protected override Task<Unit> Handle(
+    protected override async Task<Unit> Handle(
         EchoCommandResult result,
         CancellationToken cancellationToken
     )
     {
-        _echoResultStore.TrySetAsComplete(result);
+        await _resultStore.TrySetAsComplete(result, cancellationToken);
 
-        return Task.FromResult(new Unit());
+        return new();
     }
 }

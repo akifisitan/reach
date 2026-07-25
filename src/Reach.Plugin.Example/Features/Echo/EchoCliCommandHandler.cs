@@ -63,6 +63,12 @@ internal sealed class EchoCliCommandHandler
 
                                 return new(1);
                             }
+                            case EchoPollResult.Error pollError:
+                            {
+                                Console.WriteLine($"Echo failed: {pollError.Message}");
+
+                                return new(1);
+                            }
                             default:
                                 throw new NotSupportedException();
                         }

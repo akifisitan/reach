@@ -5,5 +5,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Reach.Plugin.Abstractions\Reach.Plugin.Abstractions.csproj" />
+    <ProjectReference Include="..\Reach.Plugin.Toolkit.ResultStore.Memory\Reach.Plugin.Toolkit.ResultStore.Memory.csproj" />
   </ItemGroup>
 </Project>
