@@ -1,6 +1,6 @@
 using System.CommandLine;
 using Reach.Plugin.Abstractions;
-using Reach.Plugin.Example.Features.Ping;
+using Reach.Plugin.Example.Features.Echo;
 
 namespace Reach.Plugin.Example;
 
@@ -8,10 +8,10 @@ internal sealed class ExampleCliCommand : ICliCommand
 {
     public Command Command { get; }
 
-    public ExampleCliCommand(PingCliCommand pingCliCommand)
+    public ExampleCliCommand(EchoCliCommand echoCliCommand)
     {
         Command = new Command("example", "Example plugin");
 
-        pingCliCommand.Register(Command);
+        echoCliCommand.Register(Command);
     }
 }

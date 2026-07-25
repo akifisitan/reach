@@ -1,5 +1,5 @@
 # Reach Example Plugin
 
 ```
-reach example ping -m "hello world"
+reach example echo -m "hello world"
 ```

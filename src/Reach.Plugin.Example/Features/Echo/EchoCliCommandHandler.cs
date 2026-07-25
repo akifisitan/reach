@@ -1,64 +1,64 @@
 using Reach.Plugin.Abstractions;
 
-namespace Reach.Plugin.Example.Features.Ping;
+namespace Reach.Plugin.Example.Features.Echo;
 
-internal sealed class PingCliCommandHandler
-    : CliCommandHandler<PingCliCommandPayload, PingCliCommandResult>
+internal sealed class EchoCliCommandHandler
+    : CliCommandHandler<EchoCliCommandPayload, EchoCliCommandResult>
 {
-    private readonly ILogger<PingCliCommandHandler> _logger;
+    private readonly ILogger<EchoCliCommandHandler> _logger;
     private readonly IRpcClient _rpcClient;
 
-    public PingCliCommandHandler(ILogger<PingCliCommandHandler> logger, IRpcClient rpcClient)
+    public EchoCliCommandHandler(ILogger<EchoCliCommandHandler> logger, IRpcClient rpcClient)
     {
         _logger = logger;
         _rpcClient = rpcClient;
     }
 
-    protected override async Task<PingCliCommandResult> Handle(
-        PingCliCommandPayload payload,
+    protected override async Task<EchoCliCommandResult> Handle(
+        EchoCliCommandPayload payload,
         CancellationToken cancellationToken
     )
     {
         try
         {
-            var pingPayload = new PingPayload(Guid.NewGuid().ToString("N"), payload.Message);
+            var echoPayload = new EchoPayload(Guid.NewGuid().ToString("N"), payload.Message);
 
-            var result = await _rpcClient.Invoke<PingPayload, PingResult>(
-                pingPayload,
+            var result = await _rpcClient.Invoke<EchoPayload, EchoResult>(
+                echoPayload,
                 cancellationToken
             );
 
             switch (result)
             {
-                case PingResult.Success success:
+                case EchoResult.Success success:
                 {
-                    Console.WriteLine("Ping sent, waiting for pong...");
+                    Console.WriteLine("Echo sent, waiting for reply...");
 
                     while (true)
                     {
-                        var pollResult = await _rpcClient.Invoke<PingPollPayload, PingPollResult>(
-                            new PingPollPayload(success.CorrelationId),
+                        var pollResult = await _rpcClient.Invoke<EchoPollPayload, EchoPollResult>(
+                            new EchoPollPayload(success.CorrelationId),
                             cancellationToken
                         );
 
                         switch (pollResult)
                         {
-                            case PingPollResult.Success pollSuccess:
+                            case EchoPollResult.Success pollSuccess:
                             {
                                 Console.WriteLine($"Received from remote: {pollSuccess.Reply}");
 
                                 return new(0);
                             }
-                            case PingPollResult.Ongoing:
+                            case EchoPollResult.Ongoing:
                             {
                                 await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
 
                                 break;
                             }
-                            case PingPollResult.NotFound:
+                            case EchoPollResult.NotFound:
                             {
                                 Console.WriteLine(
-                                    $"No ping found for correlation id {success.CorrelationId}"
+                                    $"No echo found for correlation id {success.CorrelationId}"
                                 );
 
                                 return new(1);
@@ -68,7 +68,7 @@ internal sealed class PingCliCommandHandler
                         }
                     }
                 }
-                case PingResult.Error err:
+                case EchoResult.Error err:
                 {
                     Console.WriteLine(err.Message);
 
