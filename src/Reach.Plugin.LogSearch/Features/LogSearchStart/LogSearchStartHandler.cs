@@ -38,11 +38,9 @@ internal sealed class LogSearchStartHandler
 
             _logger.ZLogInformation($"[{command.Id}] Posting {command} to remote");
 
-            _searchResultStore.Insert(payload.CorrelationId); // TODO: insert, if it fails because of duplicate, error saying to check the status as it already exists
+            await _searchResultStore.Insert(payload.CorrelationId, cancellationToken);
 
             var result = await _relay.PostToRemote(command, cancellationToken);
-
-            _searchResultStore.Insert(payload.CorrelationId);
 
             _logger.ZLogInformation($"[{command.Id}] Posting successful {result.PollId.Value}");
 
@@ -53,9 +51,23 @@ internal sealed class LogSearchStartHandler
 
             return new LogSearchStartResult.Success(payload.CorrelationId);
         }
+        catch (SearchResultAlreadyExistsException ex)
+        {
+            _logger.ZLogError(ex, $"[{payload.CorrelationId}] Search already exists");
+
+            return new LogSearchStartResult.Error(
+                $"A search with correlation id '{payload.CorrelationId}' already exists. Check its status."
+            );
+        }
         catch (Exception ex)
         {
             _logger.ZLogError(ex, $"An error occurred");
+
+            await _searchResultStore.TrySetAsFailed(
+                payload.CorrelationId,
+                ex.Message,
+                cancellationToken
+            );
 
             return new LogSearchStartResult.Error(ex.Message);
         }

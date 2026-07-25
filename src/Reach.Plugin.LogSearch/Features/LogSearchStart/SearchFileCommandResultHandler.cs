@@ -29,7 +29,7 @@ internal sealed class SearchFileCommandResultHandler
             throw new Exception($"Threw an error for testing");
         }
 
-        if (!_searchResultStore.TrySetAsComplete(result))
+        if (!await _searchResultStore.TrySetAsComplete(result, cancellationToken))
         {
             _logger.ZLogError($"What happened to the existing value?");
 

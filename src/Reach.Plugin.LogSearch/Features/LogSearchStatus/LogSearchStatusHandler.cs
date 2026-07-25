@@ -22,7 +22,10 @@ internal sealed class LogSearchStatusHandler
         CancellationToken cancellationToken
     )
     {
-        var storedValue = _searchResultStore.GetValue(payload.CorrelationId);
+        var storedValue = await _searchResultStore.GetValue(
+            payload.CorrelationId,
+            cancellationToken
+        );
 
         if (storedValue is null)
         {
@@ -34,10 +37,15 @@ internal sealed class LogSearchStatusHandler
             return new LogSearchStatusResult.Success(new(storedValue.Result.Content));
         }
 
-        //if (storedValue.Result is SomeErrorType)
-        //{
-        //    return new LogSearchStatusResult.Error("error");
-        //}
+        if (storedValue.Status is SearchStatus.Failed)
+        {
+            return new LogSearchStatusResult.Error(storedValue.ErrorMessage ?? "Search failed");
+        }
+
+        if (DateTimeOffset.Now - storedValue.CreationTime > _searchResultStore.StalenessThreshold)
+        {
+            return new LogSearchStatusResult.Expired();
+        }
 
         return new LogSearchStatusResult.Ongoing();
     }

@@ -12,6 +12,7 @@
     <PackageReference Include="FluentValidation" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Reach.Persistence\Reach.Persistence.csproj" />
     <ProjectReference Include="..\Reach.Plugin.Abstractions\Reach.Plugin.Abstractions.csproj" />
   </ItemGroup>
 </Project>

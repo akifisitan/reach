@@ -1,3 +1,4 @@
+using Reach.Persistence;
 using Reach.Plugin.Abstractions;
 using Reach.Plugin.LogSearch.Features.LogSearchStart;
 using Reach.Plugin.LogSearch.Features.LogSearchStatus;
@@ -10,6 +11,14 @@ public static class ServiceCollectionExtensions
     {
         services.AddSingleton<FileSearcher>();
         services.AddSingleton<SearchResultStore>();
+        services.AddSingleton<IDbInitializable>(sp => sp.GetRequiredService<SearchResultStore>());
+        services
+            .AddOptions<SearchResultStoreOptions>()
+            .Configure(x =>
+            {
+                x.TableName = "log_search_results";
+                x.StalenessThreshold = TimeSpan.FromHours(24);
+            });
 
         services.AddSingleton<ICliCommand, SearchCliCommand>();
 
