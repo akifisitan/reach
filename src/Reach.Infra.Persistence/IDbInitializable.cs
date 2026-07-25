@@ -1,4 +1,4 @@
-namespace Reach.Persistence;
+namespace Reach.Infra.Persistence;
 
 public interface IDbInitializable
 {

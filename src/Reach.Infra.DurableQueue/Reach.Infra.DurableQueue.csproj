@@ -11,7 +11,7 @@
     <PackageReference Include="Dapper.AOT" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Reach.Persistence\Reach.Persistence.csproj" />
+    <ProjectReference Include="..\Reach.Infra.Persistence\Reach.Infra.Persistence.csproj" />
     <ProjectReference Include="..\Reach.Relay.Abstractions\Reach.Relay.Abstractions.csproj" />
   </ItemGroup>
 </Project>

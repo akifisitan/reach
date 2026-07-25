@@ -1,8 +1,8 @@
 using Dapper;
 using Microsoft.Data.Sqlite;
-using Reach.Persistence;
+using Reach.Infra.Persistence;
 
-namespace Reach.DurableQueue;
+namespace Reach.Infra.DurableQueue;
 
 internal interface IDurableQueueRepository : IDbInitializable
 {

@@ -1,8 +1,8 @@
 using Microsoft.Extensions.Hosting;
-using Reach.Persistence;
+using Reach.Composition;
+using Reach.Infra.Persistence;
 using Reach.Plugin;
 using Reach.Remote.Agent;
-using Reach.Shared;
 
 var builder = Host.CreateApplicationBuilder(args);
 

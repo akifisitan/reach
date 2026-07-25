@@ -1,6 +1,6 @@
 using Reach.Relay;
 
-namespace Reach.Persistence;
+namespace Reach.Infra.Persistence;
 
 public static class ServiceCollectionExtensions
 {

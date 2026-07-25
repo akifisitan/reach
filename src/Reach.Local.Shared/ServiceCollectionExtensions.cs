@@ -1,4 +1,4 @@
-using Reach.Shared;
+using Reach.Composition;
 
 namespace Reach.Local.Shared;
 
@@ -6,7 +6,7 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddLocalShared(this IServiceCollection services)
     {
-        services.AddShared();
+        services.AddComposition();
 
         return services;
     }

@@ -1,6 +1,6 @@
 using Reach.Relay;
 
-namespace Reach.DurableQueue;
+namespace Reach.Infra.DurableQueue;
 
 internal sealed class DurableQueue<T> : IDurableQueue<T>
 {

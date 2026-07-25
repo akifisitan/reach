@@ -1,3 +1,5 @@
+using Reach.Composition;
+
 namespace Reach.Local.Server;
 
 internal static class AppPaths
@@ -16,6 +18,6 @@ internal static class AppPaths
 
     public static readonly string LockFilePath = Path.Combine(
         AppDataLocalBasePath,
-        $"{AppConstants.AppName}.local.server.lock"
+        $"{Constants.AppName}.local.server.lock"
     );
 }

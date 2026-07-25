@@ -19,8 +19,8 @@
     <PackageReference Include="Polly.Extensions" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Reach.DurableQueue\Reach.DurableQueue.csproj" />
-    <ProjectReference Include="..\Reach.Shared\Reach.Shared.csproj" />
+    <ProjectReference Include="..\Reach.Infra.DurableQueue\Reach.Infra.DurableQueue.csproj" />
+    <ProjectReference Include="..\Reach.Composition\Reach.Composition.csproj" />
     <ProjectReference Include="..\Reach.Local.Shared\Reach.Local.Shared.csproj" />
   </ItemGroup>
   <ItemGroup>

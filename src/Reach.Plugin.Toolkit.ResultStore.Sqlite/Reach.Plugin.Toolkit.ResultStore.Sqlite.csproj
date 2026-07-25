@@ -7,7 +7,7 @@
     <PackageReference Include="ZLogger" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Reach.Persistence\Reach.Persistence.csproj" />
+    <ProjectReference Include="..\Reach.Infra.Persistence\Reach.Infra.Persistence.csproj" />
     <ProjectReference Include="..\Reach.Plugin.Toolkit.ResultStore.Abstractions\Reach.Plugin.Toolkit.ResultStore.Abstractions.csproj" />
   </ItemGroup>
 </Project>

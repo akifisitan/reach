@@ -3,7 +3,7 @@ using System.Text.Json.Serialization.Metadata;
 using Reach.Plugin;
 using Reach.Relay;
 
-namespace Reach.Shared;
+namespace Reach.Composition;
 
 internal sealed class RelayJsonPayloadSerializer : IRelayPayloadSerializer, IRpcPayloadSerializer
 {

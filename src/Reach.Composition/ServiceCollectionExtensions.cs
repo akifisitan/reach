@@ -1,5 +1,5 @@
 using System.Text.Json;
-using Reach.Persistence;
+using Reach.Infra.Persistence;
 using Reach.Plugin;
 using Reach.Plugin.Example;
 using Reach.Plugin.LogSearch;
@@ -7,11 +7,11 @@ using Reach.Relay;
 using Reach.Relay.Confluence;
 using Reach.Relay.LocalFile;
 
-namespace Reach.Shared;
+namespace Reach.Composition;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddShared(this IServiceCollection services)
+    public static IServiceCollection AddComposition(this IServiceCollection services)
     {
         services.AddPluginAbstractions();
 

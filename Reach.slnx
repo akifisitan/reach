@@ -4,11 +4,12 @@
     <File Path="Directory.Build.props" />
     <File Path="Directory.Packages.props" />
   </Folder>
-  <Project Path="src/Reach.DurableQueue/Reach.DurableQueue.csproj" />
+  <Project Path="src/Reach.Composition/Reach.Composition.csproj" />
+  <Project Path="src/Reach.Infra.DurableQueue/Reach.Infra.DurableQueue.csproj" />
+  <Project Path="src/Reach.Infra.Persistence/Reach.Infra.Persistence.csproj" />
   <Project Path="src/Reach.Local.Cli/Reach.Local.Cli.csproj" />
   <Project Path="src/Reach.Local.Server/Reach.Local.Server.csproj" />
   <Project Path="src/Reach.Local.Shared/Reach.Local.Shared.csproj" />
-  <Project Path="src/Reach.Persistence/Reach.Persistence.csproj" />
   <Project Path="src/Reach.Plugin.Abstractions/Reach.Plugin.Abstractions.csproj" />
   <Project Path="src/Reach.Plugin.Example/Reach.Plugin.Example.csproj" />
   <Project Path="src/Reach.Plugin.LogSearch/Reach.Plugin.LogSearch.csproj" />
@@ -19,5 +20,4 @@
   <Project Path="src/Reach.Relay.Confluence/Reach.Relay.Confluence.csproj" />
   <Project Path="src/Reach.Relay.LocalFile/Reach.Relay.LocalFile.csproj" />
   <Project Path="src/Reach.Remote.Agent/Reach.Remote.Agent.csproj" />
-  <Project Path="src/Reach.Shared/Reach.Shared.csproj" />
 </Solution>

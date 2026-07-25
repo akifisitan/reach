@@ -1,4 +1,4 @@
-using Reach.Persistence;
+using Reach.Infra.Persistence;
 using Reach.Relay;
 
 namespace Reach.Plugin.Toolkit.ResultStore.Sqlite;

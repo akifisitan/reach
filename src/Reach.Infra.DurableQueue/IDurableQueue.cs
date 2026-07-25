@@ -1,4 +1,4 @@
-namespace Reach.DurableQueue;
+namespace Reach.Infra.DurableQueue;
 
 public interface IDurableQueue<T>
 {

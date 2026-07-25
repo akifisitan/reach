@@ -1,6 +1,6 @@
 using Dapper;
 
-namespace Reach.Persistence;
+namespace Reach.Infra.Persistence;
 
 public sealed class DatabaseInitializer
 {

@@ -4,10 +4,10 @@
     <TargetFramework>net10.0</TargetFramework>
     <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
   </PropertyGroup>
-  <Import Project="Reach.Shared.buildconfig.targets" />
+  <Import Project="Reach.Composition.buildconfig.targets" />
   <Import
-    Project="Reach.Shared.buildconfig.props"
-    Condition="Exists('Reach.Shared.buildconfig.props')"
+    Project="Reach.Composition.buildconfig.props"
+    Condition="Exists('Reach.Composition.buildconfig.props')"
   />
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
@@ -17,8 +17,8 @@
     <PackageReference Include="Polly.Extensions" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Reach.Persistence\Reach.Persistence.csproj" />
-    <!-- Shared contains 1 relay + n plugins -->
+    <ProjectReference Include="..\Reach.Infra.Persistence\Reach.Infra.Persistence.csproj" />
+    <!-- Composition contains 1 relay + n plugins -->
     <!-- Relay -->
     <ProjectReference Include="..\Reach.Relay.Confluence\Reach.Relay.Confluence.csproj" />
     <ProjectReference Include="..\Reach.Relay.LocalFile\Reach.Relay.LocalFile.csproj" />

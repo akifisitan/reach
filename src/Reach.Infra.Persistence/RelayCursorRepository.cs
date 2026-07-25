@@ -1,7 +1,7 @@
 using Dapper;
 using Reach.Relay;
 
-namespace Reach.Persistence;
+namespace Reach.Infra.Persistence;
 
 internal sealed class RelayCursorRepository : IRelayCursorStorage, IDbInitializable
 {

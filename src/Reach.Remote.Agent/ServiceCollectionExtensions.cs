@@ -1,9 +1,9 @@
 using Polly;
 using Polly.Retry;
-using Reach.DurableQueue;
-using Reach.Persistence;
+using Reach.Composition;
+using Reach.Infra.DurableQueue;
+using Reach.Infra.Persistence;
 using Reach.Relay;
-using Reach.Shared;
 using ZLogger.Formatters;
 
 namespace Reach.Remote.Agent;
@@ -15,7 +15,7 @@ internal static class ServiceCollectionExtensions
         IConfiguration configuration
     )
     {
-        services.AddShared();
+        services.AddComposition();
 
         services.AddAppLogging();
 

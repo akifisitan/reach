@@ -1,4 +1,4 @@
-namespace Reach.Shared;
+namespace Reach.Composition;
 
 public interface ISingleAppInstanceLock : IDisposable
 {

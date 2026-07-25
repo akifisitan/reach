@@ -1,7 +1,7 @@
-using Reach.Persistence;
+using Reach.Infra.Persistence;
 using Reach.Relay;
 
-namespace Reach.DurableQueue;
+namespace Reach.Infra.DurableQueue;
 
 public static class ServiceCollectionExtensions
 {

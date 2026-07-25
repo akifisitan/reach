@@ -1,6 +1,6 @@
 using Reach.Relay.Confluence;
 
-namespace Reach.Shared;
+namespace Reach.Composition;
 
 internal sealed class ConfluenceUserCredentialProvider : IConfluenceUserCredentialProvider
 {

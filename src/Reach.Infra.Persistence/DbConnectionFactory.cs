@@ -1,7 +1,7 @@
 using System.Data.Common;
 using Microsoft.Data.Sqlite;
 
-namespace Reach.Persistence;
+namespace Reach.Infra.Persistence;
 
 public sealed class DbConnectionFactory
 {

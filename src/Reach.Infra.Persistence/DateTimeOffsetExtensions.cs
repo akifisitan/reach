@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace Reach.Persistence;
+namespace Reach.Infra.Persistence;
 
 public static class DateTimeOffsetExtensions
 {

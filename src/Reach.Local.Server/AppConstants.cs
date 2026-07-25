@@ -10,8 +10,6 @@ internal static class AppConstants
     public const string AppPackageName = "Reach";
 #endif
 
-    public const string AppName = "Reach";
-
     public static readonly string AppVersion =
         FileVersionInfo.GetVersionInfo(Environment.ProcessPath!).ProductVersion ?? "Unknown";
 

@@ -1,8 +1,8 @@
 using Polly;
 using Polly.Retry;
-using Reach.DurableQueue;
+using Reach.Infra.DurableQueue;
+using Reach.Infra.Persistence;
 using Reach.Local.Shared;
-using Reach.Persistence;
 using Reach.Relay;
 using ZLogger.Formatters;
 

@@ -1,4 +1,4 @@
-using Reach.Shared;
+using Reach.Composition;
 
 namespace Reach.Remote.Agent;
 
