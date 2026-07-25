@@ -15,8 +15,6 @@ builder.Configuration.AddJsonFile("config.debug.json", optional: true, reloadOnC
 
 builder.Services.AddApplication(builder.Configuration);
 
-builder.Services.AddHostedService<LocalServerHostedService>();
-
 using var host = builder.Build();
 
 var appLock = host.Services.GetRequiredService<ISingleAppInstanceLock>();

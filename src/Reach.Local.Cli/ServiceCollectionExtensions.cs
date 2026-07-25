@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Configuration;
 using Reach.Local.Shared;
 using Reach.Plugin.Abstractions;
 using ZLogger.Formatters;

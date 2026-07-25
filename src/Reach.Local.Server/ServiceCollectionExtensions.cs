@@ -73,6 +73,8 @@ internal static class ServiceCollectionExtensions
                 x.RetryConsumerCount = 1;
             });
 
+        services.AddHostedService<LocalServerHostedService>();
+
         return services;
     }
 

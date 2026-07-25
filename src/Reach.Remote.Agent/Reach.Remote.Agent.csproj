@@ -2,10 +2,10 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
-    <InvariantGlobalization>true</InvariantGlobalization>
-    <Version>0.0.1</Version>
+    <AssemblyName>reachrd</AssemblyName>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
-    <IsAotCompatible>true</IsAotCompatible>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <PublishAot>true</PublishAot>
     <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
   </PropertyGroup>
   <ItemGroup>
@@ -13,6 +13,7 @@
     <PackageReference Include="System.Security.Cryptography.ProtectedData" />
     <PackageReference Include="ZLogger" />
     <PackageReference Include="FluentValidation" />
+    <PackageReference Include="Polly.Extensions" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Reach.DurableQueue\Reach.DurableQueue.csproj" />

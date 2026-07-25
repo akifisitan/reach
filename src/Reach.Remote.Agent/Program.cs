@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Reach.Persistence;
 using Reach.Plugin.Abstractions;

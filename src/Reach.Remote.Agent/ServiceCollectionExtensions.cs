@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Configuration;
 using Polly;
 using Polly.Retry;
 using Reach.DurableQueue;
