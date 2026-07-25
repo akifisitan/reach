@@ -1,5 +1,5 @@
 using System.Collections.Concurrent;
-using Reach.Plugin.LogSearch.LogSearchStart;
+using Reach.Plugin.LogSearch.Features.LogSearchStart;
 
 namespace Reach.Plugin.LogSearch;
 

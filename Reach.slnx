@@ -10,6 +10,7 @@
   <Project Path="src/Reach.Local.Shared/Reach.Local.Shared.csproj" />
   <Project Path="src/Reach.Persistence/Reach.Persistence.csproj" />
   <Project Path="src/Reach.Plugin.Abstractions/Reach.Plugin.Abstractions.csproj" />
+  <Project Path="src/Reach.Plugin.Example/Reach.Plugin.Example.csproj" />
   <Project Path="src/Reach.Plugin.LogSearch/Reach.Plugin.LogSearch.csproj" />
   <Project Path="src/Reach.Relay.Abstractions/Reach.Relay.Abstractions.csproj" />
   <Project Path="src/Reach.Relay.Confluence/Reach.Relay.Confluence.csproj" />

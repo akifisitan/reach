@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Reach.Persistence;
 using Reach.Plugin.Abstractions;
+using Reach.Plugin.Example;
 using Reach.Plugin.LogSearch;
 using Reach.Relay.Abstractions;
 using Reach.Relay.Confluence;
@@ -69,6 +70,7 @@ public static class ServiceCollectionExtensions
         >();
 
         services.AddLogSearchPlugin();
+        services.AddExamplePlugin();
 
         return services;
     }

@@ -194,7 +194,7 @@ public static class PluginGraphValidator
                     + $"registered as a derived type of '{baseType.FullName}' for polymorphic JSON "
                     + $"serialization. Register it in an {nameof(IJsonTypeInfoRegistration)} "
                     + $"implementation (e.g. via {nameof(PluginJsonExtensions)}."
-                    + $"{nameof(PluginJsonExtensions.RegisterResultFamily)})."
+                    + $"{nameof(PluginJsonExtensions.RegisterResultTypes)})."
             );
         }
     }

@@ -1,9 +1,9 @@
 {
   "$schema": "https://json.schemastore.org/launchsettings.json",
   "profiles": {
-    "Reach.Local.Cli Help": {
+    "Reach.Local.Cli": {
       "commandName": "Project",
-      "commandLineArgs": "--help"
+      "commandLineArgs": "example ping -m \"hello world\" "
     },
     "Reach.Local.Cli Search": {
       "commandName": "Project",

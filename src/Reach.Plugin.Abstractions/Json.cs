@@ -62,11 +62,13 @@ public static class PluginJsonExtensions
         where TDerived : TBase =>
         typeInfo.RegisterDerivedType(typeof(TBase), typeof(TDerived), typeDiscriminator, "$type");
 
-    // Registers an abstract result type and its implementations for polymorphic serialization:
-    // the abstract type and the implementations are registered under TBase, and the
-    // implementations are registered under the abstract type as well, so (de)serialization
-    // works regardless of which of the two is used as the declared type.
-    public static void RegisterResultFamily<TBase, TResult>(
+    /// <summary>
+    /// Registers an abstract result type and its implementations for polymorphic serialization:
+    /// the abstract type and the implementations are registered under TBase, and the
+    /// implementations are registered under the abstract type as well, so (de)serialization
+    /// works regardless of which of the two is used as the declared type.
+    /// </summary>
+    public static void RegisterResultTypes<TBase, TResult>(
         this JsonTypeInfo typeInfo,
         string resultDiscriminator,
         params (Type Type, string Discriminator)[] resultTypes

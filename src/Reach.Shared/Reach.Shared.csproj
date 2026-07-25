@@ -28,6 +28,7 @@
     <ProjectReference Include="..\Reach.Relay.LocalFile\Reach.Relay.LocalFile.csproj" />
     <!-- Plugins -->
     <ProjectReference Include="..\Reach.Plugin.Abstractions\Reach.Plugin.Abstractions.csproj" />
+    <ProjectReference Include="..\Reach.Plugin.Example\Reach.Plugin.Example.csproj" />
     <ProjectReference Include="..\Reach.Plugin.LogSearch\Reach.Plugin.LogSearch.csproj" />
   </ItemGroup>
 </Project>

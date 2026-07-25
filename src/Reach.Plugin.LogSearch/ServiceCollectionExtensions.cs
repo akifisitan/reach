@@ -1,7 +1,6 @@
-using Microsoft.Extensions.DependencyInjection;
 using Reach.Plugin.Abstractions;
-using Reach.Plugin.LogSearch.LogSearchStart;
-using Reach.Plugin.LogSearch.LogSearchStatus;
+using Reach.Plugin.LogSearch.Features.LogSearchStart;
+using Reach.Plugin.LogSearch.Features.LogSearchStatus;
 
 namespace Reach.Plugin.LogSearch;
 
@@ -14,25 +13,8 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton<ICliCommand, SearchCliCommand>();
 
-        // LogSearchStart
-        services.AddPluginFeature(feature =>
-            feature
-                .WithCliCommand<SearchStartCliCommand>()
-                .WithJson<LogSearchStartJsonRegistration>()
-                .WithCliCommandHandler<SearchStartCliCommandHandler>()
-                .WithRpcHandler<LogSearchStartHandler>()
-                .WithRelayCommandHandler<SearchFileCommandHandler>()
-                .WithRelayCommandResultHandler<SearchFileCommandResultHandler>()
-        );
-
-        // LogSearchStatus
-        services.AddPluginFeature(feature =>
-            feature
-                .WithCliCommand<SearchStatusCliCommand>()
-                .WithJson<LogSearchStatusJsonRegistration>()
-                .WithCliCommandHandler<SearchStatusCliCommandHandler>()
-                .WithRpcHandler<LogSearchStatusHandler>()
-        );
+        services.AddLogSearchStartFeature();
+        services.AddLogSearchStatusFeature();
 
         return services;
     }
