@@ -18,18 +18,6 @@ internal sealed class RemoteAgentHostedService : IHostedService
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        // In case simulation is needed
-        //using var cts = new CancellationTokenSource();
-
-        //Console.CancelKeyPress += (_, e) =>
-        //{
-        //    e.Cancel = true;
-
-        //    cts.Cancel();
-        //};
-
-        //cancellationToken = cts.Token;
-
         await _remoteAgent.Start(cancellationToken);
 
         _hostApplicationLifetime.StopApplication();

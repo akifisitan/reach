@@ -23,9 +23,7 @@ internal sealed class EventQueueProcessor
         _logger = logger;
         _eventQueue = eventQueue;
         _handler = handler;
-        _defaultRetry = resiliencePipelineProvider.GetPipeline(
-            DurableQueueConstants.DefaultRetryPolicy
-        );
+        _defaultRetry = resiliencePipelineProvider.GetPipeline(AppConstants.DefaultRetryPolicy);
     }
 
     public async Task Start(bool isForRetry, CancellationToken cancellationToken)

@@ -47,7 +47,7 @@ internal sealed class LocalServer
 
         foreach (var repository in _repositories)
         {
-            repository.Initialize();
+            repository.EnsureCreated();
         }
 
         _logger.ZLogInformation($"Running local server");

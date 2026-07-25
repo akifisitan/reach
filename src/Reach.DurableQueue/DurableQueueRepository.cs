@@ -35,7 +35,7 @@ internal sealed class DurableQueueRepository : IDurableQueueRepository
         _maxTryCount = options.Value.MaxTryCount;
     }
 
-    public void Initialize()
+    public void EnsureCreated()
     {
         _logger.ZLogDebug($"Ensuring {_tableName} schema is created");
 

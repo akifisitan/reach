@@ -22,7 +22,7 @@ internal sealed class SearchResultStore
     {
         ArgumentNullException.ThrowIfNull(result);
 
-        var existingValue = _store.GetValueOrDefault(result.Command.Id);
+        var existingValue = _store.GetValueOrDefault(result.CommandId);
 
         if (existingValue is null)
         {

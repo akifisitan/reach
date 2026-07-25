@@ -1,4 +1,6 @@
 using Microsoft.Extensions.Configuration;
+using Polly;
+using Polly.Retry;
 using Reach.DurableQueue;
 using Reach.Persistence;
 using Reach.Relay.Abstractions;
@@ -28,6 +30,29 @@ internal static class ServiceCollectionExtensions
             {
                 x.MaxTryCount = 4;
                 x.TableName = "relay_command_queue";
+            }
+        );
+
+        services.AddResiliencePipeline(
+            AppConstants.DefaultRetryPolicy,
+            x =>
+            {
+                x.AddRetry(
+                    new RetryStrategyOptions
+                    {
+                        UseJitter = true,
+                        MaxRetryAttempts = 3,
+                        Delay = TimeSpan.FromMilliseconds(500),
+                        ShouldHandle = new PredicateBuilder().Handle<Exception>(ex =>
+                            ex switch
+                            {
+                                AlreadyQueuedException => false,
+                                OperationCanceledException => false,
+                                _ => true,
+                            }
+                        ),
+                    }
+                );
             }
         );
 

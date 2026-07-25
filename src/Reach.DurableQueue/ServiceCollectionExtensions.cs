@@ -1,5 +1,3 @@
-using Polly;
-using Polly.Retry;
 using Reach.Persistence;
 using Reach.Relay.Abstractions;
 
@@ -24,21 +22,6 @@ public static class ServiceCollectionExtensions
             sp.GetRequiredService<IDurableQueueRepository>(),
             idSelector
         ));
-
-        services.AddResiliencePipeline(
-            DurableQueueConstants.DefaultRetryPolicy,
-            x =>
-            {
-                x.AddRetry(
-                    new RetryStrategyOptions
-                    {
-                        UseJitter = true,
-                        MaxRetryAttempts = 3,
-                        Delay = TimeSpan.FromMilliseconds(500),
-                    }
-                );
-            }
-        );
 
         return services;
     }

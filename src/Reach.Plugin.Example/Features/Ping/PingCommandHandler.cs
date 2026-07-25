@@ -18,6 +18,6 @@ internal sealed class PingCommandHandler : RelayCommandHandler<PingCommand, Ping
     {
         _logger.ZLogInformation($"Running remote execute for {command}");
 
-        return Task.FromResult(new PingCommandResult($"pong: {command.Message}", command));
+        return Task.FromResult(new PingCommandResult($"pong: {command.Message}", command.Id));
     }
 }

@@ -22,7 +22,7 @@ internal sealed class RelayCursorRepository : IRelayCursorStorage, IDbInitializa
         _tableName = options.Value.TableName;
     }
 
-    public void Initialize()
+    public void EnsureCreated()
     {
         _logger.ZLogDebug($"Ensuring {_tableName} schema is created");
 

@@ -45,7 +45,7 @@ internal sealed class RemoteAgent
 
         foreach (var repository in _repositories)
         {
-            repository.Initialize();
+            repository.EnsureCreated();
         }
 
         _logger.ZLogInformation($"Running daemon");

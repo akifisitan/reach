@@ -15,7 +15,7 @@ public abstract record RelayCommand(string Id)
     public DateTimeOffset CreatedAt { get; } = DateTimeOffset.Now;
 }
 
-public abstract record RelayCommandResult(string Id, RelayCommand Command)
+public abstract record RelayCommandResult(string Id, string CommandId)
 {
     public string Version { get; } = "1";
     public DateTimeOffset CreatedAt { get; } = DateTimeOffset.Now;

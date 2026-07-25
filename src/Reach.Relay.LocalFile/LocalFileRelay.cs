@@ -50,9 +50,8 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
         [EnumeratorCancellation] CancellationToken cancellationToken = default
     )
     {
-        var cursor =
-            await _cursorStorage.Retrieve(cancellationToken)
-            ?? new RelayCursor(0, DateTimeOffset.Now.Subtract(TimeSpan.FromDays(1)));
+        var defaultCursor = new RelayCursor(0, DateTimeOffset.Now.Subtract(TimeSpan.FromDays(1)));
+        var cursor = await _cursorStorage.Retrieve(cancellationToken) ?? defaultCursor;
 
         HashSet<string> processedEntries = [];
 
@@ -68,6 +67,16 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
             {
                 response = await ReadCommentsFromPage(filePath, cursor, cancellationToken)
                     .ConfigureAwait(false);
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.ZLogError($"{ex.Message}. Resetting cursor");
+
+                cursor = defaultCursor;
+
+                await _cursorStorage.Store(cursor, cancellationToken);
+
+                continue;
             }
             catch (Exception ex)
             {

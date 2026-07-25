@@ -38,8 +38,8 @@ internal sealed record SearchFileCommand(
     public static string Kind => "searchFile";
 }
 
-internal sealed record SearchFileCommandResult(string Content, RelayCommand Command)
-    : RelayCommandResult(Guid.NewGuid().ToString("N"), Command),
+internal sealed record SearchFileCommandResult(string Content, string CommandId)
+    : RelayCommandResult(Guid.NewGuid().ToString("N"), CommandId),
         IWireRecord
 {
     public static string Kind => "searchFile.result";

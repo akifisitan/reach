@@ -22,9 +22,7 @@ internal sealed class LocalRelayPoller
         _relay = relay;
         _logger = logger;
         _commandQueue = commandQueue;
-        _defaultRetry = resiliencePipelineProvider.GetPipeline(
-            DurableQueueConstants.DefaultRetryPolicy
-        );
+        _defaultRetry = resiliencePipelineProvider.GetPipeline(AppConstants.DefaultRetryPolicy);
     }
 
     public async Task Start(CancellationToken cancellationToken)

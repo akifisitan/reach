@@ -18,18 +18,6 @@ internal sealed class LocalServerHostedService : IHostedService
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        // In case simulation is needed
-        //using var cts = new CancellationTokenSource();
-
-        //Console.CancelKeyPress += (_, e) =>
-        //{
-        //    e.Cancel = true;
-
-        //    cts.Cancel();
-        //};
-
-        //cancellationToken = cts.Token;
-
         await _localServer.Start(cancellationToken);
 
         _hostApplicationLifetime.StopApplication();

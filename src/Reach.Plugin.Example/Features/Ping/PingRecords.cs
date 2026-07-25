@@ -21,8 +21,8 @@ internal sealed record PingCommand(string Id, string Message) : RelayCommand(Id)
     public static string Kind => "examplePing";
 }
 
-internal sealed record PingCommandResult(string Reply, RelayCommand Command)
-    : RelayCommandResult(Guid.NewGuid().ToString("N"), Command),
+internal sealed record PingCommandResult(string Reply, string CommandId)
+    : RelayCommandResult(Guid.NewGuid().ToString("N"), CommandId),
         IWireRecord
 {
     public static string Kind => "examplePing.result";
