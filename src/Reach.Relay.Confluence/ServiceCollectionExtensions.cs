@@ -1,27 +1,47 @@
-using Polly;
+using Reach.Infra.Credentials;
 
 namespace Reach.Relay.Confluence;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddConfluenceRelay(this IServiceCollection services)
+    public static IServiceCollection AddConfluenceRelay(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        string basePath
+    )
     {
-        services.AddSingleton<ILocalRelay, ConfluenceCommentRelay>();
-        services.AddSingleton<IRemoteRelay, ConfluenceCommentRelay>();
+        services.AddSingleton<ConfluenceCommentRelay>();
+        services.AddSingleton<ILocalRelay>(sp => sp.GetRequiredService<ConfluenceCommentRelay>());
+        services.AddSingleton<IRemoteRelay>(sp => sp.GetRequiredService<ConfluenceCommentRelay>());
         services.AddSingleton<IConfluenceHttpClientFactory, ConfluenceHttpClientFactory>();
 
-        services.AddResiliencePipeline(
-            nameof(ConfluenceCommentRelay),
-            x =>
-            {
-                //x.AddRetry(new RetryStrategyOptions
-                //{
-                //    UseJitter = true,
-                //    MaxRetryAttempts = 2,
-                //    ShouldHandle = (x) => ValueTask.FromResult(false)
-                //});
-            }
+        services.AddSingleton<ICredentialFileStore>(
+            new DpapiCredentialFileStore(
+                Path.Combine(basePath, ConfluenceRelaySetup.CredentialFileName),
+                ConfluenceRelaySetup.CredentialEntropy
+            )
         );
+        services.AddSingleton<
+            IConfluenceUserCredentialProvider,
+            DpapiConfluenceUserCredentialProvider
+        >();
+
+        services.AddSingleton<IRelaySetup, ConfluenceRelaySetup>();
+
+        services.AddSingleton<ConfluenceStartupCheck>();
+
+        services
+            .AddOptions<ConfluenceOptions>()
+            .Bind(configuration.GetSection(ConfluenceOptions.SectionName))
+            .PostConfigure(x =>
+            {
+                x.BaseUrl = BuildConfig.BaseUrl.TrimEnd('/') + "/";
+            })
+            .Validate(
+                x => new ConfluenceOptionsValidator().Validate(x).IsValid,
+                "Invalid Confluence configuration. Restart the application to reconfigure."
+            )
+            .ValidateOnStart();
 
         return services;
     }

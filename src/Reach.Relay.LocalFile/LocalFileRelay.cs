@@ -5,6 +5,9 @@ namespace Reach.Relay.LocalFile;
 
 public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
 {
+    private const string LocalToRemoteCursorName = "localfile.local_to_remote";
+    private const string RemoteToLocalCursorName = "localfile.remote_to_local";
+
     private readonly LocalFileRelayOptions _options;
     private readonly IRelayPayloadSerializer _payloadSerializer;
     private readonly ILogger<LocalFileRelay> _logger;
@@ -28,7 +31,12 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
         CancellationToken cancellationToken = default
     )
     {
-        return InnerPoll<RelayCommand>(_options.LocalToRemoteFilePath, options, cancellationToken);
+        return InnerPoll<RelayCommand>(
+            _options.LocalToRemoteFilePath,
+            LocalToRemoteCursorName,
+            options,
+            cancellationToken
+        );
     }
 
     public IAsyncEnumerable<RelayCommandResult> PollFromRemote(
@@ -38,6 +46,7 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
     {
         return InnerPoll<RelayCommandResult>(
             _options.RemoteToLocalFilePath,
+            RemoteToLocalCursorName,
             options,
             cancellationToken
         );
@@ -45,12 +54,13 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
 
     private async IAsyncEnumerable<TOut> InnerPoll<TOut>(
         string filePath,
+        string cursorName,
         PollingOptions? options = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default
     )
     {
         var defaultCursor = new RelayCursor(0, DateTimeOffset.Now.Subtract(TimeSpan.FromDays(1)));
-        var cursor = await _cursorStorage.Retrieve(cancellationToken) ?? defaultCursor;
+        var cursor = await _cursorStorage.Retrieve(cursorName, cancellationToken) ?? defaultCursor;
 
         HashSet<string> processedEntries = [];
 
@@ -73,7 +83,7 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
 
                 cursor = defaultCursor;
 
-                await _cursorStorage.Store(cursor, cancellationToken);
+                await _cursorStorage.Store(cursorName, cursor, cancellationToken);
 
                 continue;
             }
@@ -146,13 +156,13 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
                 CreationTime = latestCreatedAt,
             };
 
-            await _cursorStorage.Store(cursor, cancellationToken);
+            await _cursorStorage.Store(cursorName, cursor, cancellationToken);
 
             await Task.Delay(pollDelayMs, cancellationToken).ConfigureAwait(false);
         }
     }
 
-    private async Task<List<Storage>> ReadCommentsFromPage(
+    private static async Task<List<Storage>> ReadCommentsFromPage(
         string filePath,
         RelayCursor cursor,
         CancellationToken cancellationToken
@@ -216,7 +226,7 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
         return new();
     }
 
-    private async Task CreateComment(
+    private static async Task CreateComment(
         string base64Text,
         string filePath,
         CancellationToken cancellationToken

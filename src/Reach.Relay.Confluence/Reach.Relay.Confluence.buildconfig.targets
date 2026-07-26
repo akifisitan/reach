@@ -1,6 +1,6 @@
 <Project>
   <ItemGroup>
-    <BuildConfigLines Include="namespace Reach.Composition%3B" />
+    <BuildConfigLines Include="namespace Reach.Relay.Confluence%3B" />
     <BuildConfigLines Include="internal static class BuildConfig" />
     <BuildConfigLines Include="{" />
     <BuildConfigLines Include="public const string BaseUrl = &quot;$(BaseUrl)&quot;%3B" />

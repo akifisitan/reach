@@ -5,13 +5,16 @@ using Reach.Plugin.Example;
 using Reach.Plugin.LogSearch;
 using Reach.Relay;
 using Reach.Relay.Confluence;
-using Reach.Relay.LocalFile;
 
 namespace Reach.Composition;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddComposition(this IServiceCollection services)
+    public static IServiceCollection AddComposition(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        string basePath
+    )
     {
         services.AddPluginAbstractions();
 
@@ -27,47 +30,10 @@ public static class ServiceCollectionExtensions
         );
         services.AddSingleton<ISingleAppInstanceLock, SingleAppInstanceLock>();
 
-        services.AddLocalFileRelay();
+        services.AddConfluenceRelay(configuration, basePath);
+        //services.AddLocalFileRelay();
 
         services.AddPersistence();
-
-        services
-            .AddOptions<LocalFileRelayOptions>()
-            .Configure(x =>
-            {
-                var basePath = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "Reach.Debug",
-                    "local",
-                    "localrelay"
-                );
-
-                Directory.CreateDirectory(basePath);
-
-                x.LocalToRemoteFilePath = Path.Combine(basePath, "relay_local_to_remote.jsonl");
-                x.RemoteToLocalFilePath = Path.Combine(basePath, "relay_remote_to_local.jsonl");
-
-                File.AppendAllText(x.LocalToRemoteFilePath, string.Empty);
-                File.AppendAllText(x.RemoteToLocalFilePath, string.Empty);
-            });
-
-        //services
-        //    .AddOptions<ConfluenceOptions>()
-        //    .Configure(x =>
-        //    {
-        //        x.BaseUrl = BuildConfig.BaseUrl;
-        //        x.LocalToRemotePageId = 801540584;
-        //        x.RemoteToLocalPageId = 801540586;
-        //        x.PollDelayMs = 5000;
-        //        x.Count = 10;
-        //    });
-
-        //services.AddConfluenceRelay();
-
-        services.AddSingleton<
-            IConfluenceUserCredentialProvider,
-            ConfluenceUserCredentialProvider
-        >();
 
         services.AddLogSearchPlugin();
         services.AddExamplePlugin();

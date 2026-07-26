@@ -39,7 +39,7 @@ internal sealed class RelayCursorRepository : IRelayCursorStorage, IDbInitializa
         );
     }
 
-    public async Task Store(RelayCursor cursor, CancellationToken cancellationToken)
+    public async Task Store(string name, RelayCursor cursor, CancellationToken cancellationToken)
     {
         await using var connection = await _dbConnectionFactory.CreateConnection(cancellationToken);
 
@@ -53,7 +53,7 @@ internal sealed class RelayCursorRepository : IRelayCursorStorage, IDbInitializa
             """,
             new
             {
-                Name = "cursor",
+                Name = name,
                 CreationTime = cursor.CreationTime.ToIsoString(),
                 CurrentIndex = cursor.CurrentIndex,
             },
@@ -69,7 +69,7 @@ internal sealed class RelayCursorRepository : IRelayCursorStorage, IDbInitializa
                 """,
                 new
                 {
-                    Name = "cursor",
+                    Name = name,
                     CreationTime = cursor.CreationTime.ToIsoString(),
                     CurrentIndex = cursor.CurrentIndex,
                 },
@@ -80,7 +80,7 @@ internal sealed class RelayCursorRepository : IRelayCursorStorage, IDbInitializa
         await transaction.CommitAsync(cancellationToken);
     }
 
-    public async Task<RelayCursor?> Retrieve(CancellationToken cancellationToken)
+    public async Task<RelayCursor?> Retrieve(string name, CancellationToken cancellationToken)
     {
         await using var connection = await _dbConnectionFactory.CreateConnection(cancellationToken);
 
@@ -91,14 +91,14 @@ internal sealed class RelayCursorRepository : IRelayCursorStorage, IDbInitializa
             WHERE name = $Name
             LIMIT 1
             """,
-            new { Name = "cursor" }
+            new { Name = name }
         );
 
         return result?.ToRelayCursor();
     }
 }
 
-internal sealed record DbRelayCursor(int CurrentIndex, string CreationTime)
+internal sealed record DbRelayCursor(long CurrentIndex, string CreationTime)
 {
     public RelayCursor ToRelayCursor() =>
         new(CurrentIndex, DateTimeOffset.FromIsoString(CreationTime));

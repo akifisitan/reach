@@ -15,7 +15,7 @@ internal static class ServiceCollectionExtensions
         IConfiguration configuration
     )
     {
-        services.AddComposition();
+        services.AddComposition(configuration, AppPaths.AppDataLocalBasePath);
 
         services.AddAppLogging();
 

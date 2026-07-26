@@ -28,8 +28,9 @@ public sealed class ConfluenceHttpClientFactory : IConfluenceHttpClientFactory
         PooledConnectionIdleTimeout = TimeSpan.FromMinutes(2),
     };
 
-    private static string? _cachedAuthHeaderContent;
-    private static AuthenticationHeaderValue? _cachedAuthenticationHeaderValue;
+    private readonly Lock _authHeaderLock = new();
+    private string? _cachedCredentialKey;
+    private AuthenticationHeaderValue? _cachedAuthenticationHeaderValue;
 
     public HttpClient CreateClient()
     {
@@ -52,33 +53,48 @@ public sealed class ConfluenceHttpClientFactory : IConfluenceHttpClientFactory
     {
         var credential = _confluenceUserCredentialsProvider.GetCredential();
 
-        if (credential is ConfluencePersonalAccessTokenCredential accessTokenCredential)
+        lock (_authHeaderLock)
         {
-            _cachedAuthenticationHeaderValue ??= new("Bearer", accessTokenCredential.AccessToken);
+            var credentialKey = credential switch
+            {
+                ConfluencePersonalAccessTokenCredential accessTokenCredential =>
+                    $"pat:{accessTokenCredential.AccessToken}",
+                ConfluenceBasicAuthCredential basicAuthCredential =>
+                    $"basic:{basicAuthCredential.Username}:{basicAuthCredential.Password}",
+                _ => throw new InvalidOperationException(
+                    $"Invalid {nameof(ConfluenceUserCredential)} type"
+                ),
+            };
+
+            if (
+                _cachedCredentialKey == credentialKey
+                && _cachedAuthenticationHeaderValue is not null
+            )
+            {
+                return _cachedAuthenticationHeaderValue;
+            }
+
+            _cachedAuthenticationHeaderValue = credential switch
+            {
+                ConfluencePersonalAccessTokenCredential accessTokenCredential => new(
+                    "Bearer",
+                    accessTokenCredential.AccessToken
+                ),
+                ConfluenceBasicAuthCredential basicAuthCredential => new(
+                    "Basic",
+                    Convert.ToBase64String(
+                        Encoding.UTF8.GetBytes(
+                            $"{basicAuthCredential.Username}:{basicAuthCredential.Password}"
+                        )
+                    )
+                ),
+                _ => throw new InvalidOperationException(
+                    $"Invalid {nameof(ConfluenceUserCredential)} type"
+                ),
+            };
+            _cachedCredentialKey = credentialKey;
 
             return _cachedAuthenticationHeaderValue;
         }
-
-        if (credential is not ConfluenceBasicAuthCredential basicAuthCredential)
-        {
-            throw new InvalidOperationException($"Invalid {nameof(ConfluenceUserCredential)} type");
-        }
-
-        var kvp = $"{basicAuthCredential.Username}:{basicAuthCredential.Password}";
-
-        if (_cachedAuthHeaderContent == kvp)
-        {
-            ArgumentNullException.ThrowIfNull(_cachedAuthenticationHeaderValue);
-
-            return _cachedAuthenticationHeaderValue;
-        }
-
-        _cachedAuthenticationHeaderValue = new(
-            "Basic",
-            Convert.ToBase64String(Encoding.UTF8.GetBytes(kvp))
-        );
-        _cachedAuthHeaderContent = kvp;
-
-        return _cachedAuthenticationHeaderValue;
     }
 }

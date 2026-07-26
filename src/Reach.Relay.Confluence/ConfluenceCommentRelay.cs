@@ -1,16 +1,20 @@
+using System.Net;
 using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Web;
-using Polly;
 
 namespace Reach.Relay.Confluence;
 
 public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
 {
+    private const string LocalToRemoteCursorName = "confluence.local_to_remote";
+    private const string RemoteToLocalCursorName = "confluence.remote_to_local";
+
+    private static readonly TimeSpan MaxBackoff = TimeSpan.FromMinutes(5);
+
     private readonly IConfluenceHttpClientFactory _confluenceHttpClientFactory;
     private readonly ILogger<ConfluenceCommentRelay> _logger;
-    private readonly ResiliencePipeline _resiliencePipeline;
     private readonly IRelayPayloadSerializer _payloadSerializer;
     private readonly ConfluenceOptions _options;
     private readonly IRelayCursorStorage _cursorStorage;
@@ -18,7 +22,6 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
     public ConfluenceCommentRelay(
         IConfluenceHttpClientFactory confluenceHttpClientFactory,
         ILogger<ConfluenceCommentRelay> logger,
-        [FromKeyedServices(nameof(ConfluenceCommentRelay))] ResiliencePipeline resiliencePipeline,
         IRelayPayloadSerializer payloadSerializer,
         IOptions<ConfluenceOptions> options,
         IRelayCursorStorage cursorStorage
@@ -26,7 +29,6 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
     {
         _confluenceHttpClientFactory = confluenceHttpClientFactory;
         _logger = logger;
-        _resiliencePipeline = resiliencePipeline;
         _payloadSerializer = payloadSerializer;
         _options = options.Value;
         _cursorStorage = cursorStorage;
@@ -43,14 +45,8 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
 
         var base64Text = payload.EncodeBase64();
 
-        var response = await CreateComment(
-                base64Text,
-                _options.LocalToRemotePageId,
-                cancellationToken
-            )
+        await CreateComment(base64Text, _options.LocalToRemotePageId, cancellationToken)
             .ConfigureAwait(false);
-
-        //response.Id confluence id
 
         return new(new(value.Id));
     }
@@ -77,7 +73,11 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
         CancellationToken cancellationToken = default
     )
     {
-        return InnerPoll<RelayCommand>(options, _options.LocalToRemotePageId, cancellationToken);
+        return InnerPoll<RelayCommand>(
+            _options.LocalToRemotePageId,
+            LocalToRemoteCursorName,
+            cancellationToken
+        );
     }
 
     public IAsyncEnumerable<RelayCommandResult> PollFromRemote(
@@ -86,8 +86,8 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
     )
     {
         return InnerPoll<RelayCommandResult>(
-            options,
             _options.RemoteToLocalPageId,
+            RemoteToLocalCursorName,
             cancellationToken
         );
     }
@@ -95,73 +95,78 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
     // Assumptions
     // 1. The confluence comment page is append only. No comment deletions or updates. Only new comments
     // 2. The api returns comments sorted by id or creation date. This order does not change
-    // 3. We use the comment id for tracking previously consumed messages in this layer
-    public async IAsyncEnumerable<TOut> InnerPoll<TOut>(
-        PollingOptions? options,
+    // 3. The comment id is the cursor: only comments with an id greater than the stored cursor are consumed
+    private async IAsyncEnumerable<TOut> InnerPoll<TOut>(
         long pageId,
+        string cursorName,
         [EnumeratorCancellation] CancellationToken cancellationToken
     )
     {
-        var lastReceivedTime = DateTimeOffset.Now.Subtract(TimeSpan.FromMinutes(20));
-        var lastIndex = 0;
+        var cursor = await _cursorStorage.Retrieve(cursorName, cancellationToken);
 
-        var cursor =
-            await _cursorStorage.Retrieve(cancellationToken)
-            ?? new RelayCursor(lastIndex, lastReceivedTime);
+        var lastSeenCommentId = cursor?.CurrentIndex ?? 0;
 
         var pollDelayMs = _options.PollDelayMs;
 
-        HashSet<string> processedEntries = [];
+        var consecutiveFailures = 0;
 
         while (!cancellationToken.IsCancellationRequested)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            GetCommentsResponse response;
+            List<ResultContent> newComments;
 
             try
             {
-                response = await ReadCommentsFromPage(
+                newComments = await ReadNewCommentsFromPage(
                         pageId,
-                        _options.Count,
-                        cursor,
+                        lastSeenCommentId,
                         cancellationToken
                     )
                     .ConfigureAwait(false);
+
+                consecutiveFailures = 0;
             }
             catch (Exception ex)
             {
-                _logger.ZLogError(ex, $"An error occurred");
+                consecutiveFailures++;
 
-                await Task.Delay(pollDelayMs, cancellationToken).ConfigureAwait(false);
-
-                continue;
-            }
-
-            if (response.Results.Count == 0)
-            {
-                _logger.ZLogInformation($"No comments found");
-
-                await Task.Delay(pollDelayMs, cancellationToken).ConfigureAwait(false);
-
-                continue;
-            }
-
-            foreach (var resultContent in response.Results)
-            {
-                var commentId = resultContent.Id;
-
-                if (processedEntries.Contains(commentId))
+                if (IsAuthFailure(ex))
                 {
-                    _logger.ZLogInformation($"Skipping already processed entry: {commentId}");
-
-                    continue;
+                    _logger.ZLogError(
+                        ex,
+                        $"Confluence authentication or authorization failed. Restart the application to reconfigure the credential"
+                    );
+                }
+                else
+                {
+                    _logger.ZLogError(ex, $"An error occurred while polling Confluence comments");
                 }
 
-                if (cursor.CreationTime > resultContent.History.CreatedDate)
-                {
-                    _logger.ZLogInformation($"Skipping comment created before cursor: {commentId}");
+                var backoffMs = Math.Min(
+                    pollDelayMs * (1 << Math.Min(consecutiveFailures - 1, 10)),
+                    (int)MaxBackoff.TotalMilliseconds
+                );
 
+                await Task.Delay(backoffMs, cancellationToken).ConfigureAwait(false);
+
+                continue;
+            }
+
+            if (newComments.Count == 0)
+            {
+                await Task.Delay(pollDelayMs, cancellationToken).ConfigureAwait(false);
+
+                continue;
+            }
+
+            foreach (var resultContent in newComments)
+            {
+                if (
+                    !long.TryParse(resultContent.Id, out var commentId)
+                    || commentId <= lastSeenCommentId
+                )
+                {
                     continue;
                 }
 
@@ -181,32 +186,35 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
                 {
                     _logger.ZLogError(ex, $"Value cannot be deserialized, skipping value");
 
+                    lastSeenCommentId = Math.Max(lastSeenCommentId, commentId);
+
                     continue;
                 }
 
                 _logger.ZLogInformation($"Received value: {command.ToString()}");
 
-                processedEntries.Add(commentId);
+                lastSeenCommentId = Math.Max(lastSeenCommentId, commentId);
 
                 yield return command;
             }
 
-            var latestCreatedAt =
-                response
-                    .Results.LastOrDefault(x => x.History.CreatedDate >= cursor.CreationTime)
-                    ?.History.CreatedDate
-                ?? cursor.CreationTime;
-
-            cursor = cursor with
-            {
-                CurrentIndex = cursor.CurrentIndex + response.Size,
-                CreationTime = latestCreatedAt,
-            };
-
-            await _cursorStorage.Store(cursor, cancellationToken);
+            await _cursorStorage.Store(
+                cursorName,
+                new RelayCursor(lastSeenCommentId, DateTimeOffset.Now),
+                cancellationToken
+            );
 
             await Task.Delay(pollDelayMs, cancellationToken).ConfigureAwait(false);
         }
+    }
+
+    private static bool IsAuthFailure(Exception ex)
+    {
+        return ex
+            is HttpRequestException
+            {
+                StatusCode: HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden,
+            };
     }
 
     private async Task<CreateContentResponse?> CreateComment(
@@ -223,9 +231,9 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
             )
         );
 
-        var httpClient = _confluenceHttpClientFactory.CreateClient();
+        using var httpClient = _confluenceHttpClientFactory.CreateClient();
 
-        var response = await httpClient
+        using var response = await httpClient
             .PostAsJsonAsync(
                 "/confluence/rest/api/content",
                 request,
@@ -244,19 +252,55 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
             .ConfigureAwait(false);
     }
 
-    private async Task<GetCommentsResponse> ReadCommentsFromPage(
+    // Pages through the comment list (oldest first) and returns only comments
+    // with an id greater than afterCommentId
+    private async Task<List<ResultContent>> ReadNewCommentsFromPage(
         long pageId,
-        int count,
-        RelayCursor cursor,
+        long afterCommentId,
         CancellationToken cancellationToken
     )
     {
-        var httpClient = _confluenceHttpClientFactory.CreateClient();
+        using var httpClient = _confluenceHttpClientFactory.CreateClient();
 
+        List<ResultContent> newComments = [];
+
+        var start = 0;
+
+        while (true)
+        {
+            var batch = await ReadCommentsPage(httpClient, pageId, start, cancellationToken)
+                .ConfigureAwait(false);
+
+            foreach (var item in batch.Results)
+            {
+                if (long.TryParse(item.Id, out var id) && id > afterCommentId)
+                {
+                    newComments.Add(item);
+                }
+            }
+
+            if (batch.Size < batch.Limit || batch.Results.Count == 0)
+            {
+                break;
+            }
+
+            start += batch.Size;
+        }
+
+        return newComments;
+    }
+
+    private async Task<GetCommentsResponse> ReadCommentsPage(
+        HttpClient httpClient,
+        long pageId,
+        int start,
+        CancellationToken cancellationToken
+    )
+    {
         var query = HttpUtility.ParseQueryString(string.Empty);
 
-        query.Add("start", cursor.CurrentIndex.ToString());
-        query.Add("limit", count.ToString());
+        query.Add("start", start.ToString());
+        query.Add("limit", _options.Count.ToString());
         query.Add("location", "footer");
         query.Add("expand", "history,body.view");
 
@@ -269,7 +313,7 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
 
         var uri = uriBuilder.Uri;
 
-        var responseMessage = await httpClient
+        using var responseMessage = await httpClient
             .GetAsync(uri, cancellationToken)
             .ConfigureAwait(false);
 

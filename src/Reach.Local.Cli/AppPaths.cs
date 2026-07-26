@@ -16,6 +16,6 @@ internal static class AppPaths
 
     public static readonly string ServerBinaryPath = Path.Combine(
         Environment.CurrentDirectory,
-        "reachd.exe"
+        "reachld.exe"
     );
 }

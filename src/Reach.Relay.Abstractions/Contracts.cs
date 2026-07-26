@@ -35,10 +35,10 @@ public interface IRelayPayloadSerializer
     T Deserialize<T>(string payload);
 }
 
-public record RelayCursor(int CurrentIndex, DateTimeOffset CreationTime);
+public record RelayCursor(long CurrentIndex, DateTimeOffset CreationTime);
 
 public interface IRelayCursorStorage
 {
-    Task Store(RelayCursor cursor, CancellationToken cancellationToken);
-    Task<RelayCursor?> Retrieve(CancellationToken cancellationToken);
+    Task Store(string name, RelayCursor cursor, CancellationToken cancellationToken);
+    Task<RelayCursor?> Retrieve(string name, CancellationToken cancellationToken);
 }

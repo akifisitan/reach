@@ -4,16 +4,23 @@
     <TargetFramework>net10.0</TargetFramework>
     <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
   </PropertyGroup>
+  <Import Project="Reach.Relay.Confluence.buildconfig.targets" />
+  <Import
+    Project="Reach.Relay.Confluence.buildconfig.props"
+    Condition="Exists('Reach.Relay.Confluence.buildconfig.props')"
+  />
   <ItemGroup>
     <PackageReference Include="HtmlAgilityPack" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Options" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
     <PackageReference Include="ZLogger" />
-    <PackageReference Include="Polly.Extensions" />
     <PackageReference Include="FluentValidation" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Reach.Infra.ConsolePrompt\Reach.Infra.ConsolePrompt.csproj" />
+    <ProjectReference Include="..\Reach.Infra.Credentials\Reach.Infra.Credentials.csproj" />
+    <ProjectReference Include="..\Reach.Infra.JsonConfig\Reach.Infra.JsonConfig.csproj" />
     <ProjectReference Include="..\Reach.Relay.Abstractions\Reach.Relay.Abstractions.csproj" />
   </ItemGroup>
 </Project>

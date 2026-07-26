@@ -11,7 +11,7 @@ internal static class ServiceCollectionExtensions
         IConfiguration configuration
     )
     {
-        services.AddLocalShared();
+        services.AddLocalShared(configuration, AppPaths.AppDataLocalBasePath);
 
         services.AddAppLogging();
 
