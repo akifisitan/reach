@@ -1,3 +1,4 @@
+using Reach.Infra.ConsolePrompt;
 using Reach.Infra.Credentials;
 
 namespace Reach.Relay.Confluence;
@@ -13,6 +14,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ConfluenceCommentRelay>();
         services.AddSingleton<ILocalRelay>(sp => sp.GetRequiredService<ConfluenceCommentRelay>());
         services.AddSingleton<IRemoteRelay>(sp => sp.GetRequiredService<ConfluenceCommentRelay>());
+        services.AddSingleton<IConsolePrompter, ConsolePrompter>();
         services.AddSingleton<IConfluenceHttpClientFactory, ConfluenceHttpClientFactory>();
 
         services.AddSingleton<ICredentialFileStore>(
@@ -28,7 +30,7 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton<IRelaySetup, ConfluenceRelaySetup>();
 
-        services.AddSingleton<ConfluenceStartupCheck>();
+        services.AddSingleton<IStartupCheck, ConfluenceStartupCheck>();
 
         services
             .AddOptions<ConfluenceOptions>()

@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Reach.Infra.ConsolePrompt;
@@ -13,6 +12,21 @@ public sealed class ConfluenceRelaySetup : IRelaySetup
     internal const string ConfigFileName = "config.json";
     internal const string CredentialFileName = "confluence.credential";
     internal const string CredentialEntropy = "Reach.ConfluenceCredential.v1";
+
+    private readonly IConsolePrompter _prompter;
+    private readonly ICredentialFileStore _credentialStore;
+    private readonly IConfluenceHttpClientFactory _httpClientFactory;
+
+    public ConfluenceRelaySetup(
+        IConsolePrompter prompter,
+        ICredentialFileStore credentialStore,
+        IConfluenceHttpClientFactory httpClientFactory
+    )
+    {
+        _prompter = prompter;
+        _credentialStore = credentialStore;
+        _httpClientFactory = httpClientFactory;
+    }
 
     public string Name => "confluence";
 
@@ -43,10 +57,8 @@ public sealed class ConfluenceRelaySetup : IRelaySetup
         }
     }
 
-    public async Task<int> RunAsync(string basePath, CancellationToken cancellationToken)
+    public async Task<int> Run(string basePath, CancellationToken cancellationToken)
     {
-        var prompter = new ConsolePrompter();
-
         Console.WriteLine($"Confluence URL (set at build time): {BuildConfig.BaseUrl}");
         Console.WriteLine();
 
@@ -54,10 +66,10 @@ public sealed class ConfluenceRelaySetup : IRelaySetup
             "Create two Confluence pages first: one for commands (local -> remote), one for results (remote -> local)."
         );
 
-        var localToRemotePageId = PromptPageId(prompter, "Commands (local -> remote) page ID");
-        var remoteToLocalPageId = PromptPageId(prompter, "Results (remote -> local) page ID");
+        var localToRemotePageId = PromptPageId("Commands (local -> remote) page ID");
+        var remoteToLocalPageId = PromptPageId("Results (remote -> local) page ID");
 
-        var personalAccessToken = prompter.PromptSecret("Confluence personal access token");
+        var personalAccessToken = _prompter.PromptSecret("Confluence personal access token");
 
         Console.WriteLine();
         Console.WriteLine("Validating against Confluence...");
@@ -79,11 +91,7 @@ public sealed class ConfluenceRelaySetup : IRelaySetup
 
         Directory.CreateDirectory(basePath);
 
-        var credentialFilePath = Path.Combine(basePath, CredentialFileName);
-
-        var credentialStore = new DpapiCredentialFileStore(credentialFilePath, CredentialEntropy);
-
-        credentialStore.Save(personalAccessToken);
+        _credentialStore.Save(personalAccessToken);
 
         var configFilePath = Path.Combine(basePath, ConfigFileName);
 
@@ -100,7 +108,7 @@ public sealed class ConfluenceRelaySetup : IRelaySetup
             }
         );
 
-        Console.WriteLine($"Credential saved to {credentialFilePath} (protected for current user)");
+        Console.WriteLine("Credential saved (protected for current user)");
         Console.WriteLine($"Configuration saved to {configFilePath}");
 
         Console.WriteLine("Setup complete.");
@@ -108,23 +116,18 @@ public sealed class ConfluenceRelaySetup : IRelaySetup
         return 0;
     }
 
-    private static async Task<string?> Validate(
+    private async Task<string?> Validate(
         string personalAccessToken,
         long localToRemotePageId,
         long remoteToLocalPageId,
         CancellationToken cancellationToken
     )
     {
-        using var httpClient = new HttpClient
-        {
-            BaseAddress = new Uri(BuildConfig.BaseUrl.TrimEnd('/') + "/"),
-            Timeout = TimeSpan.FromSeconds(5),
-        };
-
-        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
-            "Bearer",
-            personalAccessToken
+        using var httpClient = _httpClientFactory.CreateClient(
+            new ConfluencePersonalAccessTokenCredential(personalAccessToken)
         );
+
+        httpClient.Timeout = TimeSpan.FromSeconds(5);
 
         try
         {
@@ -150,11 +153,11 @@ public sealed class ConfluenceRelaySetup : IRelaySetup
         }
     }
 
-    private static long PromptPageId(IConsolePrompter prompter, string label)
+    private long PromptPageId(string label)
     {
         while (true)
         {
-            if (long.TryParse(prompter.PromptText(label), out var pageId) && pageId > 0)
+            if (long.TryParse(_prompter.PromptText(label), out var pageId) && pageId > 0)
             {
                 return pageId;
             }

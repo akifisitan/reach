@@ -6,6 +6,7 @@ namespace Reach.Relay.Confluence;
 public interface IConfluenceHttpClientFactory
 {
     HttpClient CreateClient();
+    HttpClient CreateClient(ConfluenceUserCredential credential);
 }
 
 public sealed class ConfluenceHttpClientFactory : IConfluenceHttpClientFactory
@@ -32,27 +33,28 @@ public sealed class ConfluenceHttpClientFactory : IConfluenceHttpClientFactory
     private string? _cachedCredentialKey;
     private AuthenticationHeaderValue? _cachedAuthenticationHeaderValue;
 
-    public HttpClient CreateClient()
-    {
-        return CreateHttpClient();
-    }
+    public HttpClient CreateClient() =>
+        CreateClient(_confluenceUserCredentialsProvider.GetCredential(), _options.BaseUrl);
 
-    private HttpClient CreateHttpClient()
+    public HttpClient CreateClient(ConfluenceUserCredential credential) =>
+        CreateClient(credential, BuildConfig.BaseUrl.TrimEnd('/') + "/");
+
+    private HttpClient CreateClient(ConfluenceUserCredential credential, string baseUrl)
     {
         var httpClient = new HttpClient(httpHandler, disposeHandler: false)
         {
-            BaseAddress = new Uri(_options.BaseUrl),
+            BaseAddress = new Uri(baseUrl),
         };
 
-        httpClient.DefaultRequestHeaders.Authorization = GetAuthenticationHeaderValue();
+        httpClient.DefaultRequestHeaders.Authorization = GetAuthenticationHeaderValue(credential);
 
         return httpClient;
     }
 
-    private AuthenticationHeaderValue GetAuthenticationHeaderValue()
+    private AuthenticationHeaderValue GetAuthenticationHeaderValue(
+        ConfluenceUserCredential credential
+    )
     {
-        var credential = _confluenceUserCredentialsProvider.GetCredential();
-
         lock (_authHeaderLock)
         {
             var credentialKey = credential switch

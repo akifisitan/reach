@@ -6,7 +6,7 @@ namespace Reach.Relay.Confluence;
 /// transient connectivity problems only log a warning since the relay retries
 /// in the background.
 /// </summary>
-public sealed class ConfluenceStartupCheck
+public sealed class ConfluenceStartupCheck : IStartupCheck
 {
     private readonly IConfluenceHttpClientFactory _httpClientFactory;
     private readonly ConfluenceOptions _options;
@@ -23,7 +23,7 @@ public sealed class ConfluenceStartupCheck
         _logger = logger;
     }
 
-    public async Task CheckAsync(CancellationToken cancellationToken = default)
+    public async Task Check(CancellationToken cancellationToken = default)
     {
         try
         {

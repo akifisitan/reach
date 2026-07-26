@@ -1,5 +1,6 @@
 using Polly;
 using Polly.Registry;
+using Reach.Composition;
 using Reach.Infra.DurableQueue;
 using Reach.Plugin;
 using Reach.Relay;
@@ -26,7 +27,7 @@ internal sealed class CommandQueueProcessor
         _commandQueue = commandQueue;
         _relay = relay;
         _handler = handler;
-        _defaultRetry = resiliencePipelineProvider.GetPipeline(AppConstants.DefaultRetryPolicy);
+        _defaultRetry = resiliencePipelineProvider.GetPipeline(Constants.DefaultRetryPolicy);
     }
 
     public async Task Start(bool isForRetry, CancellationToken cancellationToken)

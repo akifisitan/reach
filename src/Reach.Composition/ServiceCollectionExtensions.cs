@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Reach.Infra.NativeConsole;
 using Reach.Infra.Persistence;
 using Reach.Plugin;
 using Reach.Plugin.Example;
@@ -29,6 +30,12 @@ public static class ServiceCollectionExtensions
             sp.GetRequiredService<RelayJsonPayloadSerializer>()
         );
         services.AddSingleton<ISingleAppInstanceLock, SingleAppInstanceLock>();
+        services.AddSingleton<IConsoleAttacher, ConsoleAttacher>();
+        services.AddSingleton<IRelaySetupCoordinator>(sp => new RelaySetupCoordinator(
+            basePath,
+            sp.GetRequiredService<IConsoleAttacher>(),
+            sp.GetServices<IRelaySetup>()
+        ));
 
         services.AddConfluenceRelay(configuration, basePath);
         //services.AddLocalFileRelay();

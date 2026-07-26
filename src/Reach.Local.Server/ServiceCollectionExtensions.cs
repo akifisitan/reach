@@ -1,5 +1,6 @@
 using Polly;
 using Polly.Retry;
+using Reach.Composition;
 using Reach.Infra.DurableQueue;
 using Reach.Infra.Persistence;
 using Reach.Local.Shared;
@@ -12,12 +13,13 @@ internal static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddApplication(
         this IServiceCollection services,
-        IConfiguration configuration
+        IConfiguration configuration,
+        ReachAppPaths paths
     )
     {
-        services.AddLocalShared(configuration, AppPaths.AppDataLocalBasePath);
+        services.AddLocalShared(configuration, paths.AppDataBasePath);
 
-        services.AddAppLogging();
+        services.AddAppLogging(paths);
 
         services.AddAppOptions(configuration);
 
@@ -31,7 +33,7 @@ internal static class ServiceCollectionExtensions
         );
 
         services.AddResiliencePipeline(
-            AppConstants.DefaultRetryPolicy,
+            Constants.DefaultRetryPolicy,
             x =>
             {
                 x.AddRetry(
@@ -57,7 +59,7 @@ internal static class ServiceCollectionExtensions
             .AddOptions<DbConnectionFactoryOptions>()
             .Configure(x =>
             {
-                x.DbPath = Path.Combine(AppPaths.AppDataLocalBasePath, "db", "reach.db");
+                x.DbPath = Path.Combine(paths.AppDataBasePath, "db", "reach.db");
             });
 
         services.AddSingleton<RpcTarget>();
@@ -92,6 +94,7 @@ internal static class ServiceCollectionExtensions
 
     private static IServiceCollection AddAppLogging(
         this IServiceCollection services,
+        ReachAppPaths paths,
         LogLevel minimumLogLevel = LogLevel.Debug
     )
     {
@@ -104,7 +107,7 @@ internal static class ServiceCollectionExtensions
                     options.UsePlainTextFormatter(ConfigureFormatter);
                 })
                 .AddZLoggerFile(
-                    AppPaths.LogFilePath,
+                    paths.LogFilePath,
                     options =>
                     {
                         options.UsePlainTextFormatter(ConfigureFormatter);

@@ -3,10 +3,8 @@ namespace Reach.Relay;
 public interface IRelaySetup
 {
     string Name { get; }
-
     bool IsComplete(string basePath);
-
-    Task<int> RunAsync(string basePath, CancellationToken cancellationToken);
+    Task<int> Run(string basePath, CancellationToken cancellationToken);
 }
 
 public sealed class RelaySetupRequiredException : Exception

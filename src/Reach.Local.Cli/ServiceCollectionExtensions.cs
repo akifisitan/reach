@@ -1,3 +1,4 @@
+using Reach.Composition;
 using Reach.Local.Shared;
 using Reach.Plugin;
 using ZLogger.Formatters;
@@ -8,12 +9,14 @@ internal static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddApplication(
         this IServiceCollection services,
-        IConfiguration configuration
+        IConfiguration configuration,
+        ReachAppPaths paths,
+        ReachAppPaths compositionPaths
     )
     {
-        services.AddLocalShared(configuration, AppPaths.AppDataLocalBasePath);
+        services.AddLocalShared(configuration, compositionPaths.AppDataBasePath);
 
-        services.AddAppLogging();
+        services.AddAppLogging(paths);
 
         services.AddAppOptions(configuration);
 
@@ -42,7 +45,7 @@ internal static class ServiceCollectionExtensions
                         Environment.GetEnvironmentVariable(AppConstants.ShouldNotBootServerEnvVar),
                         out var shouldNotBootServer
                     ) && shouldNotBootServer;
-                x.ServerBinaryPath = AppPaths.ServerBinaryPath;
+                x.ServerBinaryPath = Path.Combine(Environment.CurrentDirectory, "reachld.exe");
             });
 
         return services;
@@ -50,6 +53,7 @@ internal static class ServiceCollectionExtensions
 
     private static IServiceCollection AddAppLogging(
         this IServiceCollection services,
+        ReachAppPaths paths,
         LogLevel minimumLogLevel = LogLevel.Debug
     )
     {
@@ -71,7 +75,7 @@ internal static class ServiceCollectionExtensions
                     );
                 })
                 .AddZLoggerFile(
-                    AppPaths.LogFilePath,
+                    paths.LogFilePath,
                     options =>
                     {
                         options.UsePlainTextFormatter(ConfigureFormatter);

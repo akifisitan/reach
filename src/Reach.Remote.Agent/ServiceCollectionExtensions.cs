@@ -12,12 +12,13 @@ internal static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddApplication(
         this IServiceCollection services,
-        IConfiguration configuration
+        IConfiguration configuration,
+        ReachAppPaths paths
     )
     {
-        services.AddComposition(configuration, AppPaths.AppDataLocalBasePath);
+        services.AddComposition(configuration, paths.AppDataBasePath);
 
-        services.AddAppLogging();
+        services.AddAppLogging(paths);
 
         services.AddSingleton<RemoteAgent>();
 
@@ -33,7 +34,7 @@ internal static class ServiceCollectionExtensions
         );
 
         services.AddResiliencePipeline(
-            AppConstants.DefaultRetryPolicy,
+            Constants.DefaultRetryPolicy,
             x =>
             {
                 x.AddRetry(
@@ -59,7 +60,7 @@ internal static class ServiceCollectionExtensions
             .AddOptions<DbConnectionFactoryOptions>()
             .Configure(x =>
             {
-                x.DbPath = Path.Combine(AppPaths.AppDataLocalBasePath, "db", "reach.db");
+                x.DbPath = Path.Combine(paths.AppDataBasePath, "db", "reach.db");
             });
 
         services.AddSingleton<CommandQueueProcessor>();
@@ -92,6 +93,7 @@ internal static class ServiceCollectionExtensions
 
     private static IServiceCollection AddAppLogging(
         this IServiceCollection services,
+        ReachAppPaths paths,
         LogLevel minimumLogLevel = LogLevel.Debug
     )
     {
@@ -113,7 +115,7 @@ internal static class ServiceCollectionExtensions
                     );
                 })
                 .AddZLoggerFile(
-                    AppPaths.LogFilePath,
+                    paths.LogFilePath,
                     options =>
                     {
                         options.UsePlainTextFormatter(ConfigureFormatter);

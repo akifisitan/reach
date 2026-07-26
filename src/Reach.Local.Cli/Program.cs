@@ -1,17 +1,21 @@
 using Microsoft.Extensions.Hosting;
+using Reach.Composition;
 using Reach.Local.Cli;
 using Reach.Plugin;
 
+var paths = ReachAppPaths.LocalCli();
+var compositionPaths = ReachAppPaths.LocalServer();
+
+Directory.CreateDirectory(paths.AppDataBasePath);
+
 var builder = Host.CreateApplicationBuilder(args);
 
-builder.Configuration.Sources.Clear();
-builder.Configuration.AddJsonFile("config.json", optional: true, reloadOnChange: false);
+builder.Configuration.ConfigureReachConfiguration(
+    compositionPaths.AppDataBasePath,
+    includeAppDataConfig: true
+);
 
-#if DEBUG
-builder.Configuration.AddJsonFile("config.debug.json", optional: true, reloadOnChange: false);
-#endif
-
-builder.Services.AddApplication(builder.Configuration);
+builder.Services.AddApplication(builder.Configuration, paths, compositionPaths);
 
 using var host = builder.Build();
 

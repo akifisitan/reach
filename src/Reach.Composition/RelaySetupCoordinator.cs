@@ -5,8 +5,8 @@ namespace Reach.Composition;
 
 public interface IRelaySetupCoordinator
 {
-    Task EnsureSetupAsync(CancellationToken cancellationToken = default);
-    Task RunSetupAsync(CancellationToken cancellationToken = default);
+    Task EnsureSetup(CancellationToken cancellationToken = default);
+    Task RunSetup(CancellationToken cancellationToken = default);
 }
 
 public sealed class RelaySetupCoordinator : IRelaySetupCoordinator
@@ -26,7 +26,7 @@ public sealed class RelaySetupCoordinator : IRelaySetupCoordinator
         _relaySetupList = relaySetupList.ToList();
     }
 
-    public async Task EnsureSetupAsync(CancellationToken cancellationToken = default)
+    public async Task EnsureSetup(CancellationToken cancellationToken = default)
     {
         foreach (var setup in _relaySetupList)
         {
@@ -37,7 +37,7 @@ public sealed class RelaySetupCoordinator : IRelaySetupCoordinator
         }
     }
 
-    public async Task RunSetupAsync(CancellationToken cancellationToken = default)
+    public async Task RunSetup(CancellationToken cancellationToken = default)
     {
         foreach (var setup in _relaySetupList)
         {
@@ -49,7 +49,7 @@ public sealed class RelaySetupCoordinator : IRelaySetupCoordinator
     {
         _consoleAttacher.EnsureAttached();
 
-        var exitCode = await setup.RunAsync(_appBasePath, cancellationToken).ConfigureAwait(false);
+        var exitCode = await setup.Run(_appBasePath, cancellationToken).ConfigureAwait(false);
 
         if (exitCode != 0)
         {
