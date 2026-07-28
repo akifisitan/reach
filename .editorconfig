@@ -41,6 +41,9 @@ dotnet_diagnostic.IDE0160.severity = error
 dotnet_diagnostic.IDE0161.severity = error
 csharp_style_namespace_declarations = file_scoped:error
 
+# Formatting rule (Disabled as formatting is handled by CSharpier)
+dotnet_diagnostic.IDE0055.severity = none
+
 # https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/quality-rules/maintainability-warnings
 
 # Avoid excessive inheritance
