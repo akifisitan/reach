@@ -1,5 +1,4 @@
 using Reach.Infra.Persistence;
-using Reach.Relay;
 
 namespace Reach.Infra.DurableQueue;
 
@@ -11,7 +10,7 @@ public static class ServiceCollectionExtensions
         Action<DurableQueueOptions> configure
     )
     {
-        if (services.Any(x => x.ServiceType == typeof(IDurableQueueRepository)))
+        if (services.Any(x => x.ServiceType == typeof(IDurableQueue<T>)))
         {
             throw new InvalidOperationException(
                 "Only one durable queue per process is currently supported."
@@ -25,7 +24,7 @@ public static class ServiceCollectionExtensions
         services.AddOptions<DurableQueueOptions>().Configure(configure);
 
         services.AddSingleton<IDurableQueue<T>>(sp => new DurableQueue<T>(
-            sp.GetRequiredService<IRelayPayloadSerializer>(),
+            sp.GetRequiredService<IDurableQueueDataSerializer>(),
             sp.GetRequiredService<IDurableQueueRepository>(),
             idSelector
         ));

@@ -1,20 +1,18 @@
-using Reach.Relay;
-
 namespace Reach.Infra.DurableQueue;
 
 internal sealed class DurableQueue<T> : IDurableQueue<T>
 {
-    private readonly IRelayPayloadSerializer _payloadSerializer;
+    private readonly IDurableQueueDataSerializer _serializer;
     private readonly IDurableQueueRepository _repository;
     private readonly Func<T, string> _idSelector;
 
     public DurableQueue(
-        IRelayPayloadSerializer payloadSerializer,
+        IDurableQueueDataSerializer serializer,
         IDurableQueueRepository repository,
         Func<T, string> idSelector
     )
     {
-        _payloadSerializer = payloadSerializer;
+        _serializer = serializer;
         _repository = repository;
         _idSelector = idSelector;
     }
@@ -22,7 +20,7 @@ internal sealed class DurableQueue<T> : IDurableQueue<T>
     public Task Enqueue(T value, CancellationToken cancellationToken)
     {
         return _repository.Enqueue(
-            new(_idSelector(value), _payloadSerializer.Serialize(value)),
+            new(_idSelector(value), _serializer.Serialize(value)),
             cancellationToken
         );
     }
@@ -31,14 +29,14 @@ internal sealed class DurableQueue<T> : IDurableQueue<T>
     {
         var item = await _repository.Pick(cancellationToken);
 
-        return item is null ? default : _payloadSerializer.Deserialize<T>(item.EventData);
+        return item is null ? default : _serializer.Deserialize<T>(item.EventData);
     }
 
     public async Task<T?> PickForRetry(CancellationToken cancellationToken)
     {
         var item = await _repository.PickForRetry(cancellationToken);
 
-        return item is null ? default : _payloadSerializer.Deserialize<T>(item.EventData);
+        return item is null ? default : _serializer.Deserialize<T>(item.EventData);
     }
 
     public Task Complete(T value, CancellationToken cancellationToken)

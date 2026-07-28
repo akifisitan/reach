@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Reach.Infra.DurableQueue;
 using Reach.Infra.NativeConsole;
 using Reach.Infra.Persistence;
 using Reach.Module;
@@ -18,14 +19,14 @@ public static class ServiceCollectionExtensions
     )
     {
         services.AddSingleton(CreateJsonSerializerOptions);
-        services.AddSingleton(sp => new RelayJsonPayloadSerializer(
+        services.AddSingleton(sp => new JsonPayloadSerializer(
             sp.GetRequiredService<JsonSerializerOptions>()
         ));
         services.AddSingleton<IRelayPayloadSerializer>(sp =>
-            sp.GetRequiredService<RelayJsonPayloadSerializer>()
+            sp.GetRequiredService<JsonPayloadSerializer>()
         );
         services.AddSingleton<IRpcPayloadSerializer>(sp =>
-            sp.GetRequiredService<RelayJsonPayloadSerializer>()
+            sp.GetRequiredService<JsonPayloadSerializer>()
         );
         services.AddSingleton<ISingleAppInstanceLock, SingleAppInstanceLock>();
         services.AddSingleton<IConsoleAttacher, ConsoleAttacher>();
@@ -34,6 +35,10 @@ public static class ServiceCollectionExtensions
             sp.GetRequiredService<IConsoleAttacher>(),
             sp.GetServices<IRelaySetup>()
         ));
+
+        services.AddSingleton<IDurableQueueDataSerializer>(sp =>
+            sp.GetRequiredService<JsonPayloadSerializer>()
+        );
 
         services.AddConfluenceRelay(configuration, basePath);
         //services.AddLocalFileRelay();

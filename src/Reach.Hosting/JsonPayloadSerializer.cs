@@ -1,15 +1,19 @@
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
+using Reach.Infra.DurableQueue;
 using Reach.Module;
 using Reach.Relay;
 
 namespace Reach.Hosting;
 
-internal sealed class RelayJsonPayloadSerializer : IRelayPayloadSerializer, IRpcPayloadSerializer
+internal sealed class JsonPayloadSerializer
+    : IRelayPayloadSerializer,
+        IRpcPayloadSerializer,
+        IDurableQueueDataSerializer
 {
     private readonly JsonSerializerOptions _jsonSerializerOptions;
 
-    public RelayJsonPayloadSerializer(JsonSerializerOptions jsonSerializerOptions)
+    public JsonPayloadSerializer(JsonSerializerOptions jsonSerializerOptions)
     {
         _jsonSerializerOptions = jsonSerializerOptions;
     }
