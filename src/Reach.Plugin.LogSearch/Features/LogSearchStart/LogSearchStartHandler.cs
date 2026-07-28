@@ -1,3 +1,5 @@
+using Polly;
+using Polly.Registry;
 using Reach.Plugin.Toolkit.ResultStore;
 using Reach.Relay;
 
@@ -8,17 +10,20 @@ internal sealed class LogSearchStartHandler
 {
     private readonly ILogger<LogSearchStartHandler> _logger;
     private readonly ILocalRelay _relay;
+    private readonly ResiliencePipeline _relayPostChaos;
     private readonly IResultStore<SearchFileCommandResult> _resultStore;
 
     public LogSearchStartHandler(
         ILogger<LogSearchStartHandler> logger,
         ILocalRelay relay,
-        IResultStore<SearchFileCommandResult> resultStore
+        IResultStore<SearchFileCommandResult> resultStore,
+        ResiliencePipelineProvider<string> resiliencePipelineProvider
     )
     {
         _logger = logger;
         _relay = relay;
         _resultStore = resultStore;
+        _relayPostChaos = resiliencePipelineProvider.GetPipeline(ChaosPolicyNames.RelayPost);
     }
 
     protected override async Task<LogSearchStartResult> Handle(
@@ -40,15 +45,12 @@ internal sealed class LogSearchStartHandler
 
             await _resultStore.Insert(payload.CorrelationId, cancellationToken);
 
-            var result = await _relay.PostToRemote(command, cancellationToken);
+            var result = await _relayPostChaos.ExecuteAsync(
+                async ct => await _relay.PostToRemote(command, ct),
+                cancellationToken
+            );
 
             _logger.ZLogInformation($"[{command.Id}] Posting successful {result.PollId.Value}");
-
-            // TODO: inject random errors with Polly
-            if (Random.Shared.Next(0, 2) == 1)
-            {
-                throw new Exception("Threw an error just for testing");
-            }
 
             return new LogSearchStartResult.Success(payload.CorrelationId);
         }

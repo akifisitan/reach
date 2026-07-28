@@ -23,6 +23,9 @@ internal static class ServiceCollectionExtensions
 
         services.AddAppOptions(configuration);
 
+        var chaosOptions =
+            configuration.GetSection(ChaosOptions.SectionName).Get<ChaosOptions>() ?? new();
+
         services.AddDurableQueue<RelayCommandResult>(
             x => x.Id,
             x =>
@@ -52,6 +55,32 @@ internal static class ServiceCollectionExtensions
                         ),
                     }
                 );
+
+                x.AddConfiguredChaosFault(chaosOptions, chaosOptions.Retry, "retry");
+            }
+        );
+
+        services.AddResiliencePipeline(
+            ChaosPolicyNames.RpcTransport,
+            x => x.AddConfiguredChaosFault(chaosOptions, chaosOptions.RpcTransport, "rpc-transport")
+        );
+
+        services.AddResiliencePipeline(
+            ChaosPolicyNames.RelayPost,
+            x => x.AddConfiguredChaosFault(chaosOptions, chaosOptions.RelayPost, "relay-post")
+        );
+
+        services.AddResiliencePipeline(
+            ChaosPolicyNames.RelayResult,
+            x => x.AddConfiguredChaosFault(chaosOptions, chaosOptions.RelayResult, "relay-result")
+        );
+
+        services.AddResiliencePipeline(
+            ChaosPolicyNames.RelayPoll,
+            x =>
+            {
+                x.AddConfiguredChaosLatency(chaosOptions, chaosOptions.RelayPoll)
+                    .AddConfiguredChaosFault(chaosOptions, chaosOptions.RelayPoll, "relay-poll");
             }
         );
 
@@ -88,6 +117,10 @@ internal static class ServiceCollectionExtensions
         services
             .AddOptions<AppOptions>()
             .Bind(configuration.GetRequiredSection(nameof(AppOptions)));
+
+        services
+            .AddOptions<ChaosOptions>()
+            .Bind(configuration.GetSection(ChaosOptions.SectionName));
 
         return services;
     }

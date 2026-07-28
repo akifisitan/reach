@@ -5,6 +5,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="HtmlAgilityPack" />
+    <PackageReference Include="Polly.Extensions" />
     <PackageReference Include="ZLogger" />
   </ItemGroup>
   <ItemGroup>

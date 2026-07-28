@@ -13,6 +13,7 @@ internal sealed class EventQueueProcessor
     private readonly IDurableQueue<RelayCommandResult> _eventQueue;
     private readonly IHandlerDispatcher<RelayCommandResult, Unit> _handler;
     private readonly ResiliencePipeline _defaultRetry;
+    private readonly ResiliencePipeline _relayResultChaos;
 
     public EventQueueProcessor(
         ILogger<EventQueueProcessor> logger,
@@ -25,6 +26,7 @@ internal sealed class EventQueueProcessor
         _eventQueue = eventQueue;
         _handler = handler;
         _defaultRetry = resiliencePipelineProvider.GetPipeline(Constants.DefaultRetryPolicy);
+        _relayResultChaos = resiliencePipelineProvider.GetPipeline(ChaosPolicyNames.RelayResult);
     }
 
     public async Task Start(bool isForRetry, CancellationToken cancellationToken)
@@ -61,7 +63,10 @@ internal sealed class EventQueueProcessor
 
             try
             {
-                await _handler.Handle(value, cancellationToken);
+                await _relayResultChaos.ExecuteAsync(
+                    async ct => await _handler.Handle(value, ct),
+                    cancellationToken
+                );
 
                 isSuccess = true;
             }

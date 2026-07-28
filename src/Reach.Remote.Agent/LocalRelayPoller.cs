@@ -12,6 +12,7 @@ internal sealed class LocalRelayPoller
     private readonly ILogger<LocalRelayPoller> _logger;
     private readonly IDurableQueue<RelayCommand> _commandQueue;
     private readonly ResiliencePipeline _defaultRetry;
+    private readonly ResiliencePipeline _relayPollChaos;
 
     public LocalRelayPoller(
         IRemoteRelay relay,
@@ -24,6 +25,7 @@ internal sealed class LocalRelayPoller
         _logger = logger;
         _commandQueue = commandQueue;
         _defaultRetry = resiliencePipelineProvider.GetPipeline(Constants.DefaultRetryPolicy);
+        _relayPollChaos = resiliencePipelineProvider.GetPipeline(ChaosPolicyNames.RelayPoll);
     }
 
     public async Task Start(CancellationToken cancellationToken)
@@ -34,31 +36,38 @@ internal sealed class LocalRelayPoller
 
             try
             {
-                await foreach (
-                    var command in _relay.PollFromLocal(cancellationToken: cancellationToken)
-                )
-                {
-                    _logger.ZLogInformation($"Received from local: {command}");
+                await _relayPollChaos.ExecuteAsync(
+                    async ct =>
+                    {
+                        await foreach (var command in _relay.PollFromLocal(cancellationToken: ct))
+                        {
+                            _logger.ZLogInformation($"Received from local: {command}");
 
-                    try
-                    {
-                        await _defaultRetry.ExecuteAsync(
-                            async ct =>
+                            try
                             {
-                                await _commandQueue.Enqueue(command, ct);
-                            },
-                            cancellationToken
-                        );
-                    }
-                    catch (AlreadyQueuedException)
-                    {
-                        _logger.ZLogInformation($"Skipping already queued value");
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.ZLogError(ex, $"An error occurred while inserting value to queue");
-                    }
-                }
+                                await _defaultRetry.ExecuteAsync(
+                                    async retryCt =>
+                                    {
+                                        await _commandQueue.Enqueue(command, retryCt);
+                                    },
+                                    ct
+                                );
+                            }
+                            catch (AlreadyQueuedException)
+                            {
+                                _logger.ZLogInformation($"Skipping already queued value");
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.ZLogError(
+                                    ex,
+                                    $"An error occurred while inserting value to queue"
+                                );
+                            }
+                        }
+                    },
+                    cancellationToken
+                );
             }
             catch (Exception ex)
             {

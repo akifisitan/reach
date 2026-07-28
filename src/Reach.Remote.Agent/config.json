@@ -6,5 +6,31 @@
   },
   "AppOptions": {
     "DebugMode": false
+  },
+  "Chaos": {
+    "Enabled": false,
+    "Retry": {
+      "Enabled": false,
+      "InjectionRate": 0.0
+    },
+    "RpcTransport": {
+      "Enabled": false,
+      "InjectionRate": 0.0
+    },
+    "RelayPost": {
+      "Enabled": false,
+      "InjectionRate": 0.0
+    },
+    "RelayResult": {
+      "Enabled": false,
+      "InjectionRate": 0.0
+    },
+    "RelayPoll": {
+      "Enabled": false,
+      "InjectionRate": 0.0,
+      "LatencyEnabled": false,
+      "LatencyRate": 0.0,
+      "Latency": "00:00:02"
+    }
   }
 }

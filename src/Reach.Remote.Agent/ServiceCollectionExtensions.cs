@@ -24,6 +24,9 @@ internal static class ServiceCollectionExtensions
 
         services.AddAppOptions(configuration);
 
+        var chaosOptions =
+            configuration.GetSection(ChaosOptions.SectionName).Get<ChaosOptions>() ?? new();
+
         services.AddDurableQueue<RelayCommand>(
             x => x.Id,
             x =>
@@ -53,6 +56,17 @@ internal static class ServiceCollectionExtensions
                         ),
                     }
                 );
+
+                x.AddConfiguredChaosFault(chaosOptions, chaosOptions.Retry, "retry");
+            }
+        );
+
+        services.AddResiliencePipeline(
+            ChaosPolicyNames.RelayPoll,
+            x =>
+            {
+                x.AddConfiguredChaosLatency(chaosOptions, chaosOptions.RelayPoll)
+                    .AddConfiguredChaosFault(chaosOptions, chaosOptions.RelayPoll, "relay-poll");
             }
         );
 
@@ -79,6 +93,10 @@ internal static class ServiceCollectionExtensions
         services
             .AddOptions<AppOptions>()
             .Bind(configuration.GetRequiredSection(nameof(AppOptions)));
+
+        services
+            .AddOptions<ChaosOptions>()
+            .Bind(configuration.GetSection(ChaosOptions.SectionName));
 
         services
             .AddOptions<ExecutorOptions>()

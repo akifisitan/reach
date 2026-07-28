@@ -24,11 +24,6 @@ internal sealed class SearchFileCommandResultHandler
     {
         _logger.ZLogInformation($"Doing something with command: {result.Id}");
 
-        if (Random.Shared.Next(0, 2) == 1)
-        {
-            throw new Exception($"Threw an error for testing");
-        }
-
         if (!await _resultStore.TrySetAsComplete(result, cancellationToken))
         {
             _logger.ZLogError($"What happened to the existing value?");
