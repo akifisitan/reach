@@ -12,7 +12,6 @@ internal sealed record SearchStartCliCommandPayload(
 internal sealed record SearchStartCliCommandResult(int StatusCode) : CliCommandResult(StatusCode);
 
 internal sealed record LogSearchStartPayload(
-    string CorrelationId,
     string Query,
     string ServerName,
     DateTimeOffset StartTime,
@@ -38,7 +37,7 @@ internal sealed record SearchFileCommand(
 }
 
 internal sealed record SearchFileCommandResult(string Content, string CommandId)
-    : RelayCommandResult(Guid.NewGuid().ToString("N"), CommandId),
+    : RelayCommandResult(Guid.CreateVersion7().ToString("N"), CommandId),
         IWireRecord
 {
     public static string Kind => "searchFile.result";

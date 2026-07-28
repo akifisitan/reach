@@ -14,7 +14,7 @@ public sealed class SqliteResultStore<TResult> : IResultStore<TResult>, IDbIniti
     private readonly string _tableName;
 
     private const string TableColumns =
-        "correlation_id,status,result_data,error_message,creation_time,completion_time";
+        "id,status,result_data,error_message,creation_time,completion_time";
 
     public TimeSpan StalenessThreshold { get; }
 
@@ -41,7 +41,7 @@ public sealed class SqliteResultStore<TResult> : IResultStore<TResult>, IDbIniti
         connection.Execute(
             $"""
             CREATE TABLE IF NOT EXISTS {_tableName}(
-                correlation_id TEXT PRIMARY KEY,
+                id TEXT PRIMARY KEY,
                 status INTEGER NOT NULL,
                 result_data TEXT,
                 error_message TEXT,
@@ -52,7 +52,7 @@ public sealed class SqliteResultStore<TResult> : IResultStore<TResult>, IDbIniti
         );
     }
 
-    public async Task Insert(string correlationId, CancellationToken cancellationToken)
+    public async Task Insert(string id, CancellationToken cancellationToken)
     {
         await using var connection = await _dbConnectionFactory.CreateConnection(cancellationToken);
 
@@ -60,12 +60,12 @@ public sealed class SqliteResultStore<TResult> : IResultStore<TResult>, IDbIniti
         {
             await connection.ExecuteAsync(
                 $"""
-                INSERT INTO {_tableName}(correlation_id, status, result_data, error_message, creation_time, completion_time)
-                VALUES ($CorrelationId, $Status, NULL, NULL, $CreationTime, NULL)
+                INSERT INTO {_tableName}(id, status, result_data, error_message, creation_time, completion_time)
+                VALUES ($Id, $Status, NULL, NULL, $CreationTime, NULL)
                 """,
                 new
                 {
-                    CorrelationId = correlationId,
+                    Id = id,
                     Status = ResultStoreStatus.Ongoing,
                     CreationTime = DateTimeOffset.Now.ToIsoString(),
                 }
@@ -73,12 +73,12 @@ public sealed class SqliteResultStore<TResult> : IResultStore<TResult>, IDbIniti
         }
         catch (SqliteException ex) when (ex.SqliteErrorCode == 19)
         {
-            throw new ResultAlreadyExistsException(correlationId);
+            throw new ResultAlreadyExistsException(id);
         }
     }
 
     public async Task<ResultStoreEntry<TResult>?> GetValue(
-        string correlationId,
+        string id,
         CancellationToken cancellationToken
     )
     {
@@ -88,10 +88,10 @@ public sealed class SqliteResultStore<TResult> : IResultStore<TResult>, IDbIniti
             $"""
             SELECT {TableColumns}
             FROM {_tableName}
-            WHERE correlation_id = $CorrelationId
+            WHERE id = $Id
             LIMIT 1
             """,
-            new { CorrelationId = correlationId }
+            new { Id = id }
         );
 
         return result?.ToEntry(_payloadSerializer.Deserialize<TResult>);
@@ -109,11 +109,11 @@ public sealed class SqliteResultStore<TResult> : IResultStore<TResult>, IDbIniti
             $"""
             UPDATE {_tableName}
             SET status = $Status, result_data = $ResultJson, error_message = NULL, completion_time = $CompletionTime
-            WHERE correlation_id = $CorrelationId
+            WHERE id = $Id
             """,
             new
             {
-                CorrelationId = result.CommandId,
+                Id = result.CommandId,
                 Status = ResultStoreStatus.Complete,
                 ResultJson = data,
                 CompletionTime = DateTimeOffset.Now.ToIsoString(),
@@ -124,7 +124,7 @@ public sealed class SqliteResultStore<TResult> : IResultStore<TResult>, IDbIniti
     }
 
     public async Task<bool> TrySetAsFailed(
-        string correlationId,
+        string id,
         string error,
         CancellationToken cancellationToken
     )
@@ -135,11 +135,11 @@ public sealed class SqliteResultStore<TResult> : IResultStore<TResult>, IDbIniti
             $"""
             UPDATE {_tableName}
             SET status = $Status, error_message = $ErrorMessage, completion_time = $CompletionTime
-            WHERE correlation_id = $CorrelationId
+            WHERE id = $Id
             """,
             new
             {
-                CorrelationId = correlationId,
+                Id = id,
                 Status = ResultStoreStatus.Failed,
                 ErrorMessage = error,
                 CompletionTime = DateTimeOffset.Now.ToIsoString(),
@@ -151,7 +151,7 @@ public sealed class SqliteResultStore<TResult> : IResultStore<TResult>, IDbIniti
 }
 
 internal sealed record DbResultStoreEntry(
-    string CorrelationId,
+    string Id,
     ResultStoreStatus Status,
     string? ResultData,
     string? ErrorMessage,

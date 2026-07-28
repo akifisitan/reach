@@ -23,7 +23,6 @@ internal sealed class SearchStartCliCommandHandler
         try
         {
             var startPayload = new LogSearchStartPayload(
-                Guid.NewGuid().ToString("N"),
                 payload.Query,
                 payload.ServerName,
                 payload.StartTime,

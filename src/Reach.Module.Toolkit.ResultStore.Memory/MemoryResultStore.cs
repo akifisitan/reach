@@ -15,10 +15,10 @@ public sealed class MemoryResultStore<TResult> : IResultStore<TResult>
         StalenessThreshold = stalenessThreshold;
     }
 
-    public Task Insert(string correlationId, CancellationToken cancellationToken)
+    public Task Insert(string id, CancellationToken cancellationToken)
     {
         var added = _store.TryAdd(
-            correlationId,
+            id,
             new ResultStoreEntry<TResult>
             {
                 Status = ResultStoreStatus.Ongoing,
@@ -28,16 +28,16 @@ public sealed class MemoryResultStore<TResult> : IResultStore<TResult>
 
         if (!added)
         {
-            throw new ResultAlreadyExistsException(correlationId);
+            throw new ResultAlreadyExistsException(id);
         }
 
         return Task.CompletedTask;
     }
 
     public Task<ResultStoreEntry<TResult>?> GetValue(
-        string correlationId,
+        string id,
         CancellationToken cancellationToken
-    ) => Task.FromResult(_store.GetValueOrDefault(correlationId));
+    ) => Task.FromResult(_store.GetValueOrDefault(id));
 
     public Task<bool> TrySetAsComplete(TResult result, CancellationToken cancellationToken)
     {
@@ -58,13 +58,13 @@ public sealed class MemoryResultStore<TResult> : IResultStore<TResult>
     }
 
     public Task<bool> TrySetAsFailed(
-        string correlationId,
+        string id,
         string error,
         CancellationToken cancellationToken
     ) =>
         Task.FromResult(
             TryUpdate(
-                correlationId,
+                id,
                 entry => entry with { Status = ResultStoreStatus.Failed, ErrorMessage = error }
             )
         );

@@ -25,33 +25,35 @@ internal sealed class EchoRpcHandler : RpcHandler<EchoPayload, EchoResult>
         CancellationToken cancellationToken
     )
     {
+        var id = Guid.CreateVersion7().ToString("N");
+
         try
         {
-            var command = new EchoCommand(payload.CorrelationId, payload.Message);
+            var command = new EchoCommand(id, payload.Message);
 
-            _logger.ZLogInformation($"[{command.Id}] Posting {command} to remote");
+            _logger.ZLogInformation($"[{id}] Posting {command} to remote");
 
-            await _resultStore.Insert(payload.CorrelationId, cancellationToken);
+            await _resultStore.Insert(id, cancellationToken);
 
             var result = await _relay.PostToRemote(command, cancellationToken);
 
-            _logger.ZLogInformation($"[{command.Id}] Posting successful {result.PollId.Value}");
+            _logger.ZLogInformation($"[{id}] Posting successful {result.PollId.Value}");
 
-            return new EchoResult.Success(payload.CorrelationId);
+            return new EchoResult.Success(id);
         }
         catch (ResultAlreadyExistsException ex)
         {
-            _logger.ZLogError(ex, $"[{payload.CorrelationId}] Echo already exists");
+            _logger.ZLogError(ex, $"[{id}] Echo already exists");
 
             return new EchoResult.Error(
-                $"An echo with correlation id '{payload.CorrelationId}' already exists. Check its status."
+                $"An echo with correlation id '{id}' already exists. Check its status."
             );
         }
         catch (Exception ex)
         {
             _logger.ZLogError(ex, $"An error occurred");
 
-            await _resultStore.TrySetAsFailed(payload.CorrelationId, ex.Message, cancellationToken);
+            await _resultStore.TrySetAsFailed(id, ex.Message, cancellationToken);
 
             return new EchoResult.Error(ex.Message);
         }

@@ -31,10 +31,12 @@ internal sealed class LogSearchStartHandler
         CancellationToken cancellationToken
     )
     {
+        var id = Guid.CreateVersion7().ToString("N");
+
         try
         {
             var command = new SearchFileCommand(
-                payload.CorrelationId,
+                id,
                 payload.Query,
                 payload.ServerName,
                 payload.StartTime,
@@ -43,7 +45,7 @@ internal sealed class LogSearchStartHandler
 
             _logger.ZLogInformation($"[{command.Id}] Posting {command} to remote");
 
-            await _resultStore.Insert(payload.CorrelationId, cancellationToken);
+            await _resultStore.Insert(id, cancellationToken);
 
             var result = await _relayPostChaos.ExecuteAsync(
                 async ct => await _relay.PostToRemote(command, ct),
@@ -52,21 +54,21 @@ internal sealed class LogSearchStartHandler
 
             _logger.ZLogInformation($"[{command.Id}] Posting successful {result.PollId.Value}");
 
-            return new LogSearchStartResult.Success(payload.CorrelationId);
+            return new LogSearchStartResult.Success(id);
         }
         catch (ResultAlreadyExistsException ex)
         {
-            _logger.ZLogError(ex, $"[{payload.CorrelationId}] Search already exists");
+            _logger.ZLogError(ex, $"[{id}] Search already exists");
 
             return new LogSearchStartResult.Error(
-                $"A search with correlation id '{payload.CorrelationId}' already exists. Check its status."
+                $"A search with correlation id '{id}' already exists. Check its status."
             );
         }
         catch (Exception ex)
         {
             _logger.ZLogError(ex, $"An error occurred");
 
-            await _resultStore.TrySetAsFailed(payload.CorrelationId, ex.Message, cancellationToken);
+            await _resultStore.TrySetAsFailed(id, ex.Message, cancellationToken);
 
             return new LogSearchStartResult.Error(ex.Message);
         }

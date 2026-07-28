@@ -7,17 +7,10 @@ public interface IResultStore<TResult>
 {
     TimeSpan StalenessThreshold { get; }
 
-    Task Insert(string correlationId, CancellationToken cancellationToken);
-    Task<ResultStoreEntry<TResult>?> GetValue(
-        string correlationId,
-        CancellationToken cancellationToken
-    );
+    Task Insert(string id, CancellationToken cancellationToken);
+    Task<ResultStoreEntry<TResult>?> GetValue(string id, CancellationToken cancellationToken);
     Task<bool> TrySetAsComplete(TResult result, CancellationToken cancellationToken);
-    Task<bool> TrySetAsFailed(
-        string correlationId,
-        string error,
-        CancellationToken cancellationToken
-    );
+    Task<bool> TrySetAsFailed(string id, string error, CancellationToken cancellationToken);
 }
 
 public sealed record ResultStoreEntry<TResult>
@@ -36,5 +29,5 @@ public enum ResultStoreStatus
     Failed = 3,
 }
 
-public sealed class ResultAlreadyExistsException(string correlationId)
-    : Exception($"A result already exists for correlation id '{correlationId}'");
+public sealed class ResultAlreadyExistsException(string Id)
+    : Exception($"A result already exists for id '{Id}'");

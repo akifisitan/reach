@@ -19,10 +19,8 @@ internal sealed class EchoCliCommandHandler
     {
         try
         {
-            var echoPayload = new EchoPayload(Guid.NewGuid().ToString("N"), payload.Message);
-
             var result = await _rpcClient.Invoke<EchoPayload, EchoResult>(
-                echoPayload,
+                new EchoPayload(payload.Message),
                 cancellationToken
             );
 

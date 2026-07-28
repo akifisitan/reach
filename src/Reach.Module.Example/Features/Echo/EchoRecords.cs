@@ -6,7 +6,7 @@ internal sealed record EchoCliCommandPayload(string Message) : CliCommandPayload
 
 internal sealed record EchoCliCommandResult(int StatusCode) : CliCommandResult(StatusCode);
 
-internal sealed record EchoPayload(string CorrelationId, string Message) : RpcPayload;
+internal sealed record EchoPayload(string Message) : RpcPayload;
 
 internal abstract record EchoResult : RpcResult
 {
