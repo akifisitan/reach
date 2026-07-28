@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Hosting;
-using Reach.Composition;
+using Reach.Hosting;
 using Reach.Local.Cli;
-using Reach.Plugin;
+using Reach.Module;
 
 var paths = ReachAppPaths.LocalCli();
 var compositionPaths = ReachAppPaths.LocalServer();
@@ -19,7 +19,7 @@ builder.Services.AddApplication(builder.Configuration, paths, compositionPaths);
 
 using var host = builder.Build();
 
-host.Services.ValidatePluginGraph();
+host.Services.ValidateMessageGraph();
 
 var cli = host.Services.GetRequiredService<LocalCliExecutor>();
 

@@ -1,6 +1,6 @@
 using Polly;
 using Polly.Retry;
-using Reach.Composition;
+using Reach.Hosting;
 using Reach.Infra.DurableQueue;
 using Reach.Infra.Persistence;
 using Reach.Local.Shared;

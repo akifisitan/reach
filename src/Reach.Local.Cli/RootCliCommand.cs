@@ -1,5 +1,5 @@
 using System.CommandLine;
-using Reach.Plugin;
+using Reach.Module;
 
 namespace Reach.Local.Cli;
 

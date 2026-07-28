@@ -1,6 +1,6 @@
-using Reach.Composition;
+using Reach.Hosting;
 using Reach.Local.Shared;
-using Reach.Plugin;
+using Reach.Module;
 using ZLogger.Formatters;
 
 namespace Reach.Local.Cli;

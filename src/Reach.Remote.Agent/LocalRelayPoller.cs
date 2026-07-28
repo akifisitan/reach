@@ -1,6 +1,6 @@
 using Polly;
 using Polly.Registry;
-using Reach.Composition;
+using Reach.Hosting;
 using Reach.Infra.DurableQueue;
 using Reach.Relay;
 

@@ -4,7 +4,7 @@
     <File Path="Directory.Build.props" />
     <File Path="Directory.Packages.props" />
   </Folder>
-  <Project Path="src/Reach.Composition/Reach.Composition.csproj" />
+  <Project Path="src/Reach.Hosting/Reach.Hosting.csproj" />
   <Project Path="src/Reach.Infra.DurableQueue/Reach.Infra.DurableQueue.csproj" />
   <Project Path="src/Reach.Infra.Persistence/Reach.Infra.Persistence.csproj" />
   <Project Path="src/Reach.Local.Cli/Reach.Local.Cli.csproj" />
@@ -14,12 +14,12 @@
   <Project Path="src/Reach.Infra.Credentials/Reach.Infra.Credentials.csproj" />
   <Project Path="src/Reach.Infra.JsonConfig/Reach.Infra.JsonConfig.csproj" />
   <Project Path="src/Reach.Infra.NativeConsole/Reach.Infra.NativeConsole.csproj" />
-  <Project Path="src/Reach.Plugin.Abstractions/Reach.Plugin.Abstractions.csproj" />
-  <Project Path="src/Reach.Plugin.Example/Reach.Plugin.Example.csproj" />
-  <Project Path="src/Reach.Plugin.LogSearch/Reach.Plugin.LogSearch.csproj" />
-  <Project Path="src/Reach.Plugin.Toolkit.ResultStore.Abstractions/Reach.Plugin.Toolkit.ResultStore.Abstractions.csproj" />
-  <Project Path="src/Reach.Plugin.Toolkit.ResultStore.Memory/Reach.Plugin.Toolkit.ResultStore.Memory.csproj" />
-  <Project Path="src/Reach.Plugin.Toolkit.ResultStore.Sqlite/Reach.Plugin.Toolkit.ResultStore.Sqlite.csproj" />
+  <Project Path="src/Reach.Module.Abstractions/Reach.Module.Abstractions.csproj" />
+  <Project Path="src/Reach.Module.Example/Reach.Module.Example.csproj" />
+  <Project Path="src/Reach.Module.LogSearch/Reach.Module.LogSearch.csproj" />
+  <Project Path="src/Reach.Module.Toolkit.ResultStore.Abstractions/Reach.Module.Toolkit.ResultStore.Abstractions.csproj" />
+  <Project Path="src/Reach.Module.Toolkit.ResultStore.Memory/Reach.Module.Toolkit.ResultStore.Memory.csproj" />
+  <Project Path="src/Reach.Module.Toolkit.ResultStore.Sqlite/Reach.Module.Toolkit.ResultStore.Sqlite.csproj" />
   <Project Path="src/Reach.Relay.Abstractions/Reach.Relay.Abstractions.csproj" />
   <Project Path="src/Reach.Relay.Confluence/Reach.Relay.Confluence.csproj" />
   <Project Path="src/Reach.Relay.LocalFile/Reach.Relay.LocalFile.csproj" />

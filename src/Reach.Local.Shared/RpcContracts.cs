@@ -1,5 +1,5 @@
 using PolyType;
-using Reach.Composition;
+using Reach.Hosting;
 using StreamJsonRpc;
 
 namespace Reach.Local.Shared;

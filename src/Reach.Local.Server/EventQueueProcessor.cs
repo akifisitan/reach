@@ -1,8 +1,8 @@
 using Polly;
 using Polly.Registry;
-using Reach.Composition;
+using Reach.Hosting;
 using Reach.Infra.DurableQueue;
-using Reach.Plugin;
+using Reach.Module;
 using Reach.Relay;
 
 namespace Reach.Local.Server;

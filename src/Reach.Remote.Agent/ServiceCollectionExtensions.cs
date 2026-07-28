@@ -1,6 +1,6 @@
 using Polly;
 using Polly.Retry;
-using Reach.Composition;
+using Reach.Hosting;
 using Reach.Infra.DurableQueue;
 using Reach.Infra.Persistence;
 using Reach.Relay;
@@ -16,7 +16,7 @@ internal static class ServiceCollectionExtensions
         ReachAppPaths paths
     )
     {
-        services.AddComposition(configuration, paths.AppDataBasePath);
+        services.AddHosting(configuration, paths.AppDataBasePath);
 
         services.AddAppLogging(paths);
 

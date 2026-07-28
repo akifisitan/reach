@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.IO.Pipes;
 using Reach.Local.Shared;
-using Reach.Plugin;
+using Reach.Module;
 using StreamJsonRpc;
 
 namespace Reach.Local.Cli;

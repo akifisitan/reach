@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="HtmlAgilityPack" />
+    <PackageReference Include="Polly.Extensions" />
+    <PackageReference Include="ZLogger" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Reach.Module.Abstractions\Reach.Module.Abstractions.csproj" />
+    <ProjectReference Include="..\Reach.Module.Toolkit.ResultStore.Sqlite\Reach.Module.Toolkit.ResultStore.Sqlite.csproj" />
+  </ItemGroup>
+</Project>

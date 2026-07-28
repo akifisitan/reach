@@ -1,4 +1,4 @@
-using Reach.Composition;
+using Reach.Hosting;
 
 namespace Reach.Local.Shared;
 
@@ -10,7 +10,7 @@ public static class ServiceCollectionExtensions
         string basePath
     )
     {
-        services.AddComposition(configuration, basePath);
+        services.AddHosting(configuration, basePath);
 
         return services;
     }

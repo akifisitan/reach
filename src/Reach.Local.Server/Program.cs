@@ -1,4 +1,4 @@
-using Reach.Composition;
+using Reach.Hosting;
 using Reach.Local.Server;
 
 await ReachDaemonRunner.Run(
