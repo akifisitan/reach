@@ -26,7 +26,7 @@ internal sealed class SearchFileCommandResultHandler
 
         if (!await _resultStore.TrySetAsComplete(result, cancellationToken))
         {
-            _logger.ZLogError($"What happened to the existing value?");
+            _logger.ZLogError($"File not found");
 
             return new();
         }

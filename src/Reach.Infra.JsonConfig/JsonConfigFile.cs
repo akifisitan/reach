@@ -22,16 +22,11 @@ public sealed class JsonConfigFile : IJsonConfigFile
 
     public JsonObject Read()
     {
-        if (!File.Exists(_filePath))
-        {
-            return new JsonObject();
-        }
-
         try
         {
             return JsonNode.Parse(File.ReadAllText(_filePath)) as JsonObject ?? new JsonObject();
         }
-        catch (JsonException)
+        catch (Exception)
         {
             return new JsonObject();
         }

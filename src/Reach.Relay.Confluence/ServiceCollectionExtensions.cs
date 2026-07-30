@@ -17,12 +17,21 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IConsolePrompter, ConsolePrompter>();
         services.AddSingleton<IConfluenceHttpClientFactory, ConfluenceHttpClientFactory>();
 
-        services.AddSingleton<ICredentialFileStore>(
-            new DpapiCredentialFileStore(
-                Path.Combine(basePath, ConfluenceRelaySetup.CredentialFileName),
-                ConfluenceRelaySetup.CredentialEntropy
-            )
-        );
+        if (OperatingSystem.IsWindows())
+        {
+            services.AddSingleton<ICredentialFileStore>(
+                new DpapiCredentialFileStore(
+                    Path.Combine(basePath, ConfluenceRelaySetup.CredentialFileName),
+                    ConfluenceRelaySetup.CredentialEntropy
+                )
+            );
+        }
+        else
+        {
+            throw new PlatformNotSupportedException(
+                "DPAPI credential protection is only supported on Windows."
+            );
+        }
         services.AddSingleton<
             IConfluenceUserCredentialProvider,
             DpapiConfluenceUserCredentialProvider

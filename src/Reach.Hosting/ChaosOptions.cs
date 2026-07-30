@@ -1,4 +1,4 @@
-namespace Reach.Relay;
+namespace Reach.Hosting;
 
 public static class ChaosPolicyNames
 {

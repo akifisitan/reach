@@ -1,23 +1,21 @@
+using System.Runtime.Versioning;
 using System.Security.Cryptography;
 using System.Text;
 
 namespace Reach.Infra.Credentials;
 
-public interface ICredentialFileStore
-{
-    void Save(string secret);
-    string Load();
-}
-
+[SupportedOSPlatform("windows")]
 public sealed class DpapiCredentialFileStore : ICredentialFileStore
 {
     private readonly string _filePath;
     private readonly byte[] _entropy;
+    private readonly DataProtectionScope _protectionScope;
 
     public DpapiCredentialFileStore(string filePath, string entropy)
     {
         _filePath = filePath;
         _entropy = Encoding.UTF8.GetBytes(entropy);
+        _protectionScope = DataProtectionScope.CurrentUser;
     }
 
     public void Save(string secret)
@@ -32,7 +30,7 @@ public sealed class DpapiCredentialFileStore : ICredentialFileStore
         var protectedBytes = ProtectedData.Protect(
             Encoding.UTF8.GetBytes(secret),
             _entropy,
-            DataProtectionScope.CurrentUser
+            _protectionScope
         );
 
         var directory = Path.GetDirectoryName(_filePath);
@@ -61,11 +59,7 @@ public sealed class DpapiCredentialFileStore : ICredentialFileStore
 
         var protectedBytes = Convert.FromBase64String(File.ReadAllText(_filePath).Trim());
 
-        var secretBytes = ProtectedData.Unprotect(
-            protectedBytes,
-            _entropy,
-            DataProtectionScope.CurrentUser
-        );
+        var secretBytes = ProtectedData.Unprotect(protectedBytes, _entropy, _protectionScope);
 
         return Encoding.UTF8.GetString(secretBytes);
     }

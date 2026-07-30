@@ -2,10 +2,10 @@
 
 ## Publishing
 
-Publish all deployable packages as single-file trimmed ReadyToRun executables:
+Publish all deployable packages as single-file trimmed executables:
 
 ```powershell
-./publish.ps1 -Mode TrimmedReadyToRun
+./publish.ps1
 ```
 
 Publish all deployable packages with native AOT:

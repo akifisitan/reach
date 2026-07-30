@@ -2,7 +2,11 @@ namespace Reach.Relay.LocalFile;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddLocalFileRelay(this IServiceCollection services)
+    public static IServiceCollection AddLocalFileRelay(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        string basePath
+    )
     {
         services.AddSingleton<LocalFileRelay>();
         services.AddSingleton<ILocalRelay>(sp => sp.GetRequiredService<LocalFileRelay>());
@@ -12,17 +16,18 @@ public static class ServiceCollectionExtensions
             .AddOptions<LocalFileRelayOptions>()
             .Configure(x =>
             {
-                var basePath = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "Reach.Debug",
-                    "local",
-                    "localrelay"
+                var relayBasePath = Path.Combine(basePath, "localrelay");
+
+                Directory.CreateDirectory(relayBasePath);
+
+                x.LocalToRemoteFilePath = Path.Combine(
+                    relayBasePath,
+                    "relay_local_to_remote.jsonl"
                 );
-
-                Directory.CreateDirectory(basePath);
-
-                x.LocalToRemoteFilePath = Path.Combine(basePath, "relay_local_to_remote.jsonl");
-                x.RemoteToLocalFilePath = Path.Combine(basePath, "relay_remote_to_local.jsonl");
+                x.RemoteToLocalFilePath = Path.Combine(
+                    relayBasePath,
+                    "relay_remote_to_local.jsonl"
+                );
 
                 File.AppendAllText(x.LocalToRemoteFilePath, string.Empty);
                 File.AppendAllText(x.RemoteToLocalFilePath, string.Empty);

@@ -1,7 +1,7 @@
 using Polly;
 using Polly.Registry;
+using Reach.Hosting;
 using Reach.Module;
-using Reach.Relay;
 
 namespace Reach.Local.Server;
 

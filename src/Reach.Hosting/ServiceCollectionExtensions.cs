@@ -6,7 +6,7 @@ using Reach.Module;
 using Reach.Module.Example;
 using Reach.Module.LogSearch;
 using Reach.Relay;
-using Reach.Relay.Confluence;
+using Reach.Relay.LocalFile;
 
 namespace Reach.Hosting;
 
@@ -40,8 +40,8 @@ public static class ServiceCollectionExtensions
             sp.GetRequiredService<JsonPayloadSerializer>()
         );
 
-        services.AddConfluenceRelay(configuration, basePath);
-        //services.AddLocalFileRelay();
+        //services.AddConfluenceRelay(configuration, basePath);
+        services.AddLocalFileRelay(configuration, basePath);
 
         services.AddPersistence();
 
