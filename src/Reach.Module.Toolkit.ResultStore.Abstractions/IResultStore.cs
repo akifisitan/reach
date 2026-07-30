@@ -23,7 +23,7 @@ public sealed record ResultStoreEntry<TResult>
 
 public enum ResultStoreStatus
 {
-    NotFound = 0,
+    New = 0,
     Ongoing = 1,
     Complete = 2,
     Failed = 3,

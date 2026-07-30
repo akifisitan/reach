@@ -5,14 +5,17 @@ internal sealed class SearchStatusCliCommandHandler
 {
     private readonly ILogger<SearchStatusCliCommandHandler> _logger;
     private readonly IRpcClient _localClient;
+    private readonly IConsoleWriter _consoleWriter;
 
     public SearchStatusCliCommandHandler(
         ILogger<SearchStatusCliCommandHandler> logger,
-        IRpcClient localClient
+        IRpcClient localClient,
+        IConsoleWriter consoleWriter
     )
     {
         _logger = logger;
         _localClient = localClient;
+        _consoleWriter = consoleWriter;
     }
 
     protected override async Task<SearchStatusCliCommandResult> Handle(
@@ -29,16 +32,14 @@ internal sealed class SearchStatusCliCommandHandler
                 cancellationToken
             );
 
-            Console.WriteLine($"Result: {result}");
+            _consoleWriter.WriteLine($"Result: {result}");
 
             return new(0);
         }
-        catch (OperationCanceledException)
-        {
-            return new(1);
-        }
         catch (Exception ex)
         {
+            _consoleWriter.WriteLine($"An error occurred: {ex.Message}");
+
             _logger.ZLogError(ex, $"An error occurred");
 
             return new(1);

@@ -18,7 +18,11 @@ public static class ServiceCollectionExtensions
         string basePath
     )
     {
-        services.AddSingleton(CreateJsonSerializerOptions);
+        services.AddSingleton(sp =>
+            WireJsonExtensions.CreateJsonSerializerOptions(
+                sp.GetServices<IWireJsonRegistration>().ToList()
+            )
+        );
         services.AddSingleton(sp => new JsonPayloadSerializer(
             sp.GetRequiredService<JsonSerializerOptions>()
         ));
@@ -40,8 +44,8 @@ public static class ServiceCollectionExtensions
             sp.GetRequiredService<JsonPayloadSerializer>()
         );
 
-        //services.AddConfluenceRelay(configuration, basePath);
-        services.AddLocalFileRelay(configuration, basePath);
+        //services.AddConfluenceRelay(configuration, ReachAppPaths.SharedPath);
+        services.AddLocalFileRelay(configuration, ReachAppPaths.SharedPath);
 
         services.AddPersistence();
 
@@ -50,9 +54,4 @@ public static class ServiceCollectionExtensions
 
         return services;
     }
-
-    private static JsonSerializerOptions CreateJsonSerializerOptions(IServiceProvider sp) =>
-        WireJsonExtensions.CreateJsonSerializerOptions(
-            sp.GetServices<IWireJsonRegistration>().ToList()
-        );
 }

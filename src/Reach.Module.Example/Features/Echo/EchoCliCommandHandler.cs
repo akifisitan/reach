@@ -5,11 +5,17 @@ internal sealed class EchoCliCommandHandler
 {
     private readonly ILogger<EchoCliCommandHandler> _logger;
     private readonly IRpcClient _rpcClient;
+    private readonly IConsoleWriter _consoleWriter;
 
-    public EchoCliCommandHandler(ILogger<EchoCliCommandHandler> logger, IRpcClient rpcClient)
+    public EchoCliCommandHandler(
+        ILogger<EchoCliCommandHandler> logger,
+        IRpcClient rpcClient,
+        IConsoleWriter consoleWriter
+    )
     {
         _logger = logger;
         _rpcClient = rpcClient;
+        _consoleWriter = consoleWriter;
     }
 
     protected override async Task<EchoCliCommandResult> Handle(
@@ -28,7 +34,7 @@ internal sealed class EchoCliCommandHandler
             {
                 case EchoResult.Success success:
                 {
-                    Console.WriteLine("Echo sent, waiting for reply...");
+                    _consoleWriter.WriteLine("Echo sent, waiting for reply...");
 
                     while (true)
                     {
@@ -41,19 +47,24 @@ internal sealed class EchoCliCommandHandler
                         {
                             case EchoPollResult.Success pollSuccess:
                             {
-                                Console.WriteLine($"Received from remote: {pollSuccess.Reply}");
+                                _consoleWriter.WriteLine(
+                                    $"Received from remote: {pollSuccess.Reply}"
+                                );
 
                                 return new(0);
                             }
                             case EchoPollResult.Ongoing:
                             {
-                                await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
+                                await Task.Delay(
+                                    TimeSpan.FromMilliseconds(payload.PollMs),
+                                    cancellationToken
+                                );
 
                                 break;
                             }
                             case EchoPollResult.NotFound:
                             {
-                                Console.WriteLine(
+                                _consoleWriter.WriteLine(
                                     $"No echo found for correlation id {success.CorrelationId}"
                                 );
 
@@ -61,7 +72,7 @@ internal sealed class EchoCliCommandHandler
                             }
                             case EchoPollResult.Error pollError:
                             {
-                                Console.WriteLine($"Echo failed: {pollError.Message}");
+                                _consoleWriter.WriteLine($"Echo failed: {pollError.Message}");
 
                                 return new(1);
                             }
@@ -72,7 +83,7 @@ internal sealed class EchoCliCommandHandler
                 }
                 case EchoResult.Error err:
                 {
-                    Console.WriteLine(err.Message);
+                    _consoleWriter.WriteLine(err.Message);
 
                     return new(1);
                 }
@@ -80,12 +91,10 @@ internal sealed class EchoCliCommandHandler
                     throw new NotSupportedException();
             }
         }
-        catch (OperationCanceledException)
-        {
-            return new(1);
-        }
         catch (Exception ex)
         {
+            _consoleWriter.WriteLine($"An error occurred: {ex.Message}");
+
             _logger.ZLogError(ex, $"An error occurred");
 
             return new(1);

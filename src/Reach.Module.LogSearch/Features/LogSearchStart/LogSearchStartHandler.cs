@@ -48,14 +48,6 @@ internal sealed class LogSearchStartHandler
 
             return new LogSearchStartResult.Success(id);
         }
-        catch (ResultAlreadyExistsException ex)
-        {
-            _logger.ZLogError(ex, $"[{id}] Search already exists");
-
-            return new LogSearchStartResult.Error(
-                $"A search with correlation id '{id}' already exists. Check its status."
-            );
-        }
         catch (Exception ex)
         {
             _logger.ZLogError(ex, $"An error occurred");

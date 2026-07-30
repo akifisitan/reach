@@ -102,9 +102,9 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
         [EnumeratorCancellation] CancellationToken cancellationToken
     )
     {
-        var cursor = await _cursorStorage.Retrieve(cursorName, cancellationToken);
+        var previousCursor = await _cursorStorage.Retrieve(cursorName, cancellationToken);
 
-        var lastSeenCommentId = cursor?.CurrentIndex ?? 0;
+        var lastSeenCommentId = previousCursor?.CurrentIndex ?? 0;
 
         var pollDelayMs = _options.PollDelayMs;
 
@@ -143,12 +143,17 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
                     _logger.ZLogError(ex, $"An error occurred while polling Confluence comments");
                 }
 
-                var backoffMs = Math.Min(
-                    pollDelayMs * (1 << Math.Min(consecutiveFailures - 1, 10)),
-                    (int)MaxBackoff.TotalMilliseconds
-                );
+                // Exponential backoff: double the poll delay per consecutive failure, capped at MaxBackoff
+                var backoff =
+                    TimeSpan.FromMilliseconds(pollDelayMs)
+                    * Math.Pow(2, Math.Min(consecutiveFailures - 1, 10));
 
-                await Task.Delay(backoffMs, cancellationToken).ConfigureAwait(false);
+                if (backoff > MaxBackoff)
+                {
+                    backoff = MaxBackoff;
+                }
+
+                await Task.Delay(backoff, cancellationToken).ConfigureAwait(false);
 
                 continue;
             }
@@ -162,10 +167,9 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
 
             foreach (var resultContent in newComments)
             {
-                if (
-                    !long.TryParse(resultContent.Id, out var commentId)
-                    || commentId <= lastSeenCommentId
-                )
+                var commentId = long.Parse(resultContent.Id);
+
+                if (commentId <= lastSeenCommentId)
                 {
                     continue;
                 }
@@ -191,9 +195,11 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
                     continue;
                 }
 
-                _logger.ZLogInformation($"Received value: {command.ToString()}");
+                _logger.ZLogDebug($"Received value: {command.ToString()}");
 
                 lastSeenCommentId = Math.Max(lastSeenCommentId, commentId);
+
+                _logger.ZLogDebug($"Set {nameof(lastSeenCommentId)} to {lastSeenCommentId}");
 
                 yield return command;
             }
@@ -266,6 +272,7 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
 
         var start = 0;
 
+        // TODO: this could hammer the relay no?
         while (true)
         {
             var batch = await ReadCommentsPage(httpClient, pageId, start, cancellationToken)
@@ -273,7 +280,7 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
 
             foreach (var item in batch.Results)
             {
-                if (long.TryParse(item.Id, out var id) && id > afterCommentId)
+                if (long.Parse(item.Id) > afterCommentId)
                 {
                     newComments.Add(item);
                 }

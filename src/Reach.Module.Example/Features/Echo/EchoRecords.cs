@@ -2,7 +2,7 @@ using Reach.Relay;
 
 namespace Reach.Module.Example.Features.Echo;
 
-internal sealed record EchoCliCommandPayload(string Message) : CliCommandPayload;
+internal sealed record EchoCliCommandPayload(string Message, int PollMs) : CliCommandPayload;
 
 internal sealed record EchoCliCommandResult(int StatusCode) : CliCommandResult(StatusCode);
 

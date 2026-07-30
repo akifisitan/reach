@@ -17,8 +17,6 @@ internal sealed class LocalPipeRpcServer
 
     public async Task Start(CancellationToken cancellationToken)
     {
-        List<Task> tasks = [];
-
         while (!cancellationToken.IsCancellationRequested)
         {
             var pipe = new NamedPipeServerStream(
@@ -29,7 +27,7 @@ internal sealed class LocalPipeRpcServer
                 PipeOptions.Asynchronous
             );
 
-            _logger.ZLogInformation($"Waiting for connection...");
+            _logger.ZLogDebug($"Waiting for new client connection");
 
             try
             {
@@ -44,14 +42,10 @@ internal sealed class LocalPipeRpcServer
                 throw;
             }
 
-            _logger.ZLogInformation($"Establishing connection...");
+            _logger.ZLogDebug($"Connecting to client");
 
-            var task = Task.Run(() => HandleClient(pipe), cancellationToken);
-
-            tasks.Add(task);
+            _ = Task.Run(() => HandleClient(pipe), cancellationToken);
         }
-
-        await Task.WhenAll(tasks);
     }
 
     private async Task HandleClient(NamedPipeServerStream pipe)
@@ -67,10 +61,10 @@ internal sealed class LocalPipeRpcServer
 
         rpc.StartListening();
 
-        _logger.ZLogInformation($"Established connection");
+        _logger.ZLogDebug($"Connected to client");
 
         await rpc.Completion;
 
-        _logger.ZLogInformation($"Connection closed");
+        _logger.ZLogDebug($"Disconnected from client");
     }
 }

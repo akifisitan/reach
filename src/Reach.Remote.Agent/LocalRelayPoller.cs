@@ -11,8 +11,8 @@ internal sealed class LocalRelayPoller
     private readonly IRemoteRelay _relay;
     private readonly ILogger<LocalRelayPoller> _logger;
     private readonly IDurableQueue<RelayCommand> _commandQueue;
-    private readonly ResiliencePipeline _defaultRetry;
-    private readonly ResiliencePipeline _relayPollChaos;
+    private readonly ResiliencePipeline _retryPipeline;
+    private readonly ResiliencePipeline _relayChaosPipeline;
 
     public LocalRelayPoller(
         IRemoteRelay relay,
@@ -24,8 +24,8 @@ internal sealed class LocalRelayPoller
         _relay = relay;
         _logger = logger;
         _commandQueue = commandQueue;
-        _defaultRetry = resiliencePipelineProvider.GetPipeline(Constants.DefaultRetryPolicy);
-        _relayPollChaos = resiliencePipelineProvider.GetPipeline(ChaosPolicyNames.RelayPoll);
+        _retryPipeline = resiliencePipelineProvider.GetPipeline(Constants.DefaultRetryPolicy);
+        _relayChaosPipeline = resiliencePipelineProvider.GetPipeline(ChaosPolicyNames.RelayPoll);
     }
 
     public async Task Start(CancellationToken cancellationToken)
@@ -36,7 +36,8 @@ internal sealed class LocalRelayPoller
 
             try
             {
-                await _relayPollChaos.ExecuteAsync(
+                // TODO: this chaos pipeline is not good, could be better to move the chaos strategies inside PollFromLocal?
+                await _relayChaosPipeline.ExecuteAsync(
                     async ct =>
                     {
                         await foreach (var command in _relay.PollFromLocal(cancellationToken: ct))
@@ -45,7 +46,7 @@ internal sealed class LocalRelayPoller
 
                             try
                             {
-                                await _defaultRetry.ExecuteAsync(
+                                await _retryPipeline.ExecuteAsync(
                                     async retryCt =>
                                     {
                                         await _commandQueue.Enqueue(command, retryCt);

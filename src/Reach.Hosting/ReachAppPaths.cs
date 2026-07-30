@@ -1,7 +1,16 @@
 namespace Reach.Hosting;
 
-public sealed record ReachAppPaths(string AppDataBasePath, string LogFilePath, string? LockFilePath)
+public sealed record ReachAppPaths
 {
+    public required string AppDataBasePath { get; init; }
+    public required string LogFilePath { get; init; }
+    public string? LockFilePath { get; init; }
+
+    public static readonly string SharedPath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        Constants.AppPackageName
+    );
+
     public static ReachAppPaths LocalServer() =>
         Create("local", $"{Constants.AppName}.local.server.lock");
 
@@ -12,16 +21,13 @@ public sealed record ReachAppPaths(string AppDataBasePath, string LogFilePath, s
 
     private static ReachAppPaths Create(string profile, string? lockFileName)
     {
-        var basePath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            Constants.AppPackageName,
-            profile
-        );
+        var basePath = Path.Combine(SharedPath, profile);
 
-        return new(
-            basePath,
-            Path.Combine(basePath, "logs", $"{DateTime.Now:yyyy-MM-dd}.log"),
-            lockFileName is null ? null : Path.Combine(basePath, lockFileName)
-        );
+        return new()
+        {
+            AppDataBasePath = basePath,
+            LogFilePath = Path.Combine(basePath, "logs", $"{DateTime.Now:yyyy-MM-dd}.log"),
+            LockFilePath = lockFileName is null ? null : Path.Combine(basePath, lockFileName),
+        };
     }
 }

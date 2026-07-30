@@ -13,7 +13,7 @@ internal sealed class CommandQueueProcessor
     private readonly IDurableQueue<RelayCommand> _commandQueue;
     private readonly IRemoteRelay _relay;
     private readonly IHandlerDispatcher<RelayCommand, RelayCommandResult> _handler;
-    private readonly ResiliencePipeline _defaultRetry;
+    private readonly ResiliencePipeline _retryPipeline;
 
     public CommandQueueProcessor(
         ILogger<CommandQueueProcessor> logger,
@@ -27,7 +27,7 @@ internal sealed class CommandQueueProcessor
         _commandQueue = commandQueue;
         _relay = relay;
         _handler = handler;
-        _defaultRetry = resiliencePipelineProvider.GetPipeline(Constants.DefaultRetryPolicy);
+        _retryPipeline = resiliencePipelineProvider.GetPipeline(Constants.DefaultRetryPolicy);
     }
 
     public async Task Start(bool isForRetry, CancellationToken cancellationToken)
@@ -64,6 +64,7 @@ internal sealed class CommandQueueProcessor
 
             try
             {
+                // TODO: Handle is mostly a costly operation, so maybe we store the result as well and post to local from a separate workflow?
                 var commandResult = await _handler.Handle(value, cancellationToken);
 
                 await _relay.PostToLocal(commandResult, cancellationToken);
@@ -77,7 +78,7 @@ internal sealed class CommandQueueProcessor
 
             try
             {
-                await _defaultRetry.ExecuteAsync(
+                await _retryPipeline.ExecuteAsync(
                     async ct =>
                     {
                         if (isSuccess)

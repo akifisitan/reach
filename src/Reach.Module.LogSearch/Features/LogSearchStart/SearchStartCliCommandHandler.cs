@@ -5,14 +5,17 @@ internal sealed class SearchStartCliCommandHandler
 {
     private readonly ILogger<SearchStartCliCommandHandler> _logger;
     private readonly IRpcClient _rpcClient;
+    private readonly IConsoleWriter _consoleWriter;
 
     public SearchStartCliCommandHandler(
         ILogger<SearchStartCliCommandHandler> logger,
-        IRpcClient rpcClient
+        IRpcClient rpcClient,
+        IConsoleWriter consoleWriter
     )
     {
         _logger = logger;
         _rpcClient = rpcClient;
+        _consoleWriter = consoleWriter;
     }
 
     protected override async Task<SearchStartCliCommandResult> Handle(
@@ -38,13 +41,13 @@ internal sealed class SearchStartCliCommandHandler
             {
                 case LogSearchStartResult.Success success:
                 {
-                    Console.WriteLine($"Can poll with {success.CorrelationId}");
+                    _consoleWriter.WriteLine($"Can poll with {success.CorrelationId}");
 
                     return new(0);
                 }
                 case LogSearchStartResult.Error err:
                 {
-                    Console.WriteLine(err.Message);
+                    _consoleWriter.WriteLine(err.Message);
 
                     return new(1);
                 }
@@ -52,12 +55,10 @@ internal sealed class SearchStartCliCommandHandler
                     throw new NotSupportedException();
             }
         }
-        catch (OperationCanceledException)
-        {
-            return new(1);
-        }
         catch (Exception ex)
         {
+            _consoleWriter.WriteLine($"An error occurred: {ex.Message}");
+
             _logger.ZLogError(ex, $"An error occurred");
 
             return new(1);

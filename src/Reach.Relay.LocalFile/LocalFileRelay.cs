@@ -26,6 +26,36 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
         _cursorStorage = cursorStorage;
     }
 
+    public async Task<PostToRemoteResult> PostToRemote(
+        RelayCommand value,
+        CancellationToken cancellationToken
+    )
+    {
+        var payload = _payloadSerializer.Serialize(value);
+
+        var base64Text = payload.EncodeBase64();
+
+        await CreateComment(base64Text, _options.LocalToRemoteFilePath, cancellationToken)
+            .ConfigureAwait(false);
+
+        return new(new(value.Id));
+    }
+
+    public async Task<PostToLocalResult> PostToLocal(
+        RelayCommandResult value,
+        CancellationToken cancellationToken
+    )
+    {
+        var payload = _payloadSerializer.Serialize(value);
+
+        var base64Text = payload.EncodeBase64();
+
+        await CreateComment(base64Text, _options.RemoteToLocalFilePath, cancellationToken)
+            .ConfigureAwait(false);
+
+        return new();
+    }
+
     public IAsyncEnumerable<RelayCommand> PollFromLocal(
         PollingOptions? options = null,
         CancellationToken cancellationToken = default
@@ -150,11 +180,7 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
                 response.LastOrDefault(x => x.CreatedDate >= cursor.CreationTime)?.CreatedDate
                 ?? cursor.CreationTime;
 
-            cursor = cursor with
-            {
-                CurrentIndex = cursor.CurrentIndex + response.Count,
-                CreationTime = latestCreatedAt,
-            };
+            cursor = new(cursor.CurrentIndex + response.Count, latestCreatedAt);
 
             await _cursorStorage.Store(cursorName, cursor, cancellationToken);
 
@@ -194,36 +220,6 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
         }
 
         return result;
-    }
-
-    public async Task<PostToRemoteResult> PostToRemote(
-        RelayCommand value,
-        CancellationToken cancellationToken
-    )
-    {
-        var payload = _payloadSerializer.Serialize(value);
-
-        var base64Text = payload.EncodeBase64();
-
-        await CreateComment(base64Text, _options.LocalToRemoteFilePath, cancellationToken)
-            .ConfigureAwait(false);
-
-        return new(new(value.Id));
-    }
-
-    public async Task<PostToLocalResult> PostToLocal(
-        RelayCommandResult value,
-        CancellationToken cancellationToken
-    )
-    {
-        var payload = _payloadSerializer.Serialize(value);
-
-        var base64Text = payload.EncodeBase64();
-
-        await CreateComment(base64Text, _options.RemoteToLocalFilePath, cancellationToken)
-            .ConfigureAwait(false);
-
-        return new();
     }
 
     private static async Task CreateComment(

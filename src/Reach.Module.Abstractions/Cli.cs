@@ -41,3 +41,9 @@ public static class CliCommandExtensions
         );
     }
 }
+
+public interface IConsoleWriter
+{
+    public void WriteLine(string message);
+    public void WriteLine(string message, ConsoleColor color);
+}

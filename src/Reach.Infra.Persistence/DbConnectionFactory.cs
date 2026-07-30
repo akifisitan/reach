@@ -5,7 +5,7 @@ namespace Reach.Infra.Persistence;
 
 public sealed class DbConnectionFactory
 {
-    private readonly string _dbPath;
+    private readonly string _connectionString;
     private readonly ILogger<DbConnectionFactory> _logger;
 
     public DbConnectionFactory(
@@ -14,14 +14,17 @@ public sealed class DbConnectionFactory
     )
     {
         _logger = logger;
-        _dbPath = options.Value.DbPath;
+        _connectionString = new SqliteConnectionStringBuilder
+        {
+            DataSource = options.Value.DbPath,
+        }.ConnectionString;
     }
 
     public DbConnection CreateConnection()
     {
-        var connection = new SqliteConnection($"Data Source={_dbPath}");
+        var connection = new SqliteConnection(_connectionString);
 
-        _logger.ZLogDebug($"Opening database connection");
+        _logger.ZLogTrace($"Opening database connection");
 
         connection.Open();
 
@@ -30,9 +33,9 @@ public sealed class DbConnectionFactory
 
     public async Task<DbConnection> CreateConnection(CancellationToken cancellationToken)
     {
-        var connection = new SqliteConnection($"Data Source={_dbPath}");
+        var connection = new SqliteConnection(_connectionString);
 
-        _logger.ZLogDebug($"Opening database connection");
+        _logger.ZLogTrace($"Opening database connection");
 
         await connection.OpenAsync(cancellationToken);
 
