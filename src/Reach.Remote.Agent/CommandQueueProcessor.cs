@@ -1,6 +1,7 @@
 using Polly;
 using Polly.Registry;
 using Reach.Hosting;
+using Reach.Infra.CommandResultOutbox;
 using Reach.Infra.DurableQueue;
 using Reach.Module;
 using Reach.Relay;
@@ -11,22 +12,22 @@ internal sealed class CommandQueueProcessor
 {
     private readonly ILogger<CommandQueueProcessor> _logger;
     private readonly IDurableQueue<RelayCommand> _commandQueue;
-    private readonly IRemoteRelay _relay;
     private readonly IHandlerDispatcher<RelayCommand, RelayCommandResult> _handler;
+    private readonly CommandResultOutbox _commandResultOutbox;
     private readonly ResiliencePipeline _retryPipeline;
 
     public CommandQueueProcessor(
         ILogger<CommandQueueProcessor> logger,
         IDurableQueue<RelayCommand> commandQueue,
-        IRemoteRelay relay,
         IHandlerDispatcher<RelayCommand, RelayCommandResult> handler,
+        CommandResultOutbox commandResultOutbox,
         ResiliencePipelineProvider<string> resiliencePipelineProvider
     )
     {
         _logger = logger;
         _commandQueue = commandQueue;
-        _relay = relay;
         _handler = handler;
+        _commandResultOutbox = commandResultOutbox;
         _retryPipeline = resiliencePipelineProvider.GetPipeline(Constants.DefaultRetryPolicy);
     }
 
@@ -34,17 +35,15 @@ internal sealed class CommandQueueProcessor
     {
         while (!cancellationToken.IsCancellationRequested)
         {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            RelayCommand? value;
+            RelayCommand? command;
 
             try
             {
-                value = isForRetry
+                command = isForRetry
                     ? await _commandQueue.PickForRetry(cancellationToken)
                     : await _commandQueue.Pick(cancellationToken);
 
-                if (value is null)
+                if (command is null)
                 {
                     await Task.Delay(Random.Shared.Next(1500, 1700), cancellationToken);
 
@@ -60,16 +59,11 @@ internal sealed class CommandQueueProcessor
                 continue;
             }
 
-            var isSuccess = false;
+            RelayCommandResult? commandResult = null;
 
             try
             {
-                // TODO: Handle is mostly a costly operation, so maybe we store the result as well and post to local from a separate workflow?
-                var commandResult = await _handler.Handle(value, cancellationToken);
-
-                await _relay.PostToLocal(commandResult, cancellationToken);
-
-                isSuccess = true;
+                commandResult = await _handler.Handle(command, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -81,13 +75,17 @@ internal sealed class CommandQueueProcessor
                 await _retryPipeline.ExecuteAsync(
                     async ct =>
                     {
-                        if (isSuccess)
+                        if (commandResult is not null)
                         {
-                            await _commandQueue.Complete(value, ct);
+                            await _commandResultOutbox.CompleteCommandWithResult(
+                                command,
+                                commandResult,
+                                ct
+                            );
                         }
                         else
                         {
-                            await _commandQueue.Fail(value, ct);
+                            await _commandQueue.Fail(command, ct);
                         }
                     },
                     cancellationToken
@@ -95,7 +93,7 @@ internal sealed class CommandQueueProcessor
             }
             catch (Exception ex)
             {
-                _logger.ZLogError(ex, $"An error occurred while updating value");
+                _logger.ZLogError(ex, $"An error occurred while updating command");
             }
         }
     }

@@ -32,43 +32,42 @@ internal sealed class LocalRelayPoller
     {
         while (!cancellationToken.IsCancellationRequested)
         {
-            cancellationToken.ThrowIfCancellationRequested();
-
             try
             {
-                // TODO: this chaos pipeline is not good, could be better to move the chaos strategies inside PollFromLocal?
-                await _relayChaosPipeline.ExecuteAsync(
-                    async ct =>
-                    {
-                        await foreach (var command in _relay.PollFromLocal(cancellationToken: ct))
-                        {
-                            _logger.ZLogInformation($"Received from local: {command}");
+                await using var enumerator = _relay
+                    .PollFromLocal(cancellationToken: cancellationToken)
+                    .GetAsyncEnumerator(cancellationToken);
 
-                            try
+                while (
+                    await _relayChaosPipeline.ExecuteAsync(
+                        _ => enumerator.MoveNextAsync(),
+                        cancellationToken
+                    )
+                )
+                {
+                    var command = enumerator.Current;
+
+                    _logger.ZLogInformation($"Received from local: {command}");
+
+                    try
+                    {
+                        await _retryPipeline.ExecuteAsync(
+                            async ct =>
                             {
-                                await _retryPipeline.ExecuteAsync(
-                                    async retryCt =>
-                                    {
-                                        await _commandQueue.Enqueue(command, retryCt);
-                                    },
-                                    ct
-                                );
-                            }
-                            catch (AlreadyQueuedException)
-                            {
-                                _logger.ZLogInformation($"Skipping already queued value");
-                            }
-                            catch (Exception ex)
-                            {
-                                _logger.ZLogError(
-                                    ex,
-                                    $"An error occurred while inserting value to queue"
-                                );
-                            }
-                        }
-                    },
-                    cancellationToken
-                );
+                                await _commandQueue.Enqueue(command, ct);
+                            },
+                            cancellationToken
+                        );
+                    }
+                    catch (AlreadyQueuedException)
+                    {
+                        _logger.ZLogInformation($"Skipping already queued value");
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.ZLogError(ex, $"An error occurred while inserting value to queue");
+                    }
+                }
             }
             catch (Exception ex)
             {

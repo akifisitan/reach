@@ -1,3 +1,5 @@
+using System.Data.Common;
+
 namespace Reach.Infra.DurableQueue;
 
 internal sealed class DurableQueue<T> : IDurableQueue<T>
@@ -42,6 +44,16 @@ internal sealed class DurableQueue<T> : IDurableQueue<T>
     public Task Complete(T value, CancellationToken cancellationToken)
     {
         return _repository.Complete(_idSelector(value), cancellationToken);
+    }
+
+    public Task Complete(
+        T value,
+        DbConnection connection,
+        DbTransaction transaction,
+        CancellationToken cancellationToken
+    )
+    {
+        return _repository.Complete(_idSelector(value), connection, transaction, cancellationToken);
     }
 
     public Task Fail(T value, CancellationToken cancellationToken)

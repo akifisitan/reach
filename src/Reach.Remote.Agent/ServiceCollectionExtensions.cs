@@ -1,6 +1,7 @@
 using Polly;
 using Polly.Retry;
 using Reach.Hosting;
+using Reach.Infra.CommandResultOutbox;
 using Reach.Infra.DurableQueue;
 using Reach.Infra.Persistence;
 using Reach.Relay;
@@ -71,6 +72,15 @@ internal static class ServiceCollectionExtensions
         );
 
         services
+            .AddOptions<SqliteCommandResultOutboxOptions>()
+            .Configure(x =>
+            {
+                x.TableName = "command_result_outbox";
+            });
+
+        services.AddOptions<CommandResultOutboxOptions>();
+
+        services
             .AddOptions<DbConnectionFactoryOptions>()
             .Configure(x =>
             {
@@ -78,6 +88,15 @@ internal static class ServiceCollectionExtensions
             });
 
         services.AddSingleton<CommandQueueProcessor>();
+        services.AddSingleton<CommandResultPoster>();
+        services.AddSingleton<SqliteCommandResultOutboxStore>();
+        services.AddSingleton<ICommandResultOutboxStore>(sp =>
+            sp.GetRequiredService<SqliteCommandResultOutboxStore>()
+        );
+        services.AddSingleton<CommandResultOutbox>();
+        services.AddSingleton<IDbInitializable>(sp =>
+            sp.GetRequiredService<SqliteCommandResultOutboxStore>()
+        );
         services.AddSingleton<LocalRelayPoller>();
 
         services.AddHostedService<RemoteAgentHostedService>();

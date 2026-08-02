@@ -15,6 +15,7 @@
     <PackageReference Include="Polly.Extensions" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Reach.Infra.CommandResultOutbox\Reach.Infra.CommandResultOutbox.csproj" />
     <ProjectReference Include="..\Reach.Hosting\Reach.Hosting.csproj" />
   </ItemGroup>
   <ItemGroup>

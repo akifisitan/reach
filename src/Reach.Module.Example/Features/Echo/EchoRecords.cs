@@ -20,8 +20,8 @@ internal sealed record EchoCommand(string Id, string Message) : RelayCommand(Id)
     public static string Kind => "exampleEcho";
 }
 
-internal sealed record EchoCommandResult(string Reply, string CommandId)
-    : RelayCommandResult(Guid.NewGuid().ToString("N"), CommandId),
+internal sealed record EchoCommandResult(string CommandId, string Reply)
+    : RelayCommandResult(CommandId),
         IWireRecord
 {
     public static string Kind => "exampleEcho.result";

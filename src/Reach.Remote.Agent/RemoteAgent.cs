@@ -6,18 +6,21 @@ internal sealed class RemoteAgent
     private readonly ExecutorOptions _options;
     private readonly LocalRelayPoller _localRelayPoller;
     private readonly CommandQueueProcessor _commandQueueProcessor;
+    private readonly CommandResultPoster _commandResultPoster;
 
     public RemoteAgent(
         ILogger<RemoteAgent> logger,
         IOptions<ExecutorOptions> options,
         LocalRelayPoller localRelayPoller,
-        CommandQueueProcessor commandQueueProcessor
+        CommandQueueProcessor commandQueueProcessor,
+        CommandResultPoster commandResultPoster
     )
     {
         _logger = logger;
         _options = options.Value;
         _localRelayPoller = localRelayPoller;
         _commandQueueProcessor = commandQueueProcessor;
+        _commandResultPoster = commandResultPoster;
     }
 
     public async Task Start(CancellationToken cancellationToken)
@@ -27,6 +30,7 @@ internal sealed class RemoteAgent
         List<Task> tasks = [];
 
         tasks.Add(_localRelayPoller.Start(cancellationToken));
+        tasks.Add(_commandResultPoster.Start(cancellationToken));
         tasks.AddRange(
             Enumerable
                 .Range(0, _options.ConsumerCount)

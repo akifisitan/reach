@@ -1,3 +1,5 @@
+using System.Data.Common;
+
 namespace Reach.Infra.DurableQueue;
 
 public interface IDurableQueue<T>
@@ -6,5 +8,11 @@ public interface IDurableQueue<T>
     Task<T?> Pick(CancellationToken cancellationToken);
     Task<T?> PickForRetry(CancellationToken cancellationToken);
     Task Complete(T value, CancellationToken cancellationToken);
+    Task Complete(
+        T value,
+        DbConnection connection,
+        DbTransaction transaction,
+        CancellationToken cancellationToken
+    );
     Task Fail(T value, CancellationToken cancellationToken);
 }

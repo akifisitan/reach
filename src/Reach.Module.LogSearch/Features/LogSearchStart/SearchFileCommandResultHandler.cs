@@ -22,7 +22,7 @@ internal sealed class SearchFileCommandResultHandler
         CancellationToken cancellationToken
     )
     {
-        _logger.ZLogInformation($"Doing something with command: {result.Id}");
+        _logger.ZLogInformation($"Doing something with command: {result.CommandId}");
 
         if (!await _resultStore.TrySetAsComplete(result, cancellationToken))
         {

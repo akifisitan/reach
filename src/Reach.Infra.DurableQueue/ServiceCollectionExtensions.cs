@@ -23,11 +23,12 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IDurableQueueRepository, DurableQueueRepository>();
         services.AddOptions<DurableQueueOptions>().Configure(configure);
 
-        services.AddSingleton<IDurableQueue<T>>(sp => new DurableQueue<T>(
+        services.AddSingleton(sp => new DurableQueue<T>(
             sp.GetRequiredService<IDurableQueueDataSerializer>(),
             sp.GetRequiredService<IDurableQueueRepository>(),
             idSelector
         ));
+        services.AddSingleton<IDurableQueue<T>>(sp => sp.GetRequiredService<DurableQueue<T>>());
 
         return services;
     }

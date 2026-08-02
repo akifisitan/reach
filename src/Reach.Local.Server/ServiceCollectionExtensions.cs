@@ -27,7 +27,7 @@ internal static class ServiceCollectionExtensions
             configuration.GetSection(ChaosOptions.SectionName).Get<ChaosOptions>() ?? new();
 
         services.AddDurableQueue<RelayCommandResult>(
-            x => x.Id,
+            x => x.CommandId,
             x =>
             {
                 x.MaxTryCount = 4;

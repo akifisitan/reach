@@ -236,7 +236,11 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
                 filePath,
                 [
                     JsonSerializer.Serialize(
-                        new Storage(Guid.NewGuid().ToString("N"), base64Text, DateTimeOffset.Now),
+                        new Storage(
+                            Guid.CreateVersion7().ToString("N"),
+                            base64Text,
+                            DateTimeOffset.Now
+                        ),
                         LocalFileJsonSerializerContext.Default.Storage
                     ),
                 ],

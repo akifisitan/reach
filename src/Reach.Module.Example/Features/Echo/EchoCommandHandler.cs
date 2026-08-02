@@ -16,6 +16,6 @@ internal sealed class EchoCommandHandler : RelayCommandHandler<EchoCommand, Echo
     {
         _logger.ZLogInformation($"Running remote execute for {command}");
 
-        return Task.FromResult(new EchoCommandResult($"echo: {command.Message}", command.Id));
+        return Task.FromResult(new EchoCommandResult(command.Id, $"echo: {command.Message}"));
     }
 }

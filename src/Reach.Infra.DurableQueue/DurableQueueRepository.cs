@@ -1,3 +1,4 @@
+using System.Data.Common;
 using Dapper;
 using Microsoft.Data.Sqlite;
 using Reach.Infra.Persistence;
@@ -10,6 +11,12 @@ internal interface IDurableQueueRepository : IDbInitializable
     Task<QueueRecord?> Pick(CancellationToken cancellationToken);
     Task<QueueRecord?> PickForRetry(CancellationToken cancellationToken);
     Task Complete(string id, CancellationToken cancellationToken);
+    Task Complete(
+        string id,
+        DbConnection connection,
+        DbTransaction? transaction,
+        CancellationToken cancellationToken
+    );
     Task Fail(string id, CancellationToken cancellationToken);
 }
 
@@ -157,6 +164,16 @@ internal sealed class DurableQueueRepository : IDurableQueueRepository
     {
         await using var connection = await _dbConnectionFactory.CreateConnection(cancellationToken);
 
+        await Complete(id, connection, transaction: null, cancellationToken);
+    }
+
+    public async Task Complete(
+        string id,
+        DbConnection connection,
+        DbTransaction? transaction,
+        CancellationToken cancellationToken
+    )
+    {
         await connection.ExecuteAsync(
             $"""
             UPDATE {_tableName}
@@ -168,7 +185,8 @@ internal sealed class DurableQueueRepository : IDurableQueueRepository
                 Id = id,
                 Status = QueueRecordStatus.Success,
                 CompletionTime = DateTimeOffset.Now.ToIsoString(),
-            }
+            },
+            transaction: transaction
         );
     }
 

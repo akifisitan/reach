@@ -26,7 +26,9 @@ public static class ReachDaemonRunner
 
         using var host = builder.Build();
 
-        var logger = host.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Program");
+        var logger = host
+            .Services.GetRequiredService<ILoggerFactory>()
+            .CreateLogger(nameof(ReachDaemonRunner));
 
         if (paths.LockFilePath is not null)
         {
@@ -54,7 +56,7 @@ public static class ReachDaemonRunner
 
             await host.RunAsync();
         }
-        catch (RelaySetupRequiredException ex) // which one of these throws this error?
+        catch (RelaySetupRequiredException ex)
         {
             logger.ZLogError($"Relay setup required: {ex.Message}");
 
@@ -63,7 +65,9 @@ public static class ReachDaemonRunner
                 var setupCoordinator = host.Services.GetRequiredService<IRelaySetupCoordinator>();
 
                 await setupCoordinator.RunSetup();
+
                 await RunStartupChecks(host.Services);
+
                 await host.RunAsync();
             }
             catch (Exception setupEx)

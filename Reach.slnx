@@ -5,6 +5,7 @@
     <File Path="Directory.Packages.props" />
   </Folder>
   <Project Path="src/Reach.Hosting/Reach.Hosting.csproj" />
+  <Project Path="src/Reach.Infra.CommandResultOutbox/Reach.Infra.CommandResultOutbox.csproj" />
   <Project Path="src/Reach.Infra.DurableQueue/Reach.Infra.DurableQueue.csproj" />
   <Project Path="src/Reach.Infra.Persistence/Reach.Infra.Persistence.csproj" />
   <Project Path="src/Reach.Local.Cli/Reach.Local.Cli.csproj" />
