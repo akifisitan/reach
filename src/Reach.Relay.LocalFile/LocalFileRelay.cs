@@ -89,7 +89,11 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
         [EnumeratorCancellation] CancellationToken cancellationToken = default
     )
     {
-        var defaultCursor = new RelayCursor(0, DateTimeOffset.Now.Subtract(TimeSpan.FromDays(1)));
+        var defaultCursor = new RelayCursor(
+            0,
+            DateTimeOffset.Now.Subtract(TimeSpan.FromDays(1)),
+            0
+        );
         var cursor = await _cursorStorage.Retrieve(cursorName, cancellationToken) ?? defaultCursor;
 
         HashSet<string> processedEntries = [];
@@ -180,7 +184,7 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
                 response.LastOrDefault(x => x.CreatedDate >= cursor.CreationTime)?.CreatedDate
                 ?? cursor.CreationTime;
 
-            cursor = new(cursor.CurrentIndex + response.Count, latestCreatedAt);
+            cursor = new(cursor.CurrentIndex + response.Count, latestCreatedAt, 0);
 
             await _cursorStorage.Store(cursorName, cursor, cancellationToken);
 

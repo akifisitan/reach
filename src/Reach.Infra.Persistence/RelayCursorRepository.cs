@@ -9,7 +9,7 @@ internal sealed class RelayCursorRepository : IRelayCursorStorage, IDbInitializa
     private readonly ILogger<RelayCursorRepository> _logger;
     private readonly string _tableName;
 
-    private const string TableColumns = "name,current_index,creation_time";
+    private const string TableColumns = "name,current_index,page_offset,creation_time";
 
     public RelayCursorRepository(
         DbConnectionFactory dbConnectionFactory,
@@ -33,6 +33,7 @@ internal sealed class RelayCursorRepository : IRelayCursorStorage, IDbInitializa
             CREATE TABLE IF NOT EXISTS {_tableName}(
                 name TEXT PRIMARY KEY,
                 current_index INTEGER NOT NULL,
+                page_offset INTEGER NOT NULL,
                 creation_time TEXT NOT NULL
             ) STRICT;
             """
@@ -48,7 +49,7 @@ internal sealed class RelayCursorRepository : IRelayCursorStorage, IDbInitializa
         var rows = await connection.ExecuteAsync(
             $"""
             UPDATE {_tableName}
-            SET creation_time = $CreationTime, current_index = $CurrentIndex
+            SET creation_time = $CreationTime, current_index = $CurrentIndex, page_offset = $PageOffset
             WHERE name = $Name
             """,
             new
@@ -56,6 +57,7 @@ internal sealed class RelayCursorRepository : IRelayCursorStorage, IDbInitializa
                 Name = name,
                 CreationTime = cursor.CreationTime.ToIsoString(),
                 CurrentIndex = cursor.CurrentIndex,
+                PageOffset = cursor.PageOffset,
             },
             transaction: transaction
         );
@@ -64,14 +66,15 @@ internal sealed class RelayCursorRepository : IRelayCursorStorage, IDbInitializa
         {
             await connection.ExecuteAsync(
                 $"""
-                INSERT INTO {_tableName}(name, creation_time, current_index)
-                VALUES ($Name, $CreationTime, $CurrentIndex)
+                INSERT INTO {_tableName}(name, creation_time, current_index, page_offset)
+                VALUES ($Name, $CreationTime, $CurrentIndex, $PageOffset)
                 """,
                 new
                 {
                     Name = name,
                     CreationTime = cursor.CreationTime.ToIsoString(),
                     CurrentIndex = cursor.CurrentIndex,
+                    PageOffset = cursor.PageOffset,
                 },
                 transaction: transaction
             );
@@ -98,10 +101,10 @@ internal sealed class RelayCursorRepository : IRelayCursorStorage, IDbInitializa
     }
 }
 
-internal sealed record DbRelayCursor(long CurrentIndex, string CreationTime)
+internal sealed record DbRelayCursor(long CurrentIndex, long PageOffset, string CreationTime)
 {
     public RelayCursor ToRelayCursor() =>
-        new(CurrentIndex, DateTimeOffset.FromIsoString(CreationTime));
+        new(CurrentIndex, DateTimeOffset.FromIsoString(CreationTime), PageOffset);
 }
 
 internal sealed record RelayCursorRepositoryOptions

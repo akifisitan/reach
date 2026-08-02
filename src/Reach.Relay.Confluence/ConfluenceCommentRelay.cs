@@ -106,6 +106,8 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
 
         var lastSeenCommentId = previousCursor?.CurrentIndex ?? 0;
 
+        var pageOffset = previousCursor?.PageOffset ?? 0;
+
         var pollDelayMs = _options.PollDelayMs;
 
         var consecutiveFailures = 0;
@@ -118,12 +120,17 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
 
             try
             {
-                newComments = await ReadNewCommentsFromPage(
+                var readResult = await ReadNewCommentsFromPage(
                         pageId,
                         lastSeenCommentId,
+                        pageOffset,
                         cancellationToken
                     )
                     .ConfigureAwait(false);
+
+                newComments = readResult.NewComments;
+
+                pageOffset = readResult.LastPageStart;
 
                 consecutiveFailures = 0;
             }
@@ -206,7 +213,7 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
 
             await _cursorStorage.Store(
                 cursorName,
-                new RelayCursor(lastSeenCommentId, DateTimeOffset.Now),
+                new RelayCursor(lastSeenCommentId, DateTimeOffset.Now, pageOffset),
                 cancellationToken
             );
 
@@ -258,11 +265,15 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
             .ConfigureAwait(false);
     }
 
-    // Pages through the comment list (oldest first) and returns only comments
-    // with an id greater than afterCommentId
-    private async Task<List<ResultContent>> ReadNewCommentsFromPage(
+    // Pages through the comment list (oldest first), starting at the persisted page
+    // offset, and returns only comments with an id greater than afterCommentId
+    private async Task<(
+        List<ResultContent> NewComments,
+        long LastPageStart
+    )> ReadNewCommentsFromPage(
         long pageId,
         long afterCommentId,
+        long startOffset,
         CancellationToken cancellationToken
     )
     {
@@ -270,13 +281,37 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
 
         List<ResultContent> newComments = [];
 
-        var start = 0;
+        var start = startOffset;
 
-        // TODO: this could hammer the relay no?
+        var driftChecked = false;
+
         while (true)
         {
-            var batch = await ReadCommentsPage(httpClient, pageId, start, cancellationToken)
+            var batch = await ReadCommentsPage(httpClient, pageId, (int)start, cancellationToken)
                 .ConfigureAwait(false);
+
+            // On resume from a stored offset, the cursor comment must still be within the
+            // scanned range. If it is not, the append-only assumption was violated (e.g. a
+            // comment was deleted), offsets have drifted and we restart from the beginning
+            if (!driftChecked)
+            {
+                driftChecked = true;
+
+                if (
+                    startOffset > 0
+                    && batch.Results.Count > 0
+                    && batch.Results.Max(x => long.Parse(x.Id)) < afterCommentId
+                )
+                {
+                    _logger.ZLogWarning(
+                        $"Stored comment page offset has drifted, restarting pagination from the beginning"
+                    );
+
+                    start = 0;
+
+                    continue;
+                }
+            }
 
             foreach (var item in batch.Results)
             {
@@ -294,7 +329,7 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
             start += batch.Size;
         }
 
-        return newComments;
+        return (newComments, start);
     }
 
     private async Task<GetCommentsResponse> ReadCommentsPage(

@@ -35,7 +35,7 @@ public interface IRelayPayloadSerializer
     T Deserialize<T>(string payload);
 }
 
-public record RelayCursor(long CurrentIndex, DateTimeOffset CreationTime);
+public record RelayCursor(long CurrentIndex, DateTimeOffset CreationTime, long PageOffset);
 
 public interface IRelayCursorStorage
 {
