@@ -30,10 +30,14 @@ internal sealed class RemoteAgent
         List<Task> tasks = [];
 
         tasks.Add(_localRelayPoller.Start(cancellationToken));
-        tasks.Add(_commandResultPoster.Start(cancellationToken));
         tasks.AddRange(
             Enumerable
-                .Range(0, _options.ConsumerCount)
+                .Range(0, _options.PosterCount)
+                .Select(_ => _commandResultPoster.Start(cancellationToken))
+        );
+        tasks.AddRange(
+            Enumerable
+                .Range(0, _options.ProcessorCount)
                 .Select(_ => _commandQueueProcessor.Start(isForRetry: false, cancellationToken))
         );
         tasks.AddRange(

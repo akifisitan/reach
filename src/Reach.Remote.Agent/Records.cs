@@ -7,6 +7,7 @@ internal sealed record AppOptions
 
 internal sealed record ExecutorOptions
 {
-    public int ConsumerCount { get; set; }
+    public int ProcessorCount { get; set; }
     public int RetryConsumerCount { get; set; }
+    public int PosterCount { get; set; }
 }

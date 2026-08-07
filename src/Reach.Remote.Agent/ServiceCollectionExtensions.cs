@@ -121,8 +121,9 @@ internal static class ServiceCollectionExtensions
             .AddOptions<ExecutorOptions>()
             .Configure(x =>
             {
-                x.ConsumerCount = 1;
+                x.ProcessorCount = 1;
                 x.RetryConsumerCount = 1;
+                x.PosterCount = 1;
             });
 
         return services;
