@@ -22,11 +22,11 @@ internal sealed class SearchFileCommandResultHandler
         CancellationToken cancellationToken
     )
     {
-        _logger.ZLogInformation($"Doing something with command: {result.CommandId}");
+        _logger.ZLogInformation($"Received search result for id: {result.CommandId}");
 
         if (!await _resultStore.TrySetAsComplete(result, cancellationToken))
         {
-            _logger.ZLogError($"File not found");
+            _logger.ZLogError($"Result with id: {result.CommandId} not found");
 
             return new();
         }

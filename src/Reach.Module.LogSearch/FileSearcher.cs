@@ -13,10 +13,12 @@ internal sealed class FileSearcher
     {
         _logger.ZLogInformation($"Searching in file for {query}...");
 
-        await Task.Delay(2000, cancellationToken);
+        await Task.Delay(Random.Shared.Next(1500, 5000), cancellationToken);
 
-        _logger.ZLogInformation($"Search complete");
+        var result = new SearchFileResult(Guid.NewGuid().ToString(), Random.Shared.Next(1, 999999));
 
-        return new(Guid.NewGuid().ToString(), 4321);
+        _logger.ZLogInformation($"Search complete: {result}");
+
+        return result;
     }
 }

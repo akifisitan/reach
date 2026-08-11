@@ -1,3 +1,6 @@
+using Polly;
+using Polly.Registry;
+using Reach.Module.Toolkit.Resilience;
 using Reach.Module.Toolkit.ResultStore;
 using Reach.Relay;
 
@@ -8,16 +11,19 @@ internal sealed class LogSearchStartHandler
 {
     private readonly ILogger<LogSearchStartHandler> _logger;
     private readonly ILocalRelay _relay;
+    private readonly ResiliencePipeline _retryPipeline;
     private readonly IResultStore<SearchFileCommandResult> _resultStore;
 
     public LogSearchStartHandler(
         ILogger<LogSearchStartHandler> logger,
         ILocalRelay relay,
+        ResiliencePipelineProvider<string> resiliencePipelineProvider,
         IResultStore<SearchFileCommandResult> resultStore
     )
     {
         _logger = logger;
         _relay = relay;
+        _retryPipeline = resiliencePipelineProvider.GetDefaultRetryPipeline();
         _resultStore = resultStore;
     }
 
@@ -42,11 +48,14 @@ internal sealed class LogSearchStartHandler
 
             await _resultStore.Insert(id, cancellationToken);
 
-            var result = await _relay.PostToRemote(command, cancellationToken);
+            var result = await _retryPipeline.ExecuteAsync(
+                async ct => await _relay.PostToRemote(command, ct),
+                cancellationToken
+            );
 
             _logger.ZLogInformation($"[{command.Id}] Posting successful {result.PollId.Value}");
 
-            return new LogSearchStartResult.Success(id);
+            return new LogSearchStartResult.Success(result.PollId.Value);
         }
         catch (Exception ex)
         {

@@ -108,14 +108,14 @@ public sealed class SqliteResultStore<TResult> : IResultStore<TResult>, IDbIniti
         var rows = await connection.ExecuteAsync(
             $"""
             UPDATE {_tableName}
-            SET status = $Status, result_data = $ResultJson, error_message = NULL, completion_time = $CompletionTime
+            SET status = $Status, result_data = $ResultData, error_message = NULL, completion_time = $CompletionTime
             WHERE id = $Id
             """,
             new
             {
                 Id = result.CommandId,
                 Status = ResultStoreStatus.Complete,
-                ResultJson = data,
+                ResultData = data,
                 CompletionTime = DateTimeOffset.Now.ToIsoString(),
             }
         );

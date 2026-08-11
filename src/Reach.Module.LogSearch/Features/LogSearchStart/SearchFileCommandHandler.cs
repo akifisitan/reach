@@ -24,6 +24,6 @@ internal sealed class SearchFileCommandHandler
 
         var result = await _fileSearcher.Search(command.Query, cancellationToken);
 
-        return new SearchFileCommandResult(command.Id, result.Content);
+        return new SearchFileCommandResult(command.Id, result.Content, result.LineNumber);
     }
 }

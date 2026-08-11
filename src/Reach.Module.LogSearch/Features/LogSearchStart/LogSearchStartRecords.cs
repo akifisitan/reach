@@ -36,7 +36,7 @@ internal sealed record SearchFileCommand(
     public static string Kind => "searchFile";
 }
 
-internal sealed record SearchFileCommandResult(string CommandId, string Content)
+internal sealed record SearchFileCommandResult(string CommandId, string Content, int LineNumber)
     : RelayCommandResult(CommandId),
         IWireRecord
 {

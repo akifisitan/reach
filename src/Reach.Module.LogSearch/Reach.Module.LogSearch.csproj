@@ -11,5 +11,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Reach.Module.Abstractions\Reach.Module.Abstractions.csproj" />
     <ProjectReference Include="..\Reach.Module.Toolkit.ResultStore.Sqlite\Reach.Module.Toolkit.ResultStore.Sqlite.csproj" />
+    <ProjectReference Include="..\Reach.Module.Toolkit.Resilience\Reach.Module.Toolkit.Resilience.csproj" />
   </ItemGroup>
 </Project>

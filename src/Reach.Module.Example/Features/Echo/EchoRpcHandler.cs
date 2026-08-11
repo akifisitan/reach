@@ -39,7 +39,7 @@ internal sealed class EchoRpcHandler : RpcHandler<EchoPayload, EchoResult>
 
             _logger.ZLogInformation($"[{id}] Posting successful {result.PollId.Value}");
 
-            return new EchoResult.Success(id);
+            return new EchoResult.Success(result.PollId.Value);
         }
         catch (ResultAlreadyExistsException ex)
         {

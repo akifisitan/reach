@@ -9,13 +9,15 @@ internal sealed class EchoCommandHandler : RelayCommandHandler<EchoCommand, Echo
         _logger = logger;
     }
 
-    protected override Task<EchoCommandResult> Handle(
+    protected override async Task<EchoCommandResult> Handle(
         EchoCommand command,
         CancellationToken cancellationToken
     )
     {
         _logger.ZLogInformation($"Running remote execute for {command}");
 
-        return Task.FromResult(new EchoCommandResult(command.Id, $"echo: {command.Message}"));
+        await Task.Delay(1500, cancellationToken);
+
+        return new EchoCommandResult(command.Id, $"echo: {command.Message}");
     }
 }
