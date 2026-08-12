@@ -3,7 +3,6 @@ using Polly.Retry;
 using Reach.Hosting;
 using Reach.Infra.DurableQueue;
 using Reach.Infra.Persistence;
-using Reach.Local.Shared;
 using Reach.Relay;
 
 namespace Reach.Local.Server;
@@ -16,7 +15,7 @@ internal static class ServiceCollectionExtensions
         ReachAppPaths paths
     )
     {
-        services.AddLocalShared(configuration, paths.AppDataBasePath);
+        services.AddHosting(configuration, paths.AppDataBasePath);
 
         services.AddReachLogging(configuration, paths);
 

@@ -20,7 +20,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Reach.Infra.DurableQueue\Reach.Infra.DurableQueue.csproj" />
     <ProjectReference Include="..\Reach.Hosting\Reach.Hosting.csproj" />
-    <ProjectReference Include="..\Reach.Local.Shared\Reach.Local.Shared.csproj" />
+    <ProjectReference Include="..\Reach.Local.Contracts\Reach.Local.Contracts.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="config.json">

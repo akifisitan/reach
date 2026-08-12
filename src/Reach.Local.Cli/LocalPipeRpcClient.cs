@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using System.IO.Pipes;
-using Reach.Local.Shared;
+using Reach.Local.Contracts;
 using Reach.Module;
 using StreamJsonRpc;
 

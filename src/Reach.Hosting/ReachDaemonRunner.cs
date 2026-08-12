@@ -77,7 +77,7 @@ public static class ReachDaemonRunner
                 Environment.ExitCode = 1;
             }
         }
-        catch (Microsoft.Extensions.Options.OptionsValidationException ex)
+        catch (OptionsValidationException ex)
         {
             logger.ZLogError($"Configuration error: {ex.Message}");
 

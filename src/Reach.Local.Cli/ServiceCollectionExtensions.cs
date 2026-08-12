@@ -1,5 +1,4 @@
 using Reach.Hosting;
-using Reach.Local.Shared;
 using Reach.Module;
 
 namespace Reach.Local.Cli;
@@ -13,7 +12,7 @@ internal static class ServiceCollectionExtensions
         ReachAppPaths compositionPaths
     )
     {
-        services.AddLocalShared(configuration, compositionPaths.AppDataBasePath);
+        services.AddHosting(configuration, compositionPaths.AppDataBasePath);
 
         services.AddReachLogging(configuration, paths);
 

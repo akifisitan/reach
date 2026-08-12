@@ -1,12 +1,11 @@
 using PolyType;
-using Reach.Hosting;
 using StreamJsonRpc;
 
-namespace Reach.Local.Shared;
+namespace Reach.Local.Contracts;
 
 public sealed class LocalRpcShared
 {
-    public const string PipeName = $"{Constants.AppName}LocalRpcPipe";
+    public const string PipeName = "ReachLocalRpcPipe";
 
     public const string MainMethodName = "main";
     public const string HealthCheckMethodName = "hc";
