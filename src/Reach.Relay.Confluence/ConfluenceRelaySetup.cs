@@ -11,7 +11,8 @@ public sealed class ConfluenceRelaySetup : IRelaySetup
 {
     internal const string ConfigFileName = "config.json";
     internal const string CredentialFileName = "confluence.credential";
-    internal const string CredentialEntropy = "Reach.ConfluenceCredential.v1";
+    internal const string CredentialKeyDirectoryName = "credential-keys";
+    internal const string CredentialPurpose = "Reach.ConfluenceCredential.v1";
 
     private readonly IConsolePrompter _prompter;
     private readonly ICredentialFileStore _credentialStore;
