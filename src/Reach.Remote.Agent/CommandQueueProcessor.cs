@@ -64,10 +64,12 @@ internal sealed class CommandQueueProcessor
             try
             {
                 commandResult = await _handler.Handle(command, cancellationToken);
+
+                _logger.ZLogDebug($"Handled command {command.Id}");
             }
             catch (Exception ex)
             {
-                _logger.ZLogError(ex, $"An error occurred while handling");
+                _logger.ZLogWarning(ex, $"An error occurred while handling command {command.Id}");
             }
 
             try
@@ -82,10 +84,14 @@ internal sealed class CommandQueueProcessor
                                 commandResult,
                                 ct
                             );
+
+                            _logger.ZLogDebug($"Completed command {command.Id} with result");
                         }
                         else
                         {
                             await _commandQueue.Fail(command, ct);
+
+                            _logger.ZLogDebug($"Marked command {command.Id} as failed");
                         }
                     },
                     cancellationToken
@@ -93,7 +99,7 @@ internal sealed class CommandQueueProcessor
             }
             catch (Exception ex)
             {
-                _logger.ZLogError(ex, $"An error occurred while updating command");
+                _logger.ZLogError(ex, $"An error occurred while updating command {command.Id}");
             }
         }
     }

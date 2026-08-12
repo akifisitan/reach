@@ -47,7 +47,7 @@ internal sealed class LocalRelayPoller
                 {
                     var command = enumerator.Current;
 
-                    _logger.ZLogInformation($"Received from local: {command}");
+                    _logger.ZLogDebug($"Received command from local: {command}");
 
                     try
                     {
@@ -58,20 +58,25 @@ internal sealed class LocalRelayPoller
                             },
                             cancellationToken
                         );
+
+                        _logger.ZLogInformation($"Queued command {command.Id} from local relay");
                     }
                     catch (AlreadyQueuedException)
                     {
-                        _logger.ZLogInformation($"Skipping already queued value");
+                        _logger.ZLogDebug($"Skipping already queued command {command.Id}");
                     }
                     catch (Exception ex)
                     {
-                        _logger.ZLogError(ex, $"An error occurred while inserting value to queue");
+                        _logger.ZLogWarning(
+                            ex,
+                            $"An error occurred while inserting command {command.Id} to queue"
+                        );
                     }
                 }
             }
             catch (Exception ex)
             {
-                _logger.ZLogError(ex, $"An error occurred while polling from local");
+                _logger.ZLogWarning(ex, $"An error occurred while polling from local");
 
                 await Task.Delay(Random.Shared.Next(2000, 2200), cancellationToken);
             }

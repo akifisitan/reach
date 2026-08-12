@@ -132,7 +132,7 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
 
             if (response.Count == 0)
             {
-                _logger.ZLogInformation($"No new lines found");
+                _logger.ZLogTrace($"No new lines found");
 
                 await Task.Delay(pollDelayMs, cancellationToken).ConfigureAwait(false);
 
@@ -145,14 +145,14 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
 
                 if (processedEntries.Contains(commentId))
                 {
-                    _logger.ZLogInformation($"Skipping already processed entry: {commentId}");
+                    _logger.ZLogDebug($"Skipping already processed entry: {commentId}");
 
                     continue;
                 }
 
                 if (cursor.CreationTime > resultContent.CreatedDate)
                 {
-                    _logger.ZLogInformation($"Skipping line created before cursor: {commentId}");
+                    _logger.ZLogDebug($"Skipping line created before cursor: {commentId}");
 
                     continue;
                 }

@@ -69,10 +69,15 @@ internal sealed class EventQueueProcessor
                 );
 
                 isSuccess = true;
+
+                _logger.ZLogDebug($"Handled result {value.CommandId}");
             }
             catch (Exception ex)
             {
-                _logger.ZLogError(ex, $"An error occurred while handling");
+                _logger.ZLogWarning(
+                    ex,
+                    $"An error occurred while handling result {value.CommandId}"
+                );
             }
 
             try
@@ -83,10 +88,14 @@ internal sealed class EventQueueProcessor
                         if (isSuccess)
                         {
                             await _eventQueue.Complete(value, ct);
+
+                            _logger.ZLogDebug($"Completed result {value.CommandId}");
                         }
                         else
                         {
                             await _eventQueue.Fail(value, ct);
+
+                            _logger.ZLogDebug($"Marked result {value.CommandId} as failed");
                         }
                     },
                     cancellationToken
@@ -94,7 +103,7 @@ internal sealed class EventQueueProcessor
             }
             catch (Exception ex)
             {
-                _logger.ZLogError(ex, $"An error occurred while updating value");
+                _logger.ZLogError(ex, $"An error occurred while updating result {value.CommandId}");
             }
         }
     }

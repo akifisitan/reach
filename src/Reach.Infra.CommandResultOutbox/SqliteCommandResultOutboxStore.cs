@@ -86,7 +86,7 @@ public sealed class SqliteCommandResultOutboxStore : ICommandResultOutboxStore
         }
         catch (SqliteException ex) when (ex.SqliteErrorCode == 19)
         {
-            _logger.ZLogInformation($"Result outbox entry already exists for {command.Id}");
+            _logger.ZLogDebug($"Result outbox entry already exists for {command.Id}");
         }
 
         await _commandQueue.Complete(command, connection, transaction, cancellationToken);

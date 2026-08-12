@@ -49,7 +49,7 @@ internal sealed class RemoteRelayPoller
                 {
                     var result = enumerator.Current;
 
-                    _logger.ZLogInformation($"Received from remote: {result}");
+                    _logger.ZLogDebug($"Received result from remote: {result}");
 
                     try
                     {
@@ -60,20 +60,27 @@ internal sealed class RemoteRelayPoller
                             },
                             cancellationToken
                         );
+
+                        _logger.ZLogInformation(
+                            $"Queued result {result.CommandId} from remote relay"
+                        );
                     }
                     catch (AlreadyQueuedException)
                     {
-                        _logger.ZLogInformation($"Skipping already queued value");
+                        _logger.ZLogDebug($"Skipping already queued result {result.CommandId}");
                     }
                     catch (Exception ex)
                     {
-                        _logger.ZLogError(ex, $"An error occurred while inserting value to queue");
+                        _logger.ZLogWarning(
+                            ex,
+                            $"An error occurred while inserting result {result.CommandId} to queue"
+                        );
                     }
                 }
             }
             catch (Exception ex)
             {
-                _logger.ZLogError(ex, $"An error occurred while polling from remote");
+                _logger.ZLogWarning(ex, $"An error occurred while polling from remote");
 
                 await Task.Delay(Random.Shared.Next(2000, 2200), cancellationToken);
             }

@@ -54,11 +54,15 @@ internal sealed class CommandResultPoster
 
             try
             {
+                _logger.ZLogDebug($"Posting result {item.CommandId} to local");
+
                 await _relay.PostToLocal(item.Result, cancellationToken);
+
+                _logger.ZLogInformation($"Posted result {item.CommandId} to local relay");
             }
             catch (Exception ex)
             {
-                _logger.ZLogError(
+                _logger.ZLogWarning(
                     ex,
                     $"An error occurred while posting result {item.CommandId} to local, will retry"
                 );
@@ -87,6 +91,8 @@ internal sealed class CommandResultPoster
                     async ct =>
                     {
                         await _commandResultOutbox.MarkPosted(item.CommandId, ct);
+
+                        _logger.ZLogDebug($"Marked result {item.CommandId} as posted");
                     },
                     cancellationToken
                 );

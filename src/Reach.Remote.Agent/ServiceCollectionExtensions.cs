@@ -5,7 +5,6 @@ using Reach.Infra.CommandResultOutbox;
 using Reach.Infra.DurableQueue;
 using Reach.Infra.Persistence;
 using Reach.Relay;
-using ZLogger.Formatters;
 
 namespace Reach.Remote.Agent;
 
@@ -19,7 +18,7 @@ internal static class ServiceCollectionExtensions
     {
         services.AddHosting(configuration, paths.AppDataBasePath);
 
-        services.AddAppLogging(paths);
+        services.AddReachLogging(configuration, paths);
 
         services.AddSingleton<RemoteAgent>();
 
@@ -125,50 +124,6 @@ internal static class ServiceCollectionExtensions
                 x.RetryConsumerCount = 1;
                 x.PosterCount = 1;
             });
-
-        return services;
-    }
-
-    private static IServiceCollection AddAppLogging(
-        this IServiceCollection services,
-        ReachAppPaths paths,
-        LogLevel minimumLogLevel = LogLevel.Debug
-    )
-    {
-        services.AddLogging(x =>
-        {
-            x.ClearProviders()
-                .SetMinimumLevel(minimumLogLevel)
-                .AddZLoggerConsole(options =>
-                {
-                    options.UsePlainTextFormatter(
-                        static (PlainTextZLoggerFormatter formatter) =>
-                        {
-                            formatter.SetPrefixFormatter(
-                                $"[{0:local-longdate}][{1:short}] ",
-                                (in MessageTemplate template, in LogInfo logInfo) =>
-                                    template.Format(logInfo.Timestamp, logInfo.LogLevel)
-                            );
-                        }
-                    );
-                })
-                .AddZLoggerFile(
-                    paths.LogFilePath,
-                    options =>
-                    {
-                        options.UsePlainTextFormatter(ConfigureFormatter);
-                    }
-                );
-
-            static void ConfigureFormatter(PlainTextZLoggerFormatter formatter)
-            {
-                formatter.SetPrefixFormatter(
-                    $"[{0:local-longdate}][{1:short}][{2}] ",
-                    (in MessageTemplate template, in LogInfo logInfo) =>
-                        template.Format(logInfo.Timestamp, logInfo.LogLevel, logInfo.Category)
-                );
-            }
-        });
 
         return services;
     }

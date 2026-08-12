@@ -5,7 +5,6 @@ using Reach.Infra.DurableQueue;
 using Reach.Infra.Persistence;
 using Reach.Local.Shared;
 using Reach.Relay;
-using ZLogger.Formatters;
 
 namespace Reach.Local.Server;
 
@@ -19,7 +18,7 @@ internal static class ServiceCollectionExtensions
     {
         services.AddLocalShared(configuration, paths.AppDataBasePath);
 
-        services.AddAppLogging(paths);
+        services.AddReachLogging(configuration, paths);
 
         services.AddAppOptions(configuration);
 
@@ -121,41 +120,6 @@ internal static class ServiceCollectionExtensions
         services
             .AddOptions<ChaosOptions>()
             .Bind(configuration.GetSection(ChaosOptions.SectionName));
-
-        return services;
-    }
-
-    private static IServiceCollection AddAppLogging(
-        this IServiceCollection services,
-        ReachAppPaths paths,
-        LogLevel minimumLogLevel = LogLevel.Debug
-    )
-    {
-        services.AddLogging(x =>
-        {
-            x.ClearProviders()
-                .SetMinimumLevel(minimumLogLevel)
-                .AddZLoggerConsole(options =>
-                {
-                    options.UsePlainTextFormatter(ConfigureFormatter);
-                })
-                .AddZLoggerFile(
-                    paths.LogFilePath,
-                    options =>
-                    {
-                        options.UsePlainTextFormatter(ConfigureFormatter);
-                    }
-                );
-
-            static void ConfigureFormatter(PlainTextZLoggerFormatter formatter)
-            {
-                formatter.SetPrefixFormatter(
-                    $"[{0:local-longdate}][{1:short}][{2}] ",
-                    (in MessageTemplate template, in LogInfo logInfo) =>
-                        template.Format(logInfo.Timestamp, logInfo.LogLevel, logInfo.Category)
-                );
-            }
-        });
 
         return services;
     }

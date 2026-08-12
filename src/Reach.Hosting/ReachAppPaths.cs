@@ -12,21 +12,27 @@ public sealed record ReachAppPaths
     );
 
     public static ReachAppPaths LocalServer() =>
-        Create("local", $"{Constants.AppName}.local.server.lock");
+        Create("local", lockFileName: $"{Constants.AppName}.local.server.lock");
 
     public static ReachAppPaths RemoteAgent() =>
-        Create("remote", $"{Constants.AppName}.remote.server.lock");
+        Create("remote", lockFileName: $"{Constants.AppName}.remote.server.lock");
 
-    public static ReachAppPaths LocalCli() => Create("cli", lockFileName: null);
+    public static ReachAppPaths LocalCli() =>
+        Create("cli", logFileName: $"{DateTime.Now:yyyy-MM-dd_HH-mm-ss-fff}.log");
 
-    private static ReachAppPaths Create(string profile, string? lockFileName)
+    private static ReachAppPaths Create(
+        string profile,
+        string? logFileName = null,
+        string? lockFileName = null
+    )
     {
         var basePath = Path.Combine(SharedPath, profile);
+        logFileName ??= $"{DateTime.Now:yyyy-MM-dd}.log";
 
         return new()
         {
             AppDataBasePath = basePath,
-            LogFilePath = Path.Combine(basePath, "logs", $"{DateTime.Now:yyyy-MM-dd}.log"),
+            LogFilePath = Path.Combine(basePath, "logs", logFileName),
             LockFilePath = lockFileName is null ? null : Path.Combine(basePath, lockFileName),
         };
     }

@@ -41,7 +41,7 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
     {
         var payload = _payloadSerializer.Serialize(value);
 
-        _logger.ZLogInformation($"Sending payload from local to remote: {payload}");
+        _logger.ZLogTrace($"Sending payload from local to remote: {payload}");
 
         var base64Text = payload.EncodeBase64();
 
@@ -58,7 +58,7 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
     {
         var payload = _payloadSerializer.Serialize(value);
 
-        _logger.ZLogInformation($"Sending payload from remote to local: {payload}");
+        _logger.ZLogTrace($"Sending payload from remote to local: {payload}");
 
         var base64Text = payload.EncodeBase64();
 
@@ -147,7 +147,7 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
                 }
                 else
                 {
-                    _logger.ZLogError(ex, $"An error occurred while polling Confluence comments");
+                    _logger.ZLogWarning(ex, $"An error occurred while polling Confluence comments");
                 }
 
                 // Exponential backoff: double the poll delay per consecutive failure, capped at MaxBackoff
@@ -202,11 +202,11 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
                     continue;
                 }
 
-                _logger.ZLogDebug($"Received value: {command.ToString()}");
+                _logger.ZLogTrace($"Received value: {command.ToString()}");
 
                 lastSeenCommentId = Math.Max(lastSeenCommentId, commentId);
 
-                _logger.ZLogDebug($"Set {nameof(lastSeenCommentId)} to {lastSeenCommentId}");
+                _logger.ZLogTrace($"Set {nameof(lastSeenCommentId)} to {lastSeenCommentId}");
 
                 yield return command;
             }

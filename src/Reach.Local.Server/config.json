@@ -7,6 +7,9 @@
   "AppOptions": {
     "DebugMode": false
   },
+  "ReachLoggingOptions": {
+    "OpenLogFileOnStart": false
+  },
   "Chaos": {
     "Enabled": false,
     "Retry": {
