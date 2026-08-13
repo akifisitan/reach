@@ -1,5 +1,19 @@
 # reach
 
+## Architecture
+
+Local Computer
+
+`Reach.Local.Cli` ⇄ `Reach.Local.Server`
+
+Remote Computer
+
+`Reach.Remote.Agent`
+
+Connection Flow
+
+`Reach.Local.Cli` ⇄ `Reach.Local.Server` ⇄ `Relay` ⇄ `Reach.Remote.Agent`
+
 ## Publishing
 
 Publish all deployable packages as single-file trimmed executables:
