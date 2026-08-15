@@ -35,72 +35,104 @@ internal sealed class CommandQueueProcessor
     {
         while (!cancellationToken.IsCancellationRequested)
         {
-            RelayCommand? command;
+            var command = await PickFromQueue(isForRetry, cancellationToken);
 
-            try
+            if (command is null)
             {
-                command = isForRetry
-                    ? await _commandQueue.PickForRetry(cancellationToken)
-                    : await _commandQueue.Pick(cancellationToken);
-
-                if (command is null)
-                {
-                    await Task.Delay(Random.Shared.Next(1500, 1700), cancellationToken);
-
-                    continue;
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.ZLogError(ex, $"An error occurred while picking from the queue");
-
-                await Task.Delay(Random.Shared.Next(2050, 2200), cancellationToken);
-
                 continue;
             }
 
-            RelayCommandResult? commandResult = null;
+            var result = await ProcessCommand(command, cancellationToken);
 
-            try
+            await MarkAsComplete(command, result, cancellationToken);
+        }
+    }
+
+    private async Task<RelayCommand?> PickFromQueue(
+        bool isForRetry,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            var command = isForRetry
+                ? await _commandQueue.PickForRetry(cancellationToken)
+                : await _commandQueue.Pick(cancellationToken);
+
+            if (command is null)
             {
-                commandResult = await _handler.Handle(command, cancellationToken);
+                await Task.Delay(Random.Shared.Next(1500, 1700), cancellationToken);
 
-                _logger.ZLogDebug($"Handled command {command.Id}");
+                return null;
             }
-            catch (Exception ex)
-            {
-                _logger.ZLogWarning(ex, $"An error occurred while handling command {command.Id}");
-            }
 
-            try
-            {
-                await _retryPipeline.ExecuteAsync(
-                    async ct =>
+            return command;
+        }
+        catch (Exception ex)
+        {
+            _logger.ZLogError(ex, $"An error occurred while picking from the queue");
+
+            await Task.Delay(Random.Shared.Next(2050, 2200), cancellationToken);
+
+            return null;
+        }
+    }
+
+    private async Task<RelayCommandResult?> ProcessCommand(
+        RelayCommand command,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            var commandResult = await _handler.Handle(command, cancellationToken);
+
+            _logger.ZLogDebug($"Handled command {command.Id}");
+
+            return commandResult;
+        }
+        catch (Exception ex)
+        {
+            _logger.ZLogWarning(ex, $"An error occurred while handling command {command.Id}");
+
+            return null;
+        }
+    }
+
+    private async Task MarkAsComplete(
+        RelayCommand command,
+        RelayCommandResult? commandResult,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            await _retryPipeline.ExecuteAsync(
+                async ct =>
+                {
+                    if (commandResult is not null)
                     {
-                        if (commandResult is not null)
-                        {
-                            await _commandResultOutbox.CompleteCommandWithResult(
-                                command,
-                                commandResult,
-                                ct
-                            );
+                        await _commandResultOutbox.CompleteCommandWithResult(
+                            command,
+                            commandResult,
+                            ct
+                        );
 
-                            _logger.ZLogDebug($"Completed command {command.Id} with result");
-                        }
-                        else
-                        {
-                            await _commandQueue.Fail(command, ct);
+                        _logger.ZLogDebug($"Updated command {command.Id} as complete");
+                    }
+                    else
+                    {
+                        await _commandQueue.Fail(command, ct);
 
-                            _logger.ZLogDebug($"Marked command {command.Id} as failed");
-                        }
-                    },
-                    cancellationToken
-                );
-            }
-            catch (Exception ex)
-            {
-                _logger.ZLogError(ex, $"An error occurred while updating command {command.Id}");
-            }
+                        _logger.ZLogDebug($"Updated command {command.Id} as failed");
+                    }
+                },
+                cancellationToken
+            );
+        }
+        catch (Exception ex)
+        {
+            _logger.ZLogError(ex, $"An error occurred while updating command {command.Id}");
         }
     }
 }

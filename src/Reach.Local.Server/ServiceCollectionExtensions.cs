@@ -92,14 +92,14 @@ internal static class ServiceCollectionExtensions
         services.AddSingleton<RpcTarget>();
         services.AddSingleton<LocalServer>();
         services.AddSingleton<LocalPipeRpcServer>();
-        services.AddSingleton<EventQueueProcessor>();
+        services.AddSingleton<RelayCommandResultQueueProcessor>();
         services.AddSingleton<RemoteRelayPoller>();
         services
             .AddOptions<ServerExecutorOptions>()
             .Configure(x =>
             {
-                x.ConsumerCount = 1;
-                x.RetryConsumerCount = 1;
+                x.QueueProcessorCount = 1;
+                x.RetryQueueProcessorCount = 1;
             });
 
         services.AddHostedService<LocalServerHostedService>();

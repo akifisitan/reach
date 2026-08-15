@@ -12,6 +12,7 @@ internal sealed class CommandResultPoster
     private readonly CommandResultOutbox _commandResultOutbox;
     private readonly IRemoteRelay _relay;
     private readonly ResiliencePipeline _retryPipeline;
+    private readonly ResiliencePipeline _chaosPipeline;
 
     public CommandResultPoster(
         ILogger<CommandResultPoster> logger,
@@ -24,83 +25,113 @@ internal sealed class CommandResultPoster
         _relay = relay;
         _commandResultOutbox = commandResultOutbox;
         _retryPipeline = resiliencePipelineProvider.GetPipeline(Constants.DefaultRetryPolicy);
+        _chaosPipeline = resiliencePipelineProvider.GetPipeline(ChaosPolicyNames.RelayPost);
     }
 
     public async Task Start(CancellationToken cancellationToken)
     {
         while (!cancellationToken.IsCancellationRequested)
         {
-            CommandResultOutboxItem? item;
+            var item = await PickFromOutbox(cancellationToken);
 
-            try
+            if (item is null)
             {
-                item = await _commandResultOutbox.PickPending(cancellationToken);
-
-                if (item is null)
-                {
-                    await Task.Delay(Random.Shared.Next(1500, 1700), cancellationToken);
-
-                    continue;
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.ZLogError(ex, $"An error occurred while picking an outbox result");
-
-                await Task.Delay(Random.Shared.Next(2050, 2200), cancellationToken);
-
                 continue;
             }
 
-            try
+            var isSuccess = await PostToLocal(item, cancellationToken);
+
+            await MarkAsPosted(isSuccess, item, cancellationToken);
+        }
+    }
+
+    private async Task<CommandResultOutboxItem?> PickFromOutbox(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var item = await _commandResultOutbox.PickPending(cancellationToken);
+
+            if (item is null)
             {
-                _logger.ZLogDebug($"Posting result {item.CommandId} to local");
+                await Task.Delay(Random.Shared.Next(1500, 1700), cancellationToken);
 
-                await _relay.PostToLocal(item.Result, cancellationToken);
-
-                _logger.ZLogInformation($"Posted result {item.CommandId} to local relay");
-            }
-            catch (Exception ex)
-            {
-                _logger.ZLogWarning(
-                    ex,
-                    $"An error occurred while posting result {item.CommandId} to local, will retry"
-                );
-
-                try
-                {
-                    await _commandResultOutbox.MarkPendingForRetry(
-                        item.CommandId,
-                        cancellationToken
-                    );
-                }
-                catch (Exception updateEx)
-                {
-                    _logger.ZLogError(
-                        updateEx,
-                        $"An error occurred while scheduling result {item.CommandId} for retry"
-                    );
-                }
-
-                continue;
+                return null;
             }
 
-            try
-            {
-                await _retryPipeline.ExecuteAsync(
-                    async ct =>
+            return item;
+        }
+        catch (Exception ex)
+        {
+            _logger.ZLogError(ex, $"An error occurred while picking an outbox result");
+
+            await Task.Delay(Random.Shared.Next(2050, 2200), cancellationToken);
+
+            return null;
+        }
+    }
+
+    private async Task<bool> PostToLocal(
+        CommandResultOutboxItem item,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            _logger.ZLogDebug($"Posting result {item.CommandId} to local");
+
+            await _chaosPipeline.ExecuteAsync(
+                async ct => await _relay.PostToLocal(item.Result, ct),
+                cancellationToken
+            );
+
+            _logger.ZLogInformation($"Posted result {item.CommandId} to local relay");
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.ZLogWarning(
+                ex,
+                $"An error occurred while posting result {item.CommandId} to local, will retry"
+            );
+
+            return false;
+        }
+    }
+
+    private async Task MarkAsPosted(
+        bool isSuccess,
+        CommandResultOutboxItem item,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            await _retryPipeline.ExecuteAsync(
+                async ct =>
+                {
+                    if (isSuccess)
                     {
                         await _commandResultOutbox.MarkPosted(item.CommandId, ct);
 
-                        _logger.ZLogDebug($"Marked result {item.CommandId} as posted");
-                    },
-                    cancellationToken
-                );
-            }
-            catch (Exception ex)
-            {
-                _logger.ZLogError(ex, $"An error occurred while marking result as posted");
-            }
+                        _logger.ZLogDebug($"Updating result {item.CommandId} as posted");
+                    }
+                    else
+                    {
+                        _logger.ZLogDebug($"Updating result {item.CommandId} for retry");
+
+                        await _commandResultOutbox.MarkPendingForRetry(
+                            item.CommandId,
+                            cancellationToken
+                        );
+                    }
+                },
+                cancellationToken
+            );
+        }
+        catch (Exception ex)
+        {
+            _logger.ZLogError(ex, $"An error occurred while updating result");
         }
     }
 }

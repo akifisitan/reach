@@ -8,21 +8,21 @@ internal sealed class LocalServer
     private readonly LocalPipeRpcServer _localRpcServer;
     private readonly ServerExecutorOptions _options;
     private readonly RemoteRelayPoller _remoteRelayPoller;
-    private readonly EventQueueProcessor _eventQueueProcessor;
+    private readonly RelayCommandResultQueueProcessor _queueProcessor;
 
     public LocalServer(
         ILogger<LocalServer> logger,
         LocalPipeRpcServer localServer,
         IOptions<ServerExecutorOptions> options,
         RemoteRelayPoller remoteRelayPoller,
-        EventQueueProcessor eventQueueProcessor
+        RelayCommandResultQueueProcessor queueProcessor
     )
     {
         _logger = logger;
         _localRpcServer = localServer;
         _options = options.Value;
         _remoteRelayPoller = remoteRelayPoller;
-        _eventQueueProcessor = eventQueueProcessor;
+        _queueProcessor = queueProcessor;
     }
 
     public async Task Start(CancellationToken cancellationToken)
@@ -35,13 +35,13 @@ internal sealed class LocalServer
         tasks.Add(_remoteRelayPoller.Start(cancellationToken));
         tasks.AddRange(
             Enumerable
-                .Range(0, _options.ConsumerCount)
-                .Select(_ => _eventQueueProcessor.Start(isForRetry: false, cancellationToken))
+                .Range(0, _options.QueueProcessorCount)
+                .Select(_ => _queueProcessor.Start(isForRetry: false, cancellationToken))
         );
         tasks.AddRange(
             Enumerable
-                .Range(0, _options.RetryConsumerCount)
-                .Select(_ => _eventQueueProcessor.Start(isForRetry: true, cancellationToken))
+                .Range(0, _options.RetryQueueProcessorCount)
+                .Select(_ => _queueProcessor.Start(isForRetry: true, cancellationToken))
         );
 
         await Task.WhenAll(tasks);

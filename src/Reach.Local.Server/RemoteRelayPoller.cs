@@ -10,30 +10,28 @@ internal sealed class RemoteRelayPoller
 {
     private readonly ILocalRelay _relay;
     private readonly ILogger<RemoteRelayPoller> _logger;
-    private readonly IDurableQueue<RelayCommandResult> _eventQueue;
+    private readonly IDurableQueue<RelayCommandResult> _queue;
     private readonly ResiliencePipeline _retryPipeline;
-    private readonly ResiliencePipeline _relayChaosPipeline;
+    private readonly ResiliencePipeline _chaosPipeline;
 
     public RemoteRelayPoller(
         ILocalRelay relay,
         ILogger<RemoteRelayPoller> logger,
-        IDurableQueue<RelayCommandResult> eventQueue,
+        IDurableQueue<RelayCommandResult> queue,
         ResiliencePipelineProvider<string> resiliencePipelineProvider
     )
     {
         _relay = relay;
         _logger = logger;
-        _eventQueue = eventQueue;
+        _queue = queue;
         _retryPipeline = resiliencePipelineProvider.GetPipeline(Constants.DefaultRetryPolicy);
-        _relayChaosPipeline = resiliencePipelineProvider.GetPipeline(ChaosPolicyNames.RelayPoll);
+        _chaosPipeline = resiliencePipelineProvider.GetPipeline(ChaosPolicyNames.RelayPoll);
     }
 
     public async Task Start(CancellationToken cancellationToken)
     {
         while (!cancellationToken.IsCancellationRequested)
         {
-            cancellationToken.ThrowIfCancellationRequested();
-
             try
             {
                 await using var enumerator = _relay
@@ -41,7 +39,7 @@ internal sealed class RemoteRelayPoller
                     .GetAsyncEnumerator(cancellationToken);
 
                 while (
-                    await _relayChaosPipeline.ExecuteAsync(
+                    await _chaosPipeline.ExecuteAsync(
                         _ => enumerator.MoveNextAsync(),
                         cancellationToken
                     )
@@ -51,31 +49,7 @@ internal sealed class RemoteRelayPoller
 
                     _logger.ZLogDebug($"Received result from remote: {result}");
 
-                    try
-                    {
-                        await _retryPipeline.ExecuteAsync(
-                            async ct =>
-                            {
-                                await _eventQueue.Enqueue(result, ct);
-                            },
-                            cancellationToken
-                        );
-
-                        _logger.ZLogInformation(
-                            $"Queued result {result.CommandId} from remote relay"
-                        );
-                    }
-                    catch (AlreadyQueuedException)
-                    {
-                        _logger.ZLogDebug($"Skipping already queued result {result.CommandId}");
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.ZLogWarning(
-                            ex,
-                            $"An error occurred while inserting result {result.CommandId} to queue"
-                        );
-                    }
+                    await EnqueueResult(result, cancellationToken);
                 }
             }
             catch (Exception ex)
@@ -84,6 +58,33 @@ internal sealed class RemoteRelayPoller
 
                 await Task.Delay(Random.Shared.Next(2000, 2200), cancellationToken);
             }
+        }
+    }
+
+    private async Task EnqueueResult(RelayCommandResult result, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _retryPipeline.ExecuteAsync(
+                async ct =>
+                {
+                    await _queue.Enqueue(result, ct);
+                },
+                cancellationToken
+            );
+
+            _logger.ZLogInformation($"Queued result {result.CommandId} from remote relay");
+        }
+        catch (AlreadyQueuedException)
+        {
+            _logger.ZLogDebug($"Skipping already queued result {result.CommandId}");
+        }
+        catch (Exception ex)
+        {
+            _logger.ZLogError(
+                ex,
+                $"An error occurred while inserting result {result.CommandId} to queue"
+            );
         }
     }
 }
