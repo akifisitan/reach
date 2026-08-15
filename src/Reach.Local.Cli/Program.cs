@@ -16,6 +16,4 @@ using var host = builder.Build();
 
 host.Services.ValidateMessageGraph();
 
-var cli = host.Services.GetRequiredService<LocalCliExecutor>();
-
-await cli.Execute(args);
+await host.Services.GetRequiredService<LocalCliExecutor>().Execute(args);

@@ -2,6 +2,8 @@ namespace Reach.Remote.Agent;
 
 internal sealed record AppOptions
 {
+    public const string SectionName = "AppOptions";
+
     public bool DebugMode { get; set; }
 }
 

@@ -19,10 +19,7 @@ internal static class ServiceCollectionExtensions
 
         services.AddReachLogging(configuration, paths);
 
-        services.AddAppOptions(configuration);
-
-        var chaosOptions =
-            configuration.GetSection(ChaosOptions.SectionName).Get<ChaosOptions>() ?? new();
+        services.AddAppOptions(configuration, paths.AppDataBasePath);
 
         services.AddDurableQueue<RelayCommandResult>(
             x => x.CommandId,
@@ -32,6 +29,34 @@ internal static class ServiceCollectionExtensions
                 x.TableName = "relay_command_result_queue";
             }
         );
+
+        services.AddResilience(configuration);
+
+        services.AddSingleton<RpcTarget>();
+        services.AddSingleton<LocalServer>();
+        services.AddSingleton<LocalPipeRpcServer>();
+        services.AddSingleton<RelayCommandResultQueueProcessor>();
+        services.AddSingleton<RemoteRelayPoller>();
+        services
+            .AddOptions<ServerExecutorOptions>()
+            .Configure(x =>
+            {
+                x.QueueProcessorCount = 1;
+                x.RetryQueueProcessorCount = 1;
+            });
+
+        services.AddHostedService<LocalServerHostedService>();
+
+        return services;
+    }
+
+    private static IServiceCollection AddResilience(
+        this IServiceCollection services,
+        IConfiguration configuration
+    )
+    {
+        var chaosOptions =
+            configuration.GetSection(ChaosOptions.SectionName).Get<ChaosOptions>() ?? new();
 
         services.AddResiliencePipeline(
             Constants.DefaultRetryPolicy,
@@ -82,43 +107,27 @@ internal static class ServiceCollectionExtensions
             }
         );
 
-        services
-            .AddOptions<DbConnectionFactoryOptions>()
-            .Configure(x =>
-            {
-                x.DbPath = Path.Combine(paths.AppDataBasePath, "db", "reach.db");
-            });
-
-        services.AddSingleton<RpcTarget>();
-        services.AddSingleton<LocalServer>();
-        services.AddSingleton<LocalPipeRpcServer>();
-        services.AddSingleton<RelayCommandResultQueueProcessor>();
-        services.AddSingleton<RemoteRelayPoller>();
-        services
-            .AddOptions<ServerExecutorOptions>()
-            .Configure(x =>
-            {
-                x.QueueProcessorCount = 1;
-                x.RetryQueueProcessorCount = 1;
-            });
-
-        services.AddHostedService<LocalServerHostedService>();
-
         return services;
     }
 
     private static IServiceCollection AddAppOptions(
         this IServiceCollection services,
-        IConfiguration configuration
+        IConfiguration configuration,
+        string basePath
     )
     {
-        services
-            .AddOptions<AppOptions>()
-            .Bind(configuration.GetRequiredSection(nameof(AppOptions)));
+        services.AddOptions<AppOptions>().Bind(configuration.GetSection(nameof(AppOptions)));
 
         services
             .AddOptions<ChaosOptions>()
             .Bind(configuration.GetSection(ChaosOptions.SectionName));
+
+        services
+            .AddOptions<DbConnectionFactoryOptions>()
+            .Configure(x =>
+            {
+                x.DbPath = Path.Combine(basePath, "db", "reach.db");
+            });
 
         return services;
     }

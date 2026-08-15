@@ -31,19 +31,17 @@ internal static class ServiceCollectionExtensions
         IConfiguration configuration
     )
     {
-        services
-            .AddOptions<AppOptions>()
-            .Bind(configuration.GetRequiredSection(nameof(AppOptions)));
+        services.AddOptions<AppOptions>().Bind(configuration.GetSection(AppOptions.SectionName));
 
         services
             .AddOptions<LocalPipeRpcClientOptions>()
             .Configure(x =>
             {
-                x.ShouldNotBootServer =
-                    bool.TryParse(
-                        Environment.GetEnvironmentVariable(AppConstants.ShouldNotBootServerEnvVar),
-                        out var shouldNotBootServer
-                    ) && shouldNotBootServer;
+                x.ShouldNotBootServer = true;
+                //bool.TryParse(
+                //    Environment.GetEnvironmentVariable(AppConstants.ShouldNotBootServerEnvVar),
+                //    out var shouldNotBootServer
+                //) && shouldNotBootServer;
                 x.ServerBinaryPath = Path.Combine(Environment.CurrentDirectory, "reachld.exe");
             });
 

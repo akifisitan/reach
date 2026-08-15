@@ -20,12 +20,7 @@ internal static class ServiceCollectionExtensions
 
         services.AddReachLogging(configuration, paths);
 
-        services.AddSingleton<RemoteAgent>();
-
-        services.AddAppOptions(configuration);
-
-        var chaosOptions =
-            configuration.GetSection(ChaosOptions.SectionName).Get<ChaosOptions>() ?? new();
+        services.AddAppOptions(configuration, paths.AppDataBasePath);
 
         services.AddDurableQueue<RelayCommand>(
             x => x.Id,
@@ -35,6 +30,35 @@ internal static class ServiceCollectionExtensions
                 x.TableName = "relay_command_queue";
             }
         );
+
+        services.AddResilience(configuration);
+
+        services.AddSingleton<CommandQueueProcessor>();
+        services.AddSingleton<CommandResultPoster>();
+        services.AddSingleton<SqliteCommandResultOutboxStore>();
+        services.AddSingleton<ICommandResultOutboxStore>(sp =>
+            sp.GetRequiredService<SqliteCommandResultOutboxStore>()
+        );
+        services.AddSingleton<CommandResultOutbox>();
+        services.AddSingleton<IDbInitializable>(sp =>
+            sp.GetRequiredService<SqliteCommandResultOutboxStore>()
+        );
+        services.AddSingleton<LocalRelayPoller>();
+
+        services.AddSingleton<RemoteAgent>();
+
+        services.AddHostedService<RemoteAgentHostedService>();
+
+        return services;
+    }
+
+    private static IServiceCollection AddResilience(
+        this IServiceCollection services,
+        IConfiguration configuration
+    )
+    {
+        var chaosOptions =
+            configuration.GetSection(ChaosOptions.SectionName).Get<ChaosOptions>() ?? new();
 
         services.AddResiliencePipeline(
             Constants.DefaultRetryPolicy,
@@ -70,6 +94,30 @@ internal static class ServiceCollectionExtensions
             }
         );
 
+        return services;
+    }
+
+    private static IServiceCollection AddAppOptions(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        string basePath
+    )
+    {
+        services.AddOptions<AppOptions>().Bind(configuration.GetSection(AppOptions.SectionName));
+
+        services
+            .AddOptions<ChaosOptions>()
+            .Bind(configuration.GetSection(ChaosOptions.SectionName));
+
+        services
+            .AddOptions<ExecutorOptions>()
+            .Configure(x =>
+            {
+                x.ProcessorCount = 1;
+                x.RetryConsumerCount = 1;
+                x.PosterCount = 1;
+            });
+
         services
             .AddOptions<SqliteCommandResultOutboxOptions>()
             .Configure(x =>
@@ -83,46 +131,7 @@ internal static class ServiceCollectionExtensions
             .AddOptions<DbConnectionFactoryOptions>()
             .Configure(x =>
             {
-                x.DbPath = Path.Combine(paths.AppDataBasePath, "db", "reach.db");
-            });
-
-        services.AddSingleton<CommandQueueProcessor>();
-        services.AddSingleton<CommandResultPoster>();
-        services.AddSingleton<SqliteCommandResultOutboxStore>();
-        services.AddSingleton<ICommandResultOutboxStore>(sp =>
-            sp.GetRequiredService<SqliteCommandResultOutboxStore>()
-        );
-        services.AddSingleton<CommandResultOutbox>();
-        services.AddSingleton<IDbInitializable>(sp =>
-            sp.GetRequiredService<SqliteCommandResultOutboxStore>()
-        );
-        services.AddSingleton<LocalRelayPoller>();
-
-        services.AddHostedService<RemoteAgentHostedService>();
-
-        return services;
-    }
-
-    private static IServiceCollection AddAppOptions(
-        this IServiceCollection services,
-        IConfiguration configuration
-    )
-    {
-        services
-            .AddOptions<AppOptions>()
-            .Bind(configuration.GetRequiredSection(nameof(AppOptions)));
-
-        services
-            .AddOptions<ChaosOptions>()
-            .Bind(configuration.GetSection(ChaosOptions.SectionName));
-
-        services
-            .AddOptions<ExecutorOptions>()
-            .Configure(x =>
-            {
-                x.ProcessorCount = 1;
-                x.RetryConsumerCount = 1;
-                x.PosterCount = 1;
+                x.DbPath = Path.Combine(basePath, "db", "reach.db");
             });
 
         return services;

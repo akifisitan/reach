@@ -16,10 +16,9 @@ public static class ReachConfiguration
             optional: true,
             reloadOnChange: false
         );
-        configuration.AddEnvironmentVariables(prefix: "REACH_");
 
 #if DEBUG
-        configuration.AddJsonFile("config.debug.json", optional: true, reloadOnChange: false);
+        configuration.AddJsonFile("config.json", optional: true, reloadOnChange: false);
 #endif
         return configuration;
     }
