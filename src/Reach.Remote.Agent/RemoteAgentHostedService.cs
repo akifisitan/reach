@@ -2,29 +2,17 @@ using Microsoft.Extensions.Hosting;
 
 namespace Reach.Remote.Agent;
 
-internal sealed class RemoteAgentHostedService : IHostedService
+internal sealed class RemoteAgentHostedService : BackgroundService
 {
     private readonly RemoteAgent _remoteAgent;
-    private readonly IHostApplicationLifetime _hostApplicationLifetime;
 
-    public RemoteAgentHostedService(
-        RemoteAgent remoteAgent,
-        IHostApplicationLifetime hostApplicationLifetime
-    )
+    public RemoteAgentHostedService(RemoteAgent remoteAgent)
     {
         _remoteAgent = remoteAgent;
-        _hostApplicationLifetime = hostApplicationLifetime;
     }
 
-    public async Task StartAsync(CancellationToken cancellationToken)
+    protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        await _remoteAgent.Start(cancellationToken);
-
-        _hostApplicationLifetime.StopApplication();
-    }
-
-    public Task StopAsync(CancellationToken cancellationToken)
-    {
-        return Task.CompletedTask;
+        return _remoteAgent.Start(stoppingToken);
     }
 }

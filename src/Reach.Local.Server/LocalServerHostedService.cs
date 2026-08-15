@@ -2,29 +2,17 @@ using Microsoft.Extensions.Hosting;
 
 namespace Reach.Local.Server;
 
-internal sealed class LocalServerHostedService : IHostedService
+internal sealed class LocalServerHostedService : BackgroundService
 {
     private readonly LocalServer _localServer;
-    private readonly IHostApplicationLifetime _hostApplicationLifetime;
 
-    public LocalServerHostedService(
-        LocalServer localServer,
-        IHostApplicationLifetime hostApplicationLifetime
-    )
+    public LocalServerHostedService(LocalServer localServer)
     {
         _localServer = localServer;
-        _hostApplicationLifetime = hostApplicationLifetime;
     }
 
-    public async Task StartAsync(CancellationToken cancellationToken)
+    protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        await _localServer.Start(cancellationToken);
-
-        _hostApplicationLifetime.StopApplication();
-    }
-
-    public Task StopAsync(CancellationToken cancellationToken)
-    {
-        return Task.CompletedTask;
+        return _localServer.Start(stoppingToken);
     }
 }
