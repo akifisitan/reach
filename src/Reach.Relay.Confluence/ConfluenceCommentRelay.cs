@@ -67,7 +67,7 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
         return new();
     }
 
-    public IAsyncEnumerable<RelayCommand> PollFromLocal(
+    public IAsyncEnumerable<RelayDelivery<RelayCommand>> PollFromLocal(
         PollingOptions? options = null,
         CancellationToken cancellationToken = default
     )
@@ -79,7 +79,7 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
         );
     }
 
-    public IAsyncEnumerable<RelayCommandResult> PollFromRemote(
+    public IAsyncEnumerable<RelayDelivery<RelayCommandResult>> PollFromRemote(
         PollingOptions? options = null,
         CancellationToken cancellationToken = default
     )
@@ -91,7 +91,7 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
         );
     }
 
-    private async IAsyncEnumerable<TOut> InnerPoll<TOut>(
+    private async IAsyncEnumerable<RelayDelivery<TOut>> InnerPoll<TOut>(
         long pageId,
         string cursorName,
         [EnumeratorCancellation] CancellationToken cancellationToken
@@ -189,23 +189,34 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
 
                     lastSeenCommentId = Math.Max(lastSeenCommentId, commentId);
 
+                    await _cursorStorage.Store(
+                        cursorName,
+                        new RelayCursor(lastSeenCommentId, DateTimeOffset.Now, pageOffset),
+                        cancellationToken
+                    );
+
                     continue;
                 }
 
                 _logger.ZLogTrace($"Received value: {command.ToString()}");
 
-                lastSeenCommentId = Math.Max(lastSeenCommentId, commentId);
+                var nextCommentId = Math.Max(lastSeenCommentId, commentId);
+                var nextCursor = new RelayCursor(nextCommentId, DateTimeOffset.Now, pageOffset);
 
-                _logger.ZLogTrace($"Set {nameof(lastSeenCommentId)} to {lastSeenCommentId}");
+                yield return new(
+                    command,
+                    async ct =>
+                    {
+                        lastSeenCommentId = nextCommentId;
 
-                yield return command;
+                        _logger.ZLogTrace(
+                            $"Set {nameof(lastSeenCommentId)} to {lastSeenCommentId}"
+                        );
+
+                        await _cursorStorage.Store(cursorName, nextCursor, ct);
+                    }
+                );
             }
-
-            await _cursorStorage.Store(
-                cursorName,
-                new RelayCursor(lastSeenCommentId, DateTimeOffset.Now, pageOffset),
-                cancellationToken
-            );
 
             await Task.Delay(pollDelayMs, cancellationToken).ConfigureAwait(false);
         }

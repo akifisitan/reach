@@ -21,21 +21,11 @@ public abstract record RelayCommandResult(string CommandId)
     public DateTimeOffset CreatedAt { get; } = DateTimeOffset.Now;
 }
 
-public sealed record PostToRemoteResult(PollId PollId);
-
-public sealed record PostToLocalResult();
-
-public sealed record PollId(string Value);
-
-public sealed record PollingOptions();
-
 public interface IRelayPayloadSerializer
 {
     string Serialize<T>(T value);
     T Deserialize<T>(string payload);
 }
-
-public record RelayCursor(long CurrentIndex, DateTimeOffset CreationTime, long PageOffset);
 
 public interface IRelayCursorStorage
 {

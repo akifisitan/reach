@@ -52,7 +52,7 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
         return new();
     }
 
-    public IAsyncEnumerable<RelayCommand> PollFromLocal(
+    public IAsyncEnumerable<RelayDelivery<RelayCommand>> PollFromLocal(
         PollingOptions? options = null,
         CancellationToken cancellationToken = default
     )
@@ -65,7 +65,7 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
         );
     }
 
-    public IAsyncEnumerable<RelayCommandResult> PollFromRemote(
+    public IAsyncEnumerable<RelayDelivery<RelayCommandResult>> PollFromRemote(
         PollingOptions? options = null,
         CancellationToken cancellationToken = default
     )
@@ -78,7 +78,7 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
         );
     }
 
-    private async IAsyncEnumerable<TOut> InnerPoll<TOut>(
+    private async IAsyncEnumerable<RelayDelivery<TOut>> InnerPoll<TOut>(
         string filePath,
         string cursorName,
         PollingOptions? options = null,
@@ -135,8 +135,11 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
                 continue;
             }
 
-            foreach (var resultContent in response)
+            var baseIndex = cursor.CurrentIndex;
+
+            for (var i = 0; i < response.Count; i++)
             {
+                var resultContent = response[i];
                 var commentId = resultContent.Id;
 
                 if (processedEntries.Contains(commentId))
@@ -166,6 +169,19 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
                 catch (Exception ex)
                 {
                     _logger.ZLogError(ex, $"An error occurred");
+
+                    var skippedCursor = new RelayCursor(
+                        baseIndex + i + 1,
+                        resultContent.CreatedDate >= cursor.CreationTime
+                            ? resultContent.CreatedDate
+                            : cursor.CreationTime,
+                        0
+                    );
+
+                    await _cursorStorage.Store(cursorName, skippedCursor, cancellationToken);
+
+                    cursor = skippedCursor;
+
                     continue;
                 }
 
@@ -173,16 +189,23 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
 
                 processedEntries.Add(commentId);
 
-                yield return command;
+                var nextCursor = new RelayCursor(
+                    baseIndex + i + 1,
+                    resultContent.CreatedDate >= cursor.CreationTime
+                        ? resultContent.CreatedDate
+                        : cursor.CreationTime,
+                    0
+                );
+
+                yield return new(
+                    command,
+                    async ct =>
+                    {
+                        await _cursorStorage.Store(cursorName, nextCursor, ct);
+                        cursor = nextCursor;
+                    }
+                );
             }
-
-            var latestCreatedAt =
-                response.LastOrDefault(x => x.CreatedDate >= cursor.CreationTime)?.CreatedDate
-                ?? cursor.CreationTime;
-
-            cursor = new(cursor.CurrentIndex + response.Count, latestCreatedAt, 0);
-
-            await _cursorStorage.Store(cursorName, cursor, cancellationToken);
 
             await Task.Delay(pollDelayMs, cancellationToken).ConfigureAwait(false);
         }

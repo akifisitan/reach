@@ -97,7 +97,7 @@ public static class ServiceCollectionExtensions
     private static void OpenLogFileOnStart(IConfiguration configuration, ReachAppPaths paths)
     {
         var options = configuration
-            .GetSection(nameof(ReachLoggingOptions))
+            .GetSection(ReachLoggingOptions.SectionName)
             .Get<ReachLoggingOptions>();
 
         if (options?.OpenLogFileOnStart != true)

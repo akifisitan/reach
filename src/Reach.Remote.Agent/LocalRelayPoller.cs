@@ -45,24 +45,39 @@ internal sealed class LocalRelayPoller
                     )
                 )
                 {
-                    var command = enumerator.Current;
+                    var delivery = enumerator.Current;
+                    var command = delivery.Value;
 
                     _logger.ZLogDebug($"Received command from local: {command}");
 
-                    await EnqueueCommand(command, cancellationToken);
+                    if (!await EnqueueCommand(command, cancellationToken))
+                    {
+                        break;
+                    }
+
+                    if (!await Commit(delivery, cancellationToken))
+                    {
+                        break;
+                    }
                 }
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
             }
             catch (Exception ex)
             {
                 _logger.ZLogWarning(ex, $"An error occurred while polling from local");
-
-                await Task.Delay(Random.Shared.Next(2000, 2200), cancellationToken);
             }
+
+            await Task.Delay(Random.Shared.Next(2000, 2200), cancellationToken);
         }
     }
 
-    // TODO: This flow auto-acks even if the command cannot be enqueued. Can we improve that?
-    private async Task EnqueueCommand(RelayCommand command, CancellationToken cancellationToken)
+    private async Task<bool> EnqueueCommand(
+        RelayCommand command,
+        CancellationToken cancellationToken
+    )
     {
         try
         {
@@ -75,18 +90,50 @@ internal sealed class LocalRelayPoller
             );
 
             _logger.ZLogInformation($"Queued command {command.Id} from local relay");
+
+            return true;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch (AlreadyQueuedException)
         {
             _logger.ZLogDebug($"Skipping already queued command {command.Id}");
+
+            return true;
         }
         catch (Exception ex)
         {
-            // value lost
+            _logger.ZLogError(ex, $"An error occurred while queueing command {command.Id}");
+
+            return false;
+        }
+    }
+
+    private async Task<bool> Commit(
+        RelayDelivery<RelayCommand> delivery,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            await delivery.Commit(cancellationToken);
+
+            return true;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
             _logger.ZLogError(
                 ex,
-                $"An error occurred while inserting command {command.Id} to queue"
+                $"An error occurred while committing delivery {delivery.Value.Id}"
             );
+
+            return false;
         }
     }
 }

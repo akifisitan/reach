@@ -4,7 +4,7 @@ public interface ILocalRelay
 {
     Task<PostToRemoteResult> PostToRemote(RelayCommand value, CancellationToken cancellationToken);
 
-    IAsyncEnumerable<RelayCommandResult> PollFromRemote(
+    IAsyncEnumerable<RelayDelivery<RelayCommandResult>> PollFromRemote(
         PollingOptions? options = null,
         CancellationToken cancellationToken = default
     );
@@ -17,7 +17,7 @@ public interface IRemoteRelay
         CancellationToken cancellationToken
     );
 
-    IAsyncEnumerable<RelayCommand> PollFromLocal(
+    IAsyncEnumerable<RelayDelivery<RelayCommand>> PollFromLocal(
         PollingOptions? options = null,
         CancellationToken cancellationToken = default
     );
