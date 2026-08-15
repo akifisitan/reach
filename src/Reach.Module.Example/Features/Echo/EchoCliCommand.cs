@@ -26,7 +26,7 @@ internal sealed class EchoCliCommand
         var pollMsOption = new Option<int>("--poll-ms", "-ms")
         {
             Description = "Poll interval in milliseconds",
-            DefaultValueFactory = static _ => 2000,
+            DefaultValueFactory = static _ => 5000,
         };
 
         pollMsOption.Validators.Add(static x =>

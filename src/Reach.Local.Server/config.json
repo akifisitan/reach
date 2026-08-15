@@ -2,7 +2,8 @@
   "Logging": {
     "LogLevel": {
       "Default": "Trace",
-      "Polly": "Error"
+      "Polly": "Error",
+      "Reach.Infra.Persistence.DbConnectionFactory": "Debug"
     }
   },
   "AppOptions": {

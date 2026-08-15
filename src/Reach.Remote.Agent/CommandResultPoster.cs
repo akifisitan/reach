@@ -24,7 +24,7 @@ internal sealed class CommandResultPoster
         _logger = logger;
         _relay = relay;
         _commandResultOutbox = commandResultOutbox;
-        _retryPipeline = resiliencePipelineProvider.GetPipeline(Constants.DefaultRetryPolicy);
+        _retryPipeline = resiliencePipelineProvider.GetPipeline(RetryPolicyNames.Default);
         _chaosPipeline = resiliencePipelineProvider.GetPipeline(ChaosPolicyNames.RelayPost);
     }
 

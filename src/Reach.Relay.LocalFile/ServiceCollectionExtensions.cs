@@ -28,6 +28,7 @@ public static class ServiceCollectionExtensions
                     relayBasePath,
                     "relay_remote_to_local.jsonl"
                 );
+                x.PollDelayMs = 3000;
 
                 File.AppendAllText(x.LocalToRemoteFilePath, string.Empty);
                 File.AppendAllText(x.RemoteToLocalFilePath, string.Empty);

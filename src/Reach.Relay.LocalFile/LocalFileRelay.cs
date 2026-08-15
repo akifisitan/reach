@@ -94,7 +94,7 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
 
         HashSet<string> processedEntries = [];
 
-        var pollDelayMs = 1000;
+        var pollDelayMs = _options.PollDelayMs;
 
         while (!cancellationToken.IsCancellationRequested)
         {

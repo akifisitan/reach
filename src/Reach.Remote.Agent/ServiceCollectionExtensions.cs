@@ -61,7 +61,7 @@ internal static class ServiceCollectionExtensions
             configuration.GetSection(ChaosOptions.SectionName).Get<ChaosOptions>() ?? new();
 
         services.AddResiliencePipeline(
-            Constants.DefaultRetryPolicy,
+            RetryPolicyNames.Default,
             x =>
             {
                 x.AddRetry(
@@ -83,6 +83,11 @@ internal static class ServiceCollectionExtensions
 
                 x.AddConfiguredChaosFault(chaosOptions, chaosOptions.Retry, "retry");
             }
+        );
+
+        services.AddResiliencePipeline(
+            ChaosPolicyNames.RelayPost,
+            x => x.AddConfiguredChaosFault(chaosOptions, chaosOptions.RelayPost, "relay-post")
         );
 
         services.AddResiliencePipeline(

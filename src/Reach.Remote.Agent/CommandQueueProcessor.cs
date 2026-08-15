@@ -28,7 +28,7 @@ internal sealed class CommandQueueProcessor
         _commandQueue = commandQueue;
         _handler = handler;
         _commandResultOutbox = commandResultOutbox;
-        _retryPipeline = resiliencePipelineProvider.GetPipeline(Constants.DefaultRetryPolicy);
+        _retryPipeline = resiliencePipelineProvider.GetPipeline(RetryPolicyNames.Default);
     }
 
     public async Task Start(bool isForRetry, CancellationToken cancellationToken)

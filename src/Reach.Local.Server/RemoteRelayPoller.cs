@@ -24,7 +24,7 @@ internal sealed class RemoteRelayPoller
         _relay = relay;
         _logger = logger;
         _queue = queue;
-        _retryPipeline = resiliencePipelineProvider.GetPipeline(Constants.DefaultRetryPolicy);
+        _retryPipeline = resiliencePipelineProvider.GetPipeline(RetryPolicyNames.Default);
         _chaosPipeline = resiliencePipelineProvider.GetPipeline(ChaosPolicyNames.RelayPoll);
     }
 

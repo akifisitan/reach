@@ -25,7 +25,7 @@ internal sealed class RelayCommandResultQueueProcessor
         _logger = logger;
         _queue = queue;
         _handler = handler;
-        _retryPipeline = resiliencePipelineProvider.GetPipeline(Constants.DefaultRetryPolicy);
+        _retryPipeline = resiliencePipelineProvider.GetPipeline(RetryPolicyNames.Default);
         _chaosPipeline = resiliencePipelineProvider.GetPipeline(ChaosPolicyNames.RelayResult);
     }
 
