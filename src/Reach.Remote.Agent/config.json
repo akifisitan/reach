@@ -1,14 +1,15 @@
 {
   "Logging": {
     "LogLevel": {
-      "Default": "Debug"
+      "Default": "Trace",
+      "Polly": "Error"
     }
   },
   "AppOptions": {
     "DebugMode": false
   },
   "ReachLoggingOptions": {
-    "OpenLogFileOnStart": false
+    "OpenLogFileOnStart": true
   },
   "Confluence": {
 

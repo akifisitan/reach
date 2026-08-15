@@ -1,3 +1,3 @@
 namespace Reach.Module;
 
-public readonly record struct Unit;
+public sealed record Unit;
