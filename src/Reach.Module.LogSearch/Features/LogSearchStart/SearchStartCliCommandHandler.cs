@@ -37,23 +37,21 @@ internal sealed class SearchStartCliCommandHandler
                 cancellationToken
             );
 
-            switch (result)
+            if (result is LogSearchStartResult.Error err)
             {
-                case LogSearchStartResult.Success success:
-                {
-                    _consoleWriter.WriteLine($"Can poll with {success.CorrelationId}");
+                _consoleWriter.WriteLine(err.Message);
 
-                    return new(0);
-                }
-                case LogSearchStartResult.Error err:
-                {
-                    _consoleWriter.WriteLine(err.Message);
-
-                    return new(1);
-                }
-                default:
-                    throw new NotSupportedException();
+                return new(1);
             }
+
+            if (result is not LogSearchStartResult.Success success)
+            {
+                throw new NotSupportedException();
+            }
+
+            _consoleWriter.WriteLine($"Can poll with {success.CorrelationId}");
+
+            return new(0);
         }
         catch (Exception ex)
         {

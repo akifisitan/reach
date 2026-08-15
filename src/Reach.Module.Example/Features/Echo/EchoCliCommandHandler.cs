@@ -30,65 +30,58 @@ internal sealed class EchoCliCommandHandler
                 cancellationToken
             );
 
-            switch (result)
+            if (result is EchoResult.Error err)
             {
-                case EchoResult.Success success:
+                _consoleWriter.WriteLine(err.Message);
+
+                return new(1);
+            }
+
+            if (result is not EchoResult.Success success)
+            {
+                throw new NotSupportedException();
+            }
+
+            _consoleWriter.WriteLine("Echo sent, waiting for reply...");
+
+            while (true)
+            {
+                var pollResult = await _rpcClient.Invoke<EchoPollPayload, EchoPollResult>(
+                    new EchoPollPayload(success.CorrelationId),
+                    cancellationToken
+                );
+
+                if (pollResult is EchoPollResult.Ongoing)
                 {
-                    _consoleWriter.WriteLine("Echo sent, waiting for reply...");
+                    await Task.Delay(TimeSpan.FromMilliseconds(payload.PollMs), cancellationToken);
 
-                    while (true)
-                    {
-                        var pollResult = await _rpcClient.Invoke<EchoPollPayload, EchoPollResult>(
-                            new EchoPollPayload(success.CorrelationId),
-                            cancellationToken
-                        );
-
-                        switch (pollResult)
-                        {
-                            case EchoPollResult.Success pollSuccess:
-                            {
-                                _consoleWriter.WriteLine(
-                                    $"Received from remote: {pollSuccess.Reply}"
-                                );
-
-                                return new(0);
-                            }
-                            case EchoPollResult.Ongoing:
-                            {
-                                await Task.Delay(
-                                    TimeSpan.FromMilliseconds(payload.PollMs),
-                                    cancellationToken
-                                );
-
-                                break;
-                            }
-                            case EchoPollResult.NotFound:
-                            {
-                                _consoleWriter.WriteLine(
-                                    $"No echo found for correlation id {success.CorrelationId}"
-                                );
-
-                                return new(1);
-                            }
-                            case EchoPollResult.Error pollError:
-                            {
-                                _consoleWriter.WriteLine($"Echo failed: {pollError.Message}");
-
-                                return new(1);
-                            }
-                            default:
-                                throw new NotSupportedException();
-                        }
-                    }
+                    continue;
                 }
-                case EchoResult.Error err:
+
+                if (pollResult is EchoPollResult.NotFound)
                 {
-                    _consoleWriter.WriteLine(err.Message);
+                    _consoleWriter.WriteLine(
+                        $"No echo found for correlation id {success.CorrelationId}"
+                    );
 
                     return new(1);
                 }
-                default:
+
+                if (pollResult is EchoPollResult.Error pollError)
+                {
+                    _consoleWriter.WriteLine($"Echo failed: {pollError.Message}");
+
+                    return new(1);
+                }
+
+                if (pollResult is not EchoPollResult.Success pollSuccess)
+                {
                     throw new NotSupportedException();
+                }
+
+                _consoleWriter.WriteLine($"Received from remote: {pollSuccess.Reply}");
+
+                return new(0);
             }
         }
         catch (Exception ex)

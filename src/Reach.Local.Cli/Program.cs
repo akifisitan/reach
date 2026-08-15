@@ -4,6 +4,7 @@ using Reach.Local.Cli;
 using Reach.Module;
 
 var paths = ReachAppPaths.LocalCli();
+
 var compositionPaths = ReachAppPaths.LocalServer();
 
 var builder = Host.CreateApplicationBuilder(args);
