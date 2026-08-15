@@ -4,27 +4,23 @@ public static class ReachConfiguration
 {
     public static IConfigurationBuilder ConfigureReachConfiguration(
         this IConfigurationBuilder configuration,
-        string appDataBasePath,
-        bool includeAppDataConfig
+        string appDataBasePath
     )
     {
         configuration.Sources.Clear();
-        configuration.AddJsonFile("config.json", optional: true, reloadOnChange: false);
+
+        Directory.CreateDirectory(appDataBasePath);
+
+        configuration.AddJsonFile(
+            Path.Combine(appDataBasePath, "config.json"),
+            optional: true,
+            reloadOnChange: false
+        );
+        configuration.AddEnvironmentVariables(prefix: "REACH_");
 
 #if DEBUG
         configuration.AddJsonFile("config.debug.json", optional: true, reloadOnChange: false);
 #endif
-
-        if (includeAppDataConfig)
-        {
-            configuration.AddJsonFile(
-                Path.Combine(appDataBasePath, "config.json"),
-                optional: true,
-                reloadOnChange: false
-            );
-            configuration.AddEnvironmentVariables(prefix: "REACH_");
-        }
-
         return configuration;
     }
 }

@@ -1,4 +1,3 @@
-using System.Net;
 using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -6,6 +5,10 @@ using System.Web;
 
 namespace Reach.Relay.Confluence;
 
+// Assumptions
+// 1. The confluence comment page is append only. No comment deletions or updates. Only new comments
+// 2. The api returns comments sorted by id or creation date. This order does not change
+// 3. The comment id is the cursor: only comments with an id greater than the stored cursor are consumed
 public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
 {
     private const string LocalToRemoteCursorName = "confluence.local_to_remote";
@@ -43,9 +46,7 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
 
         _logger.ZLogTrace($"Sending payload from local to remote: {payload}");
 
-        var base64Text = payload.EncodeBase64();
-
-        await CreateComment(base64Text, _options.LocalToRemotePageId, cancellationToken)
+        await CreateComment(payload, _options.LocalToRemotePageId, cancellationToken)
             .ConfigureAwait(false);
 
         return new(new(value.Id));
@@ -60,9 +61,7 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
 
         _logger.ZLogTrace($"Sending payload from remote to local: {payload}");
 
-        var base64Text = payload.EncodeBase64();
-
-        await CreateComment(base64Text, _options.RemoteToLocalPageId, cancellationToken)
+        await CreateComment(payload, _options.RemoteToLocalPageId, cancellationToken)
             .ConfigureAwait(false);
 
         return new();
@@ -92,10 +91,6 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
         );
     }
 
-    // Assumptions
-    // 1. The confluence comment page is append only. No comment deletions or updates. Only new comments
-    // 2. The api returns comments sorted by id or creation date. This order does not change
-    // 3. The comment id is the cursor: only comments with an id greater than the stored cursor are consumed
     private async IAsyncEnumerable<TOut> InnerPoll<TOut>(
         long pageId,
         string cursorName,
@@ -120,7 +115,7 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
 
             try
             {
-                var readResult = await ReadNewCommentsFromPage(
+                (newComments, pageOffset) = await ReadNewCommentsFromPage(
                         pageId,
                         lastSeenCommentId,
                         pageOffset,
@@ -128,17 +123,13 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
                     )
                     .ConfigureAwait(false);
 
-                newComments = readResult.NewComments;
-
-                pageOffset = readResult.LastPageStart;
-
                 consecutiveFailures = 0;
             }
             catch (Exception ex)
             {
                 consecutiveFailures++;
 
-                if (IsAuthFailure(ex))
+                if (ex.IsAuthError())
                 {
                     _logger.ZLogError(
                         ex,
@@ -147,10 +138,9 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
                 }
                 else
                 {
-                    _logger.ZLogWarning(ex, $"An error occurred while polling Confluence comments");
+                    _logger.ZLogError(ex, $"An error occurred while polling Confluence comments");
                 }
 
-                // Exponential backoff: double the poll delay per consecutive failure, capped at MaxBackoff
                 var backoff =
                     TimeSpan.FromMilliseconds(pollDelayMs)
                     * Math.Pow(2, Math.Min(consecutiveFailures - 1, 10));
@@ -185,7 +175,7 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
 
                 try
                 {
-                    var base64Text = resultContent.Body.View.Value.StripHtml();
+                    var base64Text = resultContent.Body.View.Value.GetHtmlInnerText();
 
                     var jsonText = base64Text.DecodeBase64();
 
@@ -221,26 +211,22 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
         }
     }
 
-    private static bool IsAuthFailure(Exception ex)
-    {
-        return ex
-            is HttpRequestException
-            {
-                StatusCode: HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden,
-            };
-    }
-
     private async Task<CreateContentResponse?> CreateComment(
         string text,
         long pageId,
         CancellationToken cancellationToken
     )
     {
+        var base64Text = text.EncodeBase64();
+
         var request = new CreateContentRequest(
             Type: "comment",
             Container: new CreateContentRequestContainer(Id: pageId, Type: "page"),
             Body: new CreateContentRequestBody(
-                Storage: new CreateContentRequestBodyStorage(Value: text, Representation: "storage")
+                Storage: new CreateContentRequestBodyStorage(
+                    Value: base64Text,
+                    Representation: "storage"
+                )
             )
         );
 
@@ -265,8 +251,8 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
             .ConfigureAwait(false);
     }
 
-    // Pages through the comment list (oldest first), starting at the persisted page
-    // offset, and returns only comments with an id greater than afterCommentId
+    // Pages through the comment list (oldest first), starting at the persisted page offset,
+    // and returns only comments with an id greater than afterCommentId
     private async Task<(
         List<ResultContent> NewComments,
         long LastPageStart
@@ -287,7 +273,7 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
 
         while (true)
         {
-            var batch = await ReadCommentsPage(httpClient, pageId, (int)start, cancellationToken)
+            var batch = await ReadCommentsPage(httpClient, pageId, start, cancellationToken)
                 .ConfigureAwait(false);
 
             // On resume from a stored offset, the cursor comment must still be within the
@@ -303,7 +289,7 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
                     && batch.Results.Max(x => long.Parse(x.Id)) < afterCommentId
                 )
                 {
-                    _logger.ZLogWarning(
+                    _logger.ZLogError(
                         $"Stored comment page offset has drifted, restarting pagination from the beginning"
                     );
 
@@ -335,14 +321,14 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
     private async Task<GetCommentsResponse> ReadCommentsPage(
         HttpClient httpClient,
         long pageId,
-        int start,
+        long start,
         CancellationToken cancellationToken
     )
     {
         var query = HttpUtility.ParseQueryString(string.Empty);
 
         query.Add("start", start.ToString());
-        query.Add("limit", _options.Count.ToString());
+        query.Add("limit", _options.BatchLimit.ToString());
         query.Add("location", "footer");
         query.Add("expand", "history,body.view");
 

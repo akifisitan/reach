@@ -33,9 +33,7 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
     {
         var payload = _payloadSerializer.Serialize(value);
 
-        var base64Text = payload.EncodeBase64();
-
-        await CreateComment(base64Text, _options.LocalToRemoteFilePath, cancellationToken)
+        await CreateLogEntry(payload, _options.LocalToRemoteFilePath, cancellationToken)
             .ConfigureAwait(false);
 
         return new(new(value.Id));
@@ -48,9 +46,7 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
     {
         var payload = _payloadSerializer.Serialize(value);
 
-        var base64Text = payload.EncodeBase64();
-
-        await CreateComment(base64Text, _options.RemoteToLocalFilePath, cancellationToken)
+        await CreateLogEntry(payload, _options.RemoteToLocalFilePath, cancellationToken)
             .ConfigureAwait(false);
 
         return new();
@@ -108,7 +104,7 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
 
             try
             {
-                response = await ReadCommentsFromPage(filePath, cursor, cancellationToken)
+                response = await ReadLogEntries(filePath, cursor, cancellationToken)
                     .ConfigureAwait(false);
             }
             catch (InvalidOperationException ex)
@@ -192,7 +188,7 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
         }
     }
 
-    private static async Task<List<Storage>> ReadCommentsFromPage(
+    private static async Task<List<Storage>> ReadLogEntries(
         string filePath,
         RelayCursor cursor,
         CancellationToken cancellationToken
@@ -226,12 +222,14 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
         return result;
     }
 
-    private static async Task CreateComment(
-        string base64Text,
+    private static async Task CreateLogEntry(
+        string text,
         string filePath,
         CancellationToken cancellationToken
     )
     {
+        var base64Text = text.EncodeBase64();
+
         await File.AppendAllLinesAsync(
                 filePath,
                 [

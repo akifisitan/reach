@@ -39,7 +39,7 @@ internal sealed class SingleAppInstanceLock : ISingleAppInstanceLock, IDisposabl
                 $"""
                 {Environment.MachineName}
                 {Environment.ProcessId}
-                {DateTimeOffset.UtcNow:yyyy-MM-dd HH:mm:ss.fff}
+                {DateTimeOffset.Now:yyyy-MM-dd HH:mm:ss.fff}
                 """
             );
 

@@ -6,14 +6,9 @@ using Reach.Module;
 var paths = ReachAppPaths.LocalCli();
 var compositionPaths = ReachAppPaths.LocalServer();
 
-Directory.CreateDirectory(paths.AppDataBasePath);
-
 var builder = Host.CreateApplicationBuilder(args);
 
-builder.Configuration.ConfigureReachConfiguration(
-    compositionPaths.AppDataBasePath,
-    includeAppDataConfig: true
-);
+builder.Configuration.ConfigureReachConfiguration(compositionPaths.AppDataBasePath);
 
 builder.Services.AddApplication(builder.Configuration, paths, compositionPaths);
 

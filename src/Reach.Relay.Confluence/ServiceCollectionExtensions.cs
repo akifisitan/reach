@@ -36,10 +36,6 @@ public static class ServiceCollectionExtensions
         services
             .AddOptions<ConfluenceOptions>()
             .Bind(configuration.GetSection(ConfluenceOptions.SectionName))
-            .PostConfigure(x =>
-            {
-                x.BaseUrl = BuildConfig.BaseUrl.TrimEnd('/') + "/";
-            })
             .Validate(
                 x => new ConfluenceOptionsValidator().Validate(x).IsValid,
                 "Invalid Confluence configuration. Restart the application to reconfigure."

@@ -7,7 +7,7 @@ public sealed class DatabaseInitializer
     private readonly string _dbPath;
     private readonly DbConnectionFactory _dbConnectionFactory;
     private readonly ILogger<DatabaseInitializer> _logger;
-    private readonly IReadOnlyList<IDbInitializable> _repositories;
+    private readonly IEnumerable<IDbInitializable> _repositories;
 
     public DatabaseInitializer(
         DbConnectionFactory dbConnectionFactory,
@@ -19,7 +19,7 @@ public sealed class DatabaseInitializer
         _dbConnectionFactory = dbConnectionFactory;
         _logger = logger;
         _dbPath = options.Value.DbPath;
-        _repositories = repositories.ToList();
+        _repositories = repositories;
     }
 
     public void Initialize()

@@ -80,7 +80,7 @@ internal sealed class LocalPipeRpcClient : IRpcClient
 
         await pipe.ConnectAsync(connectionTimeoutMs, cancellationToken).ConfigureAwait(false);
 
-        _logger.LogInformation($"Connected to {LocalRpcShared.PipeName}");
+        _logger.ZLogInformation($"Connected to {LocalRpcShared.PipeName}");
 
         var rpc = new JsonRpc(
             new LengthHeaderMessageHandler(pipe, pipe, LocalRpcShared.CreateFormatter())
@@ -88,7 +88,7 @@ internal sealed class LocalPipeRpcClient : IRpcClient
 
         rpc.StartListening();
 
-        _logger.LogInformation($"Started listening to rpc");
+        _logger.ZLogInformation($"Started listening to rpc");
 
         return new(rpc, pipe);
     }

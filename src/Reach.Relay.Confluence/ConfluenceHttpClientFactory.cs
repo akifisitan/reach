@@ -37,7 +37,7 @@ public sealed class ConfluenceHttpClientFactory : IConfluenceHttpClientFactory
         CreateClient(_confluenceUserCredentialsProvider.GetCredential(), _options.BaseUrl);
 
     public HttpClient CreateClient(ConfluenceUserCredential credential) =>
-        CreateClient(credential, BuildConfig.BaseUrl.TrimEnd('/') + "/");
+        CreateClient(credential, _options.BaseUrl);
 
     private HttpClient CreateClient(ConfluenceUserCredential credential, string baseUrl)
     {

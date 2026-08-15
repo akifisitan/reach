@@ -13,14 +13,9 @@ public static class ReachDaemonRunner
         Action<IServiceCollection, IConfiguration, ReachAppPaths> configureServices
     )
     {
-        Directory.CreateDirectory(paths.AppDataBasePath);
-
         var builder = Host.CreateApplicationBuilder(args);
 
-        builder.Configuration.ConfigureReachConfiguration(
-            paths.AppDataBasePath,
-            includeAppDataConfig: true
-        );
+        builder.Configuration.ConfigureReachConfiguration(paths.AppDataBasePath);
 
         configureServices(builder.Services, builder.Configuration, paths);
 

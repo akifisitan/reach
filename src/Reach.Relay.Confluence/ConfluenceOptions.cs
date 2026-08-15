@@ -10,7 +10,7 @@ public sealed record ConfluenceOptions
     public required long LocalToRemotePageId { get; set; }
     public required long RemoteToLocalPageId { get; set; }
     public required int PollDelayMs { get; set; }
-    public required int Count { get; set; }
+    public required int BatchLimit { get; set; }
 }
 
 public sealed class ConfluenceOptionsValidator : AbstractValidator<ConfluenceOptions>
@@ -23,6 +23,6 @@ public sealed class ConfluenceOptionsValidator : AbstractValidator<ConfluenceOpt
         RuleFor(x => x.LocalToRemotePageId).GreaterThan(0);
         RuleFor(x => x.RemoteToLocalPageId).GreaterThan(0);
         RuleFor(x => x.PollDelayMs).InclusiveBetween(500, 60_000);
-        RuleFor(x => x.Count).InclusiveBetween(1, 100);
+        RuleFor(x => x.BatchLimit).InclusiveBetween(1, 100);
     }
 }

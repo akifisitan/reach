@@ -60,7 +60,7 @@ public sealed class ConfluenceRelaySetup : IRelaySetup
 
     public async Task<int> Run(string basePath, CancellationToken cancellationToken)
     {
-        Console.WriteLine($"Confluence URL (set at build time): {BuildConfig.BaseUrl}");
+        //Console.WriteLine($"Confluence URL (set at build time): {BaseUrl}");
         Console.WriteLine();
 
         Console.WriteLine(
@@ -105,7 +105,7 @@ public sealed class ConfluenceRelaySetup : IRelaySetup
                 [nameof(ConfluenceOptions.LocalToRemotePageId)] = localToRemotePageId,
                 [nameof(ConfluenceOptions.RemoteToLocalPageId)] = remoteToLocalPageId,
                 [nameof(ConfluenceOptions.PollDelayMs)] = 5000,
-                [nameof(ConfluenceOptions.Count)] = 100,
+                [nameof(ConfluenceOptions.BatchLimit)] = 100,
             }
         );
 
