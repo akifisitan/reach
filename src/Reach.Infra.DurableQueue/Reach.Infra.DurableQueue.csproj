@@ -3,6 +3,7 @@
     <OutputType>Library</OutputType>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="FluentValidation" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Options" />
     <PackageReference Include="ZLogger" />
@@ -10,6 +11,7 @@
     <PackageReference Include="Dapper.AOT" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Reach.Options\Reach.Options.csproj" />
     <ProjectReference Include="..\Reach.Infra.Persistence\Reach.Infra.Persistence.csproj" />
   </ItemGroup>
 </Project>

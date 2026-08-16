@@ -1,3 +1,5 @@
+using Reach.Options;
+
 namespace Reach.Relay.LocalFile;
 
 public static class ServiceCollectionExtensions
@@ -32,7 +34,8 @@ public static class ServiceCollectionExtensions
 
                 File.AppendAllText(x.LocalToRemoteFilePath, string.Empty);
                 File.AppendAllText(x.RemoteToLocalFilePath, string.Empty);
-            });
+            })
+            .WithValidator<LocalFileRelayOptions, LocalFileOptionsValidator>();
 
         return services;
     }

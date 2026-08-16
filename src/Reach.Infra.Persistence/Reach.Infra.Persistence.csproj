@@ -3,6 +3,7 @@
     <OutputType>Library</OutputType>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="FluentValidation" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Options" />
     <PackageReference Include="ZLogger" />
@@ -12,6 +13,7 @@
     <PackageReference Include="SQLitePCLRaw.bundle_winsqlite3" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Reach.Options\Reach.Options.csproj" />
     <ProjectReference Include="..\Reach.Relay.Abstractions\Reach.Relay.Abstractions.csproj" />
   </ItemGroup>
 </Project>

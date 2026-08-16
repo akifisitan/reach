@@ -1,3 +1,4 @@
+using Reach.Options;
 using Reach.Relay;
 
 namespace Reach.Infra.Persistence;
@@ -20,7 +21,11 @@ public static class ServiceCollectionExtensions
             .Configure(x =>
             {
                 x.TableName = "relay_cursor_settings";
-            });
+            })
+            .WithValidator<RelayCursorRepositoryOptions, RelayCursorRepositoryOptionsValidator>();
+        services
+            .AddOptions<DbConnectionFactoryOptions>()
+            .WithValidator<DbConnectionFactoryOptions, DbConnectionFactoryOptionsValidator>();
 
         return services;
     }

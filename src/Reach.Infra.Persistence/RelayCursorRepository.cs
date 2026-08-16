@@ -1,4 +1,5 @@
 using Dapper;
+using FluentValidation;
 using Reach.Relay;
 
 namespace Reach.Infra.Persistence;
@@ -110,4 +111,13 @@ internal sealed record DbRelayCursor(long CurrentIndex, long PageOffset, string 
 internal sealed record RelayCursorRepositoryOptions
 {
     public required string TableName { get; set; }
+}
+
+internal sealed class RelayCursorRepositoryOptionsValidator
+    : AbstractValidator<RelayCursorRepositoryOptions>
+{
+    public RelayCursorRepositoryOptionsValidator()
+    {
+        RuleFor(x => x.TableName).NotEmpty();
+    }
 }

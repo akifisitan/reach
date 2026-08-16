@@ -1,4 +1,5 @@
 using System.Data.Common;
+using FluentValidation;
 using Microsoft.Data.Sqlite;
 
 namespace Reach.Infra.Persistence;
@@ -46,4 +47,13 @@ public sealed class DbConnectionFactory
 public sealed class DbConnectionFactoryOptions
 {
     public required string DbPath { get; set; }
+}
+
+public sealed class DbConnectionFactoryOptionsValidator
+    : AbstractValidator<DbConnectionFactoryOptions>
+{
+    public DbConnectionFactoryOptionsValidator()
+    {
+        RuleFor(x => x.DbPath).NotEmpty().Must(Path.IsPathRooted);
+    }
 }

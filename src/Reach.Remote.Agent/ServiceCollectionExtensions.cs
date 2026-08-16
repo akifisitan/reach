@@ -4,6 +4,7 @@ using Reach.Hosting;
 using Reach.Infra.CommandResultOutbox;
 using Reach.Infra.DurableQueue;
 using Reach.Infra.Persistence;
+using Reach.Options;
 using Reach.Relay;
 
 namespace Reach.Remote.Agent;
@@ -112,7 +113,8 @@ internal static class ServiceCollectionExtensions
 
         services
             .AddOptions<ChaosOptions>()
-            .Bind(configuration.GetSection(ChaosOptions.SectionName));
+            .Bind(configuration.GetSection(ChaosOptions.SectionName))
+            .WithValidator<ChaosOptions, ChaosOptionsValidator>();
 
         services
             .AddOptions<ExecutorOptions>()
@@ -121,16 +123,23 @@ internal static class ServiceCollectionExtensions
                 x.ProcessorCount = 1;
                 x.RetryConsumerCount = 1;
                 x.PosterCount = 1;
-            });
+            })
+            .WithValidator<ExecutorOptions, ExecutorOptionsValidator>();
 
         services
             .AddOptions<SqliteCommandResultOutboxOptions>()
             .Configure(x =>
             {
                 x.TableName = "command_result_outbox";
-            });
+            })
+            .WithValidator<
+                SqliteCommandResultOutboxOptions,
+                SqliteCommandResultOutboxOptionsValidator
+            >();
 
-        services.AddOptions<CommandResultOutboxOptions>();
+        services
+            .AddOptions<CommandResultOutboxOptions>()
+            .WithValidator<CommandResultOutboxOptions, CommandResultOutboxOptionsValidator>();
 
         services
             .AddOptions<DbConnectionFactoryOptions>()

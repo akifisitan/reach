@@ -1,4 +1,5 @@
 using Reach.Infra.Persistence;
+using Reach.Options;
 using Reach.Relay;
 
 namespace Reach.Module.Toolkit.ResultStore.Sqlite;
@@ -12,16 +13,15 @@ public static class ServiceCollectionExtensions
     )
         where TResult : RelayCommandResult
     {
-        services.AddSingleton(sp => new SqliteResultStore<TResult>(
-            sp.GetRequiredService<DbConnectionFactory>(),
-            sp.GetRequiredService<ILogger<SqliteResultStore<TResult>>>(),
-            new SqliteResultStoreOptions
+        services
+            .AddOptions<SqliteResultStoreOptions>()
+            .Configure(options =>
             {
-                TableName = tableName,
-                StalenessThreshold = stalenessThreshold,
-            },
-            sp.GetRequiredService<IRelayPayloadSerializer>()
-        ));
+                options.TableName = tableName;
+                options.StalenessThreshold = stalenessThreshold;
+            })
+            .WithValidator<SqliteResultStoreOptions, SqliteResultStoreOptionsValidator>();
+        services.AddSingleton<SqliteResultStore<TResult>>();
         services.AddSingleton<IResultStore<TResult>>(sp =>
             sp.GetRequiredService<SqliteResultStore<TResult>>()
         );

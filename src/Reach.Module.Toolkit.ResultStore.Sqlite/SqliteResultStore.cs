@@ -1,5 +1,6 @@
 using Dapper;
 using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Options;
 using Reach.Infra.Persistence;
 using Reach.Relay;
 
@@ -21,14 +22,14 @@ public sealed class SqliteResultStore<TResult> : IResultStore<TResult>, IDbIniti
     public SqliteResultStore(
         DbConnectionFactory dbConnectionFactory,
         ILogger<SqliteResultStore<TResult>> logger,
-        SqliteResultStoreOptions options,
+        IOptions<SqliteResultStoreOptions> options,
         IRelayPayloadSerializer payloadSerializer
     )
     {
         _dbConnectionFactory = dbConnectionFactory;
         _logger = logger;
-        _tableName = options.TableName;
-        StalenessThreshold = options.StalenessThreshold;
+        _tableName = options.Value.TableName;
+        StalenessThreshold = options.Value.StalenessThreshold;
         _payloadSerializer = payloadSerializer;
     }
 
@@ -168,10 +169,4 @@ internal sealed record DbResultStoreEntry(
             ErrorMessage = ErrorMessage,
             CreationTime = DateTimeOffset.FromIsoString(CreationTime),
         };
-}
-
-public sealed record SqliteResultStoreOptions
-{
-    public required string TableName { get; set; }
-    public required TimeSpan StalenessThreshold { get; set; }
 }

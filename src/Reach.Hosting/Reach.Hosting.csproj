@@ -8,10 +8,12 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="Microsoft.Extensions.Options" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+    <PackageReference Include="FluentValidation" />
     <PackageReference Include="ZLogger" />
     <PackageReference Include="Polly.Extensions" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Reach.Options\Reach.Options.csproj" />
     <ProjectReference Include="..\Reach.Infra.Persistence\Reach.Infra.Persistence.csproj" />
     <ProjectReference Include="..\Reach.Infra.DurableQueue\Reach.Infra.DurableQueue.csproj" />
     <ProjectReference Include="..\Reach.Relay.Abstractions\Reach.Relay.Abstractions.csproj" />

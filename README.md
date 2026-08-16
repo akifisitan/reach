@@ -39,3 +39,15 @@ The script publishes `Reach.Local.App` and `Reach.Remote.Agent` to `artifacts/pu
 ```
 
 Publish output excludes `.pdb` and `.xml` files.
+
+## Development
+
+### Formatting
+
+```bash
+dotnet csharpier format .
+```
+
+```bash
+dotnet format analyzers --diagnostics IDE0005 --no-restore
+```

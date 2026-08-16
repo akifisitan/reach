@@ -22,6 +22,7 @@
   <Project Path="src/Reach.Module.Toolkit.ResultStore.Memory/Reach.Module.Toolkit.ResultStore.Memory.csproj" />
   <Project Path="src/Reach.Module.Toolkit.ResultStore.Sqlite/Reach.Module.Toolkit.ResultStore.Sqlite.csproj" />
   <Project Path="src/Reach.Module.Toolkit.Resilience/Reach.Module.Toolkit.Resilience.csproj" />
+  <Project Path="src/Reach.Options/Reach.Options.csproj" />
   <Project Path="src/Reach.Relay.Abstractions/Reach.Relay.Abstractions.csproj" />
   <Project Path="src/Reach.Relay.Confluence/Reach.Relay.Confluence.csproj" />
   <Project Path="src/Reach.Relay.LocalFile/Reach.Relay.LocalFile.csproj" />

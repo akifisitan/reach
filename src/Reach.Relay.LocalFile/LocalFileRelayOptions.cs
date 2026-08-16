@@ -13,8 +13,17 @@ public sealed class LocalFileOptionsValidator : AbstractValidator<LocalFileRelay
 {
     public LocalFileOptionsValidator()
     {
-        RuleFor(x => x.LocalToRemoteFilePath).NotEmpty().Must(Path.Exists);
-        RuleFor(x => x.RemoteToLocalFilePath).NotEmpty().Must(Path.Exists);
+        RuleFor(x => x.LocalToRemoteFilePath).Must(Path.Exists);
+        RuleFor(x => x.RemoteToLocalFilePath).Must(Path.Exists);
         RuleFor(x => x.PollDelayMs).InclusiveBetween(500, 60_000);
+        RuleFor(x => x)
+            .Must(x =>
+                !string.Equals(
+                    Path.GetFullPath(x.LocalToRemoteFilePath),
+                    Path.GetFullPath(x.RemoteToLocalFilePath),
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            .WithMessage("Relay file paths must be different.");
     }
 }

@@ -3,6 +3,7 @@ using Polly.Retry;
 using Reach.Hosting;
 using Reach.Infra.DurableQueue;
 using Reach.Infra.Persistence;
+using Reach.Options;
 using Reach.Relay;
 
 namespace Reach.Local.Server;
@@ -44,7 +45,8 @@ internal static class ServiceCollectionExtensions
             {
                 x.QueueProcessorCount = 1;
                 x.RetryQueueProcessorCount = 1;
-            });
+            })
+            .WithValidator<ServerExecutorOptions, ServerExecutorOptionsValidator>();
 
         services.AddHostedService<LocalServerHostedService>();
 
@@ -121,7 +123,8 @@ internal static class ServiceCollectionExtensions
 
         services
             .AddOptions<ChaosOptions>()
-            .Bind(configuration.GetSection(ChaosOptions.SectionName));
+            .Bind(configuration.GetSection(ChaosOptions.SectionName))
+            .WithValidator<ChaosOptions, ChaosOptionsValidator>();
 
         services
             .AddOptions<DbConnectionFactoryOptions>()

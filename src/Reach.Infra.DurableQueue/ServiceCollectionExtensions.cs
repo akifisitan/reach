@@ -1,4 +1,5 @@
 using Reach.Infra.Persistence;
+using Reach.Options;
 
 namespace Reach.Infra.DurableQueue;
 
@@ -21,7 +22,10 @@ public static class ServiceCollectionExtensions
             sp.GetRequiredService<IDurableQueueRepository>()
         );
         services.AddSingleton<IDurableQueueRepository, DurableQueueRepository>();
-        services.AddOptions<DurableQueueOptions>().Configure(configure);
+        services
+            .AddOptions<DurableQueueOptions>()
+            .Configure(configure)
+            .WithValidator<DurableQueueOptions, DurableQueueOptionsValidator>();
 
         services.AddSingleton(sp => new DurableQueue<T>(
             sp.GetRequiredService<IDurableQueueDataSerializer>(),

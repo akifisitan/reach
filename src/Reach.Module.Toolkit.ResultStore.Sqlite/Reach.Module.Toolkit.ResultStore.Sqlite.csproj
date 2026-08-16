@@ -3,10 +3,12 @@
     <OutputType>Library</OutputType>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="FluentValidation" />
     <PackageReference Include="ZLogger" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Reach.Infra.Persistence\Reach.Infra.Persistence.csproj" />
     <ProjectReference Include="..\Reach.Module.Toolkit.ResultStore.Abstractions\Reach.Module.Toolkit.ResultStore.Abstractions.csproj" />
+    <ProjectReference Include="..\Reach.Options\Reach.Options.csproj" />
   </ItemGroup>
 </Project>

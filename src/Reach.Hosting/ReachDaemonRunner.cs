@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Hosting;
 using Reach.Infra.Persistence;
 using Reach.Module;
+using Reach.Options;
 using Reach.Relay;
 
 namespace Reach.Hosting;
@@ -52,6 +53,7 @@ public static class ReachDaemonRunner
 
         try
         {
+            ValidateOptions(host.Services);
             host.Services.ValidateMessageGraph();
 
             var setupCoordinator = host.Services.GetRequiredService<RelaySetupCoordinator>();
@@ -89,7 +91,7 @@ public static class ReachDaemonRunner
                 return 1;
             }
         }
-        catch (OptionsValidationException ex)
+        catch (AggregateOptionsValidationException ex)
         {
             logger.ZLogError($"Configuration error: {ex.Message}");
 
@@ -108,6 +110,20 @@ public static class ReachDaemonRunner
         foreach (var startupCheck in services.GetServices<IStartupCheck>())
         {
             await startupCheck.Check();
+        }
+    }
+
+    private static void ValidateOptions(IServiceProvider services)
+    {
+        var failures = services
+            .GetServices<IOptionsValidationTarget>()
+            .Select(x => x.Validate())
+            .OfType<OptionsValidationFailure>()
+            .ToList();
+
+        if (failures.Count > 0)
+        {
+            throw new AggregateOptionsValidationException(failures);
         }
     }
 }

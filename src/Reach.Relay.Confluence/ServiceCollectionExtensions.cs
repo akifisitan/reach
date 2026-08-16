@@ -1,5 +1,6 @@
 using Reach.Infra.ConsolePrompt;
 using Reach.Infra.Credentials;
+using Reach.Options;
 
 namespace Reach.Relay.Confluence;
 
@@ -36,11 +37,7 @@ public static class ServiceCollectionExtensions
         services
             .AddOptions<ConfluenceOptions>()
             .Bind(configuration.GetSection(ConfluenceOptions.SectionName))
-            .Validate(
-                x => new ConfluenceOptionsValidator().Validate(x).IsValid,
-                "Invalid Confluence configuration. Restart the application to reconfigure."
-            )
-            .ValidateOnStart();
+            .WithValidator<ConfluenceOptions, ConfluenceOptionsValidator>();
 
         return services;
     }
