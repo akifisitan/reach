@@ -68,6 +68,10 @@ internal sealed class CommandQueueProcessor
 
             return command;
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
         catch (Exception ex)
         {
             _logger.ZLogError(ex, $"An error occurred while picking from the queue");
@@ -90,6 +94,10 @@ internal sealed class CommandQueueProcessor
             _logger.ZLogDebug($"Handled command {command.Id}");
 
             return commandResult;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch (Exception ex)
         {
@@ -129,6 +137,10 @@ internal sealed class CommandQueueProcessor
                 },
                 cancellationToken
             );
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch (Exception ex)
         {

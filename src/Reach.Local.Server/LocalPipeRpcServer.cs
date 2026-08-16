@@ -35,7 +35,12 @@ internal sealed class LocalPipeRpcServer
             }
             catch (Exception ex)
             {
-                _logger.ZLogError(ex, $"An error occurred while waiting for connection");
+                if (
+                    !(ex is OperationCanceledException && cancellationToken.IsCancellationRequested)
+                )
+                {
+                    _logger.ZLogError(ex, $"An error occurred while waiting for connection");
+                }
 
                 await pipe.DisposeAsync();
 

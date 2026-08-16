@@ -21,6 +21,15 @@ public static class ReachDaemonRunner
 
         using var host = builder.Build();
 
+        var applicationLifetime = host.Services.GetRequiredService<IHostApplicationLifetime>();
+
+        applicationLifetime.ApplicationStarted.Register(() =>
+            Console.WriteLine("Started application")
+        );
+        applicationLifetime.ApplicationStopping.Register(() =>
+            Console.WriteLine("Stopping application")
+        );
+
         var logger = host
             .Services.GetRequiredService<ILoggerFactory>()
             .CreateLogger(nameof(ReachDaemonRunner));

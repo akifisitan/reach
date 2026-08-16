@@ -44,6 +44,10 @@ internal sealed class LocalServer
                 .Select(_ => _queueProcessor.Start(isForRetry: true, cancellationToken))
         );
 
-        await Task.WhenAll(tasks);
+        try
+        {
+            await Task.WhenAll(tasks);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
     }
 }

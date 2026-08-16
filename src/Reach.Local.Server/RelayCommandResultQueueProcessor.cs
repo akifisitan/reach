@@ -68,6 +68,10 @@ internal sealed class RelayCommandResultQueueProcessor
 
             return value;
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
         catch (Exception ex)
         {
             _logger.ZLogError(ex, $"An error occurred while picking from the queue");
@@ -90,6 +94,10 @@ internal sealed class RelayCommandResultQueueProcessor
             _logger.ZLogDebug($"Processed result successfully {value.CommandId}");
 
             return true;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch (Exception ex)
         {
@@ -125,6 +133,10 @@ internal sealed class RelayCommandResultQueueProcessor
                 },
                 cancellationToken
             );
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch (Exception ex)
         {

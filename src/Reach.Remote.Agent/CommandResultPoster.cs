@@ -60,6 +60,10 @@ internal sealed class CommandResultPoster
 
             return item;
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
         catch (Exception ex)
         {
             _logger.ZLogError(ex, $"An error occurred while picking an outbox result");
@@ -87,6 +91,10 @@ internal sealed class CommandResultPoster
             _logger.ZLogInformation($"Posted result {item.CommandId} to local relay");
 
             return true;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch (Exception ex)
         {
@@ -128,6 +136,10 @@ internal sealed class CommandResultPoster
                 },
                 cancellationToken
             );
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch (Exception ex)
         {

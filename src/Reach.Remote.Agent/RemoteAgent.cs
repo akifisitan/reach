@@ -46,6 +46,10 @@ internal sealed class RemoteAgent
                 .Select(_ => _commandQueueProcessor.Start(isForRetry: true, cancellationToken))
         );
 
-        await Task.WhenAll(tasks);
+        try
+        {
+            await Task.WhenAll(tasks);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
     }
 }
