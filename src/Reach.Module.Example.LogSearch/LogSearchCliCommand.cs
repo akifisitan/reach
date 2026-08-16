@@ -1,0 +1,21 @@
+using System.CommandLine;
+using Reach.Module.Example.LogSearch.Features.LogSearchStart;
+using Reach.Module.Example.LogSearch.Features.LogSearchStatus;
+
+namespace Reach.Module.Example.LogSearch;
+
+internal sealed class LogSearchCliCommand : ICliCommand
+{
+    public Command Command { get; }
+
+    public LogSearchCliCommand(
+        LogSearchStartCliCommand searchStartCliCommand,
+        LogSearchStatusCliCommand searchStatusCliCommand
+    )
+    {
+        Command = new Command("search", "Search files and check search job status");
+
+        searchStartCliCommand.Register(Command);
+        searchStatusCliCommand.Register(Command);
+    }
+}

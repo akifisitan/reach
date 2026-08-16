@@ -16,8 +16,8 @@
   <Project Path="src/Reach.Infra.JsonConfig/Reach.Infra.JsonConfig.csproj" />
   <Project Path="src/Reach.Infra.NativeConsole/Reach.Infra.NativeConsole.csproj" />
   <Project Path="src/Reach.Module.Abstractions/Reach.Module.Abstractions.csproj" />
-  <Project Path="src/Reach.Module.Example/Reach.Module.Example.csproj" />
-  <Project Path="src/Reach.Module.LogSearch/Reach.Module.LogSearch.csproj" />
+  <Project Path="src/Reach.Module.Example.Echo/Reach.Module.Example.Echo.csproj" />
+  <Project Path="src/Reach.Module.Example.LogSearch/Reach.Module.Example.LogSearch.csproj" />
   <Project Path="src/Reach.Module.Toolkit.ResultStore.Abstractions/Reach.Module.Toolkit.ResultStore.Abstractions.csproj" />
   <Project Path="src/Reach.Module.Toolkit.ResultStore.Memory/Reach.Module.Toolkit.ResultStore.Memory.csproj" />
   <Project Path="src/Reach.Module.Toolkit.ResultStore.Sqlite/Reach.Module.Toolkit.ResultStore.Sqlite.csproj" />

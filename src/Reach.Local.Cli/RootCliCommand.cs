@@ -13,6 +13,13 @@ internal sealed record RootCliCommand
 
         foreach (var command in commands)
         {
+            if (rootCommand.Subcommands.Any(x => x.Name == command.Command.Name))
+            {
+                throw new InvalidOperationException(
+                    $"Duplicate CLI command '{command.Command.Name}'."
+                );
+            }
+
             rootCommand.Subcommands.Add(command.Command);
         }
 

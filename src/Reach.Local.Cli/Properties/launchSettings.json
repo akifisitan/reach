@@ -3,7 +3,7 @@
   "profiles": {
     "Reach.Local.Cli": {
       "commandName": "Project",
-      "commandLineArgs": "example echo -m \"hello world\" "
+      "commandLineArgs": "echo -m \"hello world\" "
     },
     "Reach.Local.Cli Search": {
       "commandName": "Project",

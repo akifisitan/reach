@@ -4,8 +4,8 @@ using Reach.Infra.DurableQueue;
 using Reach.Infra.NativeConsole;
 using Reach.Infra.Persistence;
 using Reach.Module;
-using Reach.Module.Example;
-using Reach.Module.LogSearch;
+using Reach.Module.Example.Echo;
+using Reach.Module.Example.LogSearch;
 using Reach.Relay;
 using Reach.Relay.LocalFile;
 using ZLogger.Formatters;
@@ -51,8 +51,8 @@ public static class ServiceCollectionExtensions
 
         services.AddPersistence();
 
-        services.AddLogSearchModule();
-        services.AddExampleModule();
+        services.AddExampleLogSearchModule();
+        services.AddExampleEchoModule();
 
         return services;
     }

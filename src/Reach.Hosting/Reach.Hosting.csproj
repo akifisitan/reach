@@ -20,7 +20,7 @@
     <!--<ProjectReference Include="..\Reach.Relay.Confluence\Reach.Relay.Confluence.csproj" />-->
     <ProjectReference Include="..\Reach.Relay.LocalFile\Reach.Relay.LocalFile.csproj" />
     <!-- Modules -->
-    <ProjectReference Include="..\Reach.Module.Example\Reach.Module.Example.csproj" />
-    <ProjectReference Include="..\Reach.Module.LogSearch\Reach.Module.LogSearch.csproj" />
+    <ProjectReference Include="..\Reach.Module.Example.Echo\Reach.Module.Example.Echo.csproj" />
+    <ProjectReference Include="..\Reach.Module.Example.LogSearch\Reach.Module.Example.LogSearch.csproj" />
   </ItemGroup>
 </Project>
