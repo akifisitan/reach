@@ -1,61 +1,43 @@
 using Reach.Module.Toolkit.ResultStore;
-using Reach.Relay;
 
 namespace Reach.Module.Example.Features.Echo;
 
-internal sealed class EchoRpcHandler : RpcHandler<EchoPayload, EchoResult>
+internal sealed class EchoRpcHandler : RemoteCommandRpcHandler<EchoPayload, EchoCommand>
 {
     private readonly ILogger<EchoRpcHandler> _logger;
-    private readonly ILocalRelay _relay;
     private readonly IResultStore<EchoCommandResult> _resultStore;
 
     public EchoRpcHandler(
         ILogger<EchoRpcHandler> logger,
-        ILocalRelay relay,
         IResultStore<EchoCommandResult> resultStore
     )
     {
         _logger = logger;
-        _relay = relay;
         _resultStore = resultStore;
     }
 
-    protected override async Task<EchoResult> Handle(
+    protected override async Task<EchoCommand> PrepareCommand(
         EchoPayload payload,
         CancellationToken cancellationToken
     )
     {
         var id = Guid.CreateVersion7().ToString("N");
 
-        try
-        {
-            var command = new EchoCommand(id, payload.Message);
+        var command = new EchoCommand(id, payload.Message);
 
-            _logger.ZLogInformation($"[{id}] Posting {command} to remote");
+        _logger.ZLogInformation($"[{id}] Preparing {command} for remote submission");
 
-            await _resultStore.Insert(id, cancellationToken);
+        await _resultStore.Insert(id, cancellationToken);
 
-            var result = await _relay.PostToRemote(command, cancellationToken);
+        return command;
+    }
 
-            _logger.ZLogInformation($"[{id}] Posting successful {result.PollId.Value}");
-
-            return new EchoResult.Success(result.PollId.Value);
-        }
-        catch (ResultAlreadyExistsException ex)
-        {
-            _logger.ZLogError(ex, $"[{id}] Echo already exists");
-
-            return new EchoResult.Error(
-                $"An echo with correlation id '{id}' already exists. Check its status."
-            );
-        }
-        catch (Exception ex)
-        {
-            _logger.ZLogError(ex, $"An error occurred");
-
-            await _resultStore.TrySetAsFailed(id, ex.Message, cancellationToken);
-
-            return new EchoResult.Error(ex.Message);
-        }
+    protected override async Task HandleSubmissionFailure(
+        EchoCommand command,
+        Exception exception,
+        CancellationToken cancellationToken
+    )
+    {
+        await _resultStore.TrySetAsFailed(command.Id, exception.Message, cancellationToken);
     }
 }

@@ -33,6 +33,7 @@ internal static class ServiceCollectionExtensions
         services.AddResilience(configuration);
 
         services.AddSingleton<RpcTarget>();
+        services.AddSingleton<RemoteCommandCoordinator>();
         services.AddSingleton<LocalServer>();
         services.AddSingleton<LocalPipeRpcServer>();
         services.AddSingleton<RelayCommandResultQueueProcessor>();

@@ -18,13 +18,6 @@ internal sealed record LogSearchStartPayload(
     DateTimeOffset EndTime
 ) : RpcPayload;
 
-internal abstract record LogSearchStartResult : RpcResult
-{
-    public sealed record Success(string CorrelationId) : LogSearchStartResult;
-
-    public sealed record Error(string Message) : LogSearchStartResult;
-}
-
 internal sealed record SearchFileCommand(
     string Id,
     string Query,

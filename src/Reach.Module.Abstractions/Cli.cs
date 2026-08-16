@@ -2,6 +2,11 @@ using System.CommandLine;
 
 namespace Reach.Module;
 
+public abstract class CliCommandHandler<TPayload, TResult>
+    : Handler<TPayload, TResult, CliCommandPayload, CliCommandResult>
+    where TPayload : CliCommandPayload
+    where TResult : CliCommandResult;
+
 public interface ICliCommand
 {
     Command Command { get; }

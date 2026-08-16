@@ -4,11 +4,11 @@ namespace Reach.Module.Example.Features.Echo;
 
 internal sealed class EchoCliCommand
 {
-    private readonly IHandlerDispatcher<CliCommandPayload, CliCommandResult> _handler;
+    private readonly IHandlerDispatcher<CliCommandPayload, CliCommandResult> _handlerDispatcher;
 
-    public EchoCliCommand(IHandlerDispatcher<CliCommandPayload, CliCommandResult> handler)
+    public EchoCliCommand(IHandlerDispatcher<CliCommandPayload, CliCommandResult> handlerDispatcher)
     {
-        _handler = handler;
+        _handlerDispatcher = handlerDispatcher;
     }
 
     public void Register(Command rootExampleCommand)
@@ -47,7 +47,7 @@ internal sealed class EchoCliCommand
                 parseResult.GetRequiredValue(messageOption),
                 parseResult.GetRequiredValue(pollMsOption)
             ),
-            _handler
+            _handlerDispatcher
         );
     }
 }

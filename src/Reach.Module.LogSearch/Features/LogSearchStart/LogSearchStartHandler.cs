@@ -1,69 +1,50 @@
-using Polly;
-using Polly.Registry;
-using Reach.Module.Toolkit.Resilience;
 using Reach.Module.Toolkit.ResultStore;
-using Reach.Relay;
 
 namespace Reach.Module.LogSearch.Features.LogSearchStart;
 
 internal sealed class LogSearchStartHandler
-    : RpcHandler<LogSearchStartPayload, LogSearchStartResult>
+    : RemoteCommandRpcHandler<LogSearchStartPayload, SearchFileCommand>
 {
     private readonly ILogger<LogSearchStartHandler> _logger;
-    private readonly ILocalRelay _relay;
-    private readonly ResiliencePipeline _retryPipeline;
     private readonly IResultStore<SearchFileCommandResult> _resultStore;
 
     public LogSearchStartHandler(
         ILogger<LogSearchStartHandler> logger,
-        ILocalRelay relay,
-        ResiliencePipelineProvider<string> resiliencePipelineProvider,
         IResultStore<SearchFileCommandResult> resultStore
     )
     {
         _logger = logger;
-        _relay = relay;
-        _retryPipeline = resiliencePipelineProvider.GetDefaultRetryPipeline();
         _resultStore = resultStore;
     }
 
-    protected override async Task<LogSearchStartResult> Handle(
+    protected override async Task<SearchFileCommand> PrepareCommand(
         LogSearchStartPayload payload,
         CancellationToken cancellationToken
     )
     {
         var id = Guid.CreateVersion7().ToString("N");
 
-        try
-        {
-            var command = new SearchFileCommand(
-                id,
-                payload.Query,
-                payload.ServerName,
-                payload.StartTime,
-                payload.EndTime
-            );
+        var command = new SearchFileCommand(
+            id,
+            payload.Query,
+            payload.ServerName,
+            payload.StartTime,
+            payload.EndTime
+        );
 
-            _logger.ZLogInformation($"[{command.Id}] Posting {command} to remote");
+        _logger.ZLogInformation($"[{command.Id}] Preparing {command} for remote submission");
 
-            await _resultStore.Insert(id, cancellationToken);
+        await _resultStore.Insert(id, cancellationToken);
 
-            var result = await _retryPipeline.ExecuteAsync(
-                async ct => await _relay.PostToRemote(command, ct),
-                cancellationToken
-            );
+        return command;
+    }
 
-            _logger.ZLogInformation($"[{command.Id}] Posting successful {result.PollId.Value}");
-
-            return new LogSearchStartResult.Success(result.PollId.Value);
-        }
-        catch (Exception ex)
-        {
-            _logger.ZLogError(ex, $"An error occurred");
-
-            await _resultStore.TrySetAsFailed(id, ex.Message, cancellationToken);
-
-            return new LogSearchStartResult.Error(ex.Message);
-        }
+    protected override async Task HandleSubmissionFailure(
+        SearchFileCommand command,
+        Exception exception,
+        CancellationToken cancellationToken
+    )
+    {
+        await _resultStore.TrySetAsFailed(command.Id, exception.Message, cancellationToken);
     }
 }

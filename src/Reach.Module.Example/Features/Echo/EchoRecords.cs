@@ -8,13 +8,6 @@ internal sealed record EchoCliCommandResult(int StatusCode) : CliCommandResult(S
 
 internal sealed record EchoPayload(string Message) : RpcPayload;
 
-internal abstract record EchoResult : RpcResult
-{
-    public sealed record Success(string CorrelationId) : EchoResult;
-
-    public sealed record Error(string Message) : EchoResult;
-}
-
 internal sealed record EchoCommand(string Id, string Message) : RelayCommand(Id), IWireRecord
 {
     public static string Kind => "exampleEcho";

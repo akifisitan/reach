@@ -27,6 +27,21 @@ public static class WireJsonExtensions
         jsonSerializerOptions.TypeInfoResolverChain.Add(
             ModuleJsonSerializerContext.Default.WithAddedModifier(jsonTypeInfo =>
             {
+                jsonTypeInfo.RegisterDerivedType<RpcResult, RemoteCommandRequest>(
+                    "remoteCommand.request"
+                );
+                jsonTypeInfo.RegisterResultTypes<RpcResult, RemoteCommandSubmissionResult>(
+                    "remoteCommand.submission.result",
+                    (
+                        typeof(RemoteCommandSubmissionResult.Accepted),
+                        "remoteCommand.submission.result.accepted"
+                    ),
+                    (
+                        typeof(RemoteCommandSubmissionResult.Failed),
+                        "remoteCommand.submission.result.failed"
+                    )
+                );
+
                 foreach (var jsonRegistration in jsonTypeInfoRegistrations)
                 {
                     jsonRegistration.Configure(jsonTypeInfo);

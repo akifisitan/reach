@@ -31,7 +31,7 @@ public sealed class HandlerDispatcher<TBasePayload, TBaseResult>
         if (!_handlers.TryGetValue(payload.GetType(), out var handler))
         {
             throw new NotSupportedException(
-                $"No {nameof(IHandler<,>)} registered for payload type '{payload.GetType().FullName}'"
+                $"No {nameof(IHandler<,>)} registered for payload type '{payload.GetType().FullName ?? payload.GetType().Name}'"
             );
         }
 
@@ -63,13 +63,3 @@ public abstract class RelayCommandHandler<TPayload, TResult>
 public abstract class RelayCommandResultHandler<TPayload>
     : Handler<TPayload, Unit, RelayCommandResult, Unit>
     where TPayload : RelayCommandResult;
-
-public abstract class CliCommandHandler<TPayload, TResult>
-    : Handler<TPayload, TResult, CliCommandPayload, CliCommandResult>
-    where TPayload : CliCommandPayload
-    where TResult : CliCommandResult;
-
-public abstract class RpcHandler<TPayload, TResult>
-    : Handler<TPayload, TResult, RpcPayload, RpcResult>
-    where TPayload : RpcPayload
-    where TResult : RpcResult;

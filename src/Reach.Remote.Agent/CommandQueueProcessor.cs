@@ -12,21 +12,21 @@ internal sealed class CommandQueueProcessor
 {
     private readonly ILogger<CommandQueueProcessor> _logger;
     private readonly IDurableQueue<RelayCommand> _commandQueue;
-    private readonly IHandlerDispatcher<RelayCommand, RelayCommandResult> _handler;
+    private readonly IHandlerDispatcher<RelayCommand, RelayCommandResult> _handlerDispatcher;
     private readonly CommandResultOutbox _commandResultOutbox;
     private readonly ResiliencePipeline _retryPipeline;
 
     public CommandQueueProcessor(
         ILogger<CommandQueueProcessor> logger,
         IDurableQueue<RelayCommand> commandQueue,
-        IHandlerDispatcher<RelayCommand, RelayCommandResult> handler,
+        IHandlerDispatcher<RelayCommand, RelayCommandResult> handlerDispatcher,
         CommandResultOutbox commandResultOutbox,
         ResiliencePipelineProvider<string> resiliencePipelineProvider
     )
     {
         _logger = logger;
         _commandQueue = commandQueue;
-        _handler = handler;
+        _handlerDispatcher = handlerDispatcher;
         _commandResultOutbox = commandResultOutbox;
         _retryPipeline = resiliencePipelineProvider.GetPipeline(RetryPolicyNames.Default);
     }
@@ -85,7 +85,7 @@ internal sealed class CommandQueueProcessor
     {
         try
         {
-            var commandResult = await _handler.Handle(command, cancellationToken);
+            var commandResult = await _handlerDispatcher.Handle(command, cancellationToken);
 
             _logger.ZLogDebug($"Handled command {command.Id}");
 

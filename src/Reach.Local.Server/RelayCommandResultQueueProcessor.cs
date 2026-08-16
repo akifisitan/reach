@@ -11,20 +11,20 @@ internal sealed class RelayCommandResultQueueProcessor
 {
     private readonly ILogger<RelayCommandResultQueueProcessor> _logger;
     private readonly IDurableQueue<RelayCommandResult> _queue;
-    private readonly IHandlerDispatcher<RelayCommandResult, Unit> _handler;
+    private readonly IHandlerDispatcher<RelayCommandResult, Unit> _handlerDispatcher;
     private readonly ResiliencePipeline _retryPipeline;
     private readonly ResiliencePipeline _chaosPipeline;
 
     public RelayCommandResultQueueProcessor(
         ILogger<RelayCommandResultQueueProcessor> logger,
         IDurableQueue<RelayCommandResult> queue,
-        IHandlerDispatcher<RelayCommandResult, Unit> handler,
+        IHandlerDispatcher<RelayCommandResult, Unit> handlerDispatcher,
         ResiliencePipelineProvider<string> resiliencePipelineProvider
     )
     {
         _logger = logger;
         _queue = queue;
-        _handler = handler;
+        _handlerDispatcher = handlerDispatcher;
         _retryPipeline = resiliencePipelineProvider.GetPipeline(RetryPolicyNames.Default);
         _chaosPipeline = resiliencePipelineProvider.GetPipeline(ChaosPolicyNames.RelayResult);
     }
@@ -83,7 +83,7 @@ internal sealed class RelayCommandResultQueueProcessor
         try
         {
             await _chaosPipeline.ExecuteAsync(
-                async ct => await _handler.Handle(value, ct),
+                async ct => await _handlerDispatcher.Handle(value, ct),
                 cancellationToken
             );
 

@@ -96,6 +96,23 @@ public sealed class ModuleFeatureBuilder
         where THandler : class, IHandler<RelayCommandResult, Unit> =>
         WithHandler<THandler, RelayCommandResult, Unit>();
 
+    public ModuleFeatureBuilder WithRemoteCommandRpcHandler<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] THandler
+    >()
+        where THandler : class, IHandler<RpcPayload, RpcResult>, IRemoteCommandRpcHandler
+    {
+        _services.AddSingleton<THandler>();
+        _services.AddSingleton<IHandler<RpcPayload, RpcResult>>(serviceProvider =>
+            serviceProvider.GetRequiredService<THandler>()
+        );
+        _services.AddSingleton<IRemoteCommandRpcHandler>(serviceProvider =>
+            serviceProvider.GetRequiredService<THandler>()
+        );
+        _services.AddSingleton(HandlerDescriptor.Create<THandler, RpcPayload, RpcResult>());
+
+        return this;
+    }
+
     /// <summary>
     /// Registers a handler for the given base payload/result pair
     /// (e.g. <see cref="RpcPayload" />/<see cref="RpcResult" />).

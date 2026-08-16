@@ -25,19 +25,19 @@ internal sealed class EchoCliCommandHandler
     {
         try
         {
-            var result = await _rpcClient.Invoke<EchoPayload, EchoResult>(
+            var result = await _rpcClient.Invoke<EchoPayload, RemoteCommandSubmissionResult>(
                 new EchoPayload(payload.Message),
                 cancellationToken
             );
 
-            if (result is EchoResult.Error err)
+            if (result is RemoteCommandSubmissionResult.Failed failed)
             {
-                _consoleWriter.WriteLine(err.Message);
+                _consoleWriter.WriteLine(failed.Error.Message);
 
                 return new(1);
             }
 
-            if (result is not EchoResult.Success success)
+            if (result is not RemoteCommandSubmissionResult.Accepted accepted)
             {
                 throw new NotSupportedException();
             }
@@ -47,7 +47,7 @@ internal sealed class EchoCliCommandHandler
             while (true)
             {
                 var pollResult = await _rpcClient.Invoke<EchoPollPayload, EchoPollResult>(
-                    new EchoPollPayload(success.CorrelationId),
+                    new EchoPollPayload(accepted.CorrelationId),
                     cancellationToken
                 );
 
@@ -61,7 +61,7 @@ internal sealed class EchoCliCommandHandler
                 if (pollResult is EchoPollResult.NotFound)
                 {
                     _consoleWriter.WriteLine(
-                        $"No echo found for correlation id {success.CorrelationId}"
+                        $"No echo found for correlation id {accepted.CorrelationId}"
                     );
 
                     return new(1);

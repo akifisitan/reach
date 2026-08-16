@@ -4,11 +4,13 @@ namespace Reach.Module.LogSearch.Features.LogSearchStart;
 
 internal sealed class SearchStartCliCommand
 {
-    private readonly IHandlerDispatcher<CliCommandPayload, CliCommandResult> _handler;
+    private readonly IHandlerDispatcher<CliCommandPayload, CliCommandResult> _handlerDispatcher;
 
-    public SearchStartCliCommand(IHandlerDispatcher<CliCommandPayload, CliCommandResult> handler)
+    public SearchStartCliCommand(
+        IHandlerDispatcher<CliCommandPayload, CliCommandResult> handlerDispatcher
+    )
     {
-        _handler = handler;
+        _handlerDispatcher = handlerDispatcher;
     }
 
     public void Register(Command rootSearchCommand)
@@ -55,7 +57,7 @@ internal sealed class SearchStartCliCommand
                 parseResult.GetRequiredValue(startTimeOption),
                 parseResult.GetRequiredValue(endTimeOption)
             ),
-            _handler
+            _handlerDispatcher
         );
     }
 }

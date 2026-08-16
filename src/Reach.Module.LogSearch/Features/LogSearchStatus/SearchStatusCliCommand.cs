@@ -4,11 +4,13 @@ namespace Reach.Module.LogSearch.Features.LogSearchStatus;
 
 internal sealed class SearchStatusCliCommand
 {
-    private readonly IHandlerDispatcher<CliCommandPayload, CliCommandResult> _handler;
+    private readonly IHandlerDispatcher<CliCommandPayload, CliCommandResult> _handlerDispatcher;
 
-    public SearchStatusCliCommand(IHandlerDispatcher<CliCommandPayload, CliCommandResult> handler)
+    public SearchStatusCliCommand(
+        IHandlerDispatcher<CliCommandPayload, CliCommandResult> handlerDispatcher
+    )
     {
-        _handler = handler;
+        _handlerDispatcher = handlerDispatcher;
     }
 
     public void Register(Command rootSearchCommand)
@@ -29,7 +31,7 @@ internal sealed class SearchStatusCliCommand
             parseResult => new SearchStatusCliCommandPayload(
                 parseResult.GetRequiredValue(correlationIdOption)
             ),
-            _handler
+            _handlerDispatcher
         );
     }
 }

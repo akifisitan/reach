@@ -5,4 +5,7 @@
   <ItemGroup>
     <PackageReference Include="Polly.Extensions" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Reach.Module.Abstractions\Reach.Module.Abstractions.csproj" />
+  </ItemGroup>
 </Project>

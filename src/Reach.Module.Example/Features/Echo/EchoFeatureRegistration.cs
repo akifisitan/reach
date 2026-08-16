@@ -10,7 +10,7 @@ internal static class EchoFeatureRegistration
                 .WithJson<EchoJsonRegistration>()
                 .WithJson<EchoPollJsonRegistration>()
                 .WithCliCommandHandler<EchoCliCommandHandler>()
-                .WithRpcHandler<EchoRpcHandler>()
+                .WithRemoteCommandRpcHandler<EchoRpcHandler>()
                 .WithRpcHandler<EchoPollHandler>()
                 .WithRelayCommandHandler<EchoCommandHandler>()
                 .WithRelayCommandResultHandler<EchoCommandResultHandler>()

@@ -7,29 +7,37 @@ namespace Reach.Local.Server;
 
 internal sealed class RpcTarget
 {
-    private readonly IHandlerDispatcher<RpcPayload, RpcResult> _handler;
+    private readonly IHandlerDispatcher<RpcPayload, RpcResult> _handlerDispatcher;
     private readonly IRpcPayloadSerializer _payloadSerializer;
-    private readonly ResiliencePipeline _rpcTransportChaos;
+    private readonly ResiliencePipeline _chaosPipeline;
+    private readonly RemoteCommandCoordinator _remoteCommandCoordinator;
 
     public RpcTarget(
-        IHandlerDispatcher<RpcPayload, RpcResult> handler,
+        IHandlerDispatcher<RpcPayload, RpcResult> handlerDispatcher,
         IRpcPayloadSerializer payloadSerializer,
-        ResiliencePipelineProvider<string> resiliencePipelineProvider
+        ResiliencePipelineProvider<string> resiliencePipelineProvider,
+        RemoteCommandCoordinator remoteCommandCoordinator
     )
     {
-        _handler = handler;
+        _handlerDispatcher = handlerDispatcher;
         _payloadSerializer = payloadSerializer;
-        _rpcTransportChaos = resiliencePipelineProvider.GetPipeline(ChaosPolicyNames.RpcTransport);
+        _chaosPipeline = resiliencePipelineProvider.GetPipeline(ChaosPolicyNames.RpcTransport);
+        _remoteCommandCoordinator = remoteCommandCoordinator;
     }
 
     public async Task<string> Invoke(string payload, CancellationToken cancellationToken)
     {
         var value = _payloadSerializer.Deserialize<RpcPayload>(payload);
 
-        var result = await _rpcTransportChaos.ExecuteAsync(
-            async ct => await _handler.Handle(value, ct),
+        var result = await _chaosPipeline.ExecuteAsync(
+            async ct => await _handlerDispatcher.Handle(value, ct),
             cancellationToken
         );
+
+        if (result is RemoteCommandRequest request)
+        {
+            result = await _remoteCommandCoordinator.Submit(request, cancellationToken);
+        }
 
         return _payloadSerializer.Serialize(result);
     }

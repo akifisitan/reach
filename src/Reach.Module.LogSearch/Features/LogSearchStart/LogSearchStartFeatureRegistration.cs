@@ -9,7 +9,7 @@ internal static class LogSearchStartFeatureRegistration
                 .WithCliCommand<SearchStartCliCommand>()
                 .WithJson<LogSearchStartJsonRegistration>()
                 .WithCliCommandHandler<SearchStartCliCommandHandler>()
-                .WithRpcHandler<LogSearchStartHandler>()
+                .WithRemoteCommandRpcHandler<LogSearchStartHandler>()
                 .WithRelayCommandHandler<SearchFileCommandHandler>()
                 .WithRelayCommandResultHandler<SearchFileCommandResultHandler>()
         );

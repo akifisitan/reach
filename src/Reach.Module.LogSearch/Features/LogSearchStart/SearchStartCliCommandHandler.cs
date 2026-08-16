@@ -32,24 +32,24 @@ internal sealed class SearchStartCliCommandHandler
                 payload.EndTime
             );
 
-            var result = await _rpcClient.Invoke<LogSearchStartPayload, LogSearchStartResult>(
-                startPayload,
-                cancellationToken
-            );
+            var result = await _rpcClient.Invoke<
+                LogSearchStartPayload,
+                RemoteCommandSubmissionResult
+            >(startPayload, cancellationToken);
 
-            if (result is LogSearchStartResult.Error err)
+            if (result is RemoteCommandSubmissionResult.Failed failed)
             {
-                _consoleWriter.WriteLine(err.Message);
+                _consoleWriter.WriteLine(failed.Error.Message);
 
                 return new(1);
             }
 
-            if (result is not LogSearchStartResult.Success success)
+            if (result is not RemoteCommandSubmissionResult.Accepted accepted)
             {
                 throw new NotSupportedException();
             }
 
-            _consoleWriter.WriteLine($"Can poll with {success.CorrelationId}");
+            _consoleWriter.WriteLine($"Can poll with {accepted.CorrelationId}");
 
             return new(0);
         }
