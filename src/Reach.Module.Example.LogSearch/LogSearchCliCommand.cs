@@ -4,7 +4,7 @@ using Reach.Module.Example.LogSearch.Features.LogSearchStatus;
 
 namespace Reach.Module.Example.LogSearch;
 
-internal sealed class LogSearchCliCommand : ICliCommand
+internal sealed class LogSearchCliCommand : IRootCliCommand
 {
     public Command Command { get; }
 
@@ -15,7 +15,7 @@ internal sealed class LogSearchCliCommand : ICliCommand
     {
         Command = new Command("search", "Search files and check search job status");
 
-        searchStartCliCommand.Register(Command);
-        searchStatusCliCommand.Register(Command);
+        searchStartCliCommand.AddTo(Command);
+        searchStatusCliCommand.AddTo(Command);
     }
 }

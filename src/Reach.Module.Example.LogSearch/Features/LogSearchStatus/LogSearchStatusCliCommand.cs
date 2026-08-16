@@ -2,7 +2,7 @@ using System.CommandLine;
 
 namespace Reach.Module.Example.LogSearch.Features.LogSearchStatus;
 
-internal sealed class LogSearchStatusCliCommand
+internal sealed class LogSearchStatusCliCommand : IChildCliCommand
 {
     private readonly IHandlerDispatcher<CliCommandPayload, CliCommandResult> _handlerDispatcher;
 
@@ -13,7 +13,7 @@ internal sealed class LogSearchStatusCliCommand
         _handlerDispatcher = handlerDispatcher;
     }
 
-    public void Register(Command rootSearchCommand)
+    public void AddTo(Command rootSearchCommand)
     {
         var searchStatusCommand = new Command("status", "Search status");
 

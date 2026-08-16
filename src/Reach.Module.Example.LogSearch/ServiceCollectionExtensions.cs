@@ -14,7 +14,7 @@ public static class ServiceCollectionExtensions
             TimeSpan.FromHours(24)
         );
 
-        services.AddSingleton<ICliCommand, LogSearchCliCommand>();
+        services.AddRootCliCommand<LogSearchCliCommand>();
 
         services.AddLogSearchStartFeature();
         services.AddLogSearchStatusFeature();

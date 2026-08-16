@@ -2,7 +2,7 @@ using System.CommandLine;
 
 namespace Reach.Module.Example.Echo.Features.Echo;
 
-internal sealed class EchoCliCommand : ICliCommand
+internal sealed class EchoCliCommand : IRootCliCommand
 {
     private readonly IHandlerDispatcher<CliCommandPayload, CliCommandResult> _handlerDispatcher;
     public Command Command { get; }

@@ -2,7 +2,7 @@ using System.CommandLine;
 
 namespace Reach.Module.Example.LogSearch.Features.LogSearchStart;
 
-internal sealed class LogSearchStartCliCommand
+internal sealed class LogSearchStartCliCommand : IChildCliCommand
 {
     private readonly IHandlerDispatcher<CliCommandPayload, CliCommandResult> _handlerDispatcher;
 
@@ -13,7 +13,7 @@ internal sealed class LogSearchStartCliCommand
         _handlerDispatcher = handlerDispatcher;
     }
 
-    public void Register(Command rootSearchCommand)
+    public void AddTo(Command rootSearchCommand)
     {
         var searchStartCommand = new Command("start", "Search in log");
 

@@ -17,22 +17,27 @@ public sealed class ModuleFeatureBuilder
     }
 
     /// <summary>
-    /// Registers the feature's CLI command. If it implements <see cref="ICliCommand" /> it is
-    /// also registered as one, so the root command picks it up.
+    /// Registers the feature's root CLI command so the application root command picks it up.
     /// </summary>
-    public ModuleFeatureBuilder WithCliCommand<
+    public ModuleFeatureBuilder WithRootCliCommand<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TCliCommand
     >()
-        where TCliCommand : class
+        where TCliCommand : class, IRootCliCommand
+    {
+        _services.AddRootCliCommand<TCliCommand>();
+
+        return this;
+    }
+
+    /// <summary>
+    /// Registers a feature CLI command that is attached to a parent command.
+    /// </summary>
+    public ModuleFeatureBuilder WithChildCliCommand<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TCliCommand
+    >()
+        where TCliCommand : class, IChildCliCommand
     {
         _services.AddSingleton<TCliCommand>();
-
-        if (typeof(ICliCommand).IsAssignableFrom(typeof(TCliCommand)))
-        {
-            _services.AddSingleton(serviceProvider =>
-                (ICliCommand)serviceProvider.GetRequiredService<TCliCommand>()
-            );
-        }
 
         return this;
     }

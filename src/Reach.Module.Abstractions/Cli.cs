@@ -7,9 +7,14 @@ public abstract class CliCommandHandler<TPayload, TResult>
     where TPayload : CliCommandPayload
     where TResult : CliCommandResult;
 
-public interface ICliCommand
+public interface IRootCliCommand
 {
     Command Command { get; }
+}
+
+public interface IChildCliCommand
+{
+    void AddTo(Command parent);
 }
 
 public abstract record CliCommandPayload;

@@ -6,7 +6,7 @@ internal static class EchoFeatureRegistration
     {
         services.AddFeature(feature =>
             feature
-                .WithCliCommand<EchoCliCommand>()
+                .WithRootCliCommand<EchoCliCommand>()
                 .WithJson<EchoJsonRegistration>()
                 .WithJson<EchoPollJsonRegistration>()
                 .WithCliCommandHandler<EchoCliCommandHandler>()

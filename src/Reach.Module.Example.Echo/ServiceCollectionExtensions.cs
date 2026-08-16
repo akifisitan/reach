@@ -9,8 +9,6 @@ public static class ServiceCollectionExtensions
     {
         services.AddMemoryResultStore<EchoCommandResult>();
 
-        services.AddSingleton<ICliCommand, EchoCliCommand>();
-
         services.AddEchoFeature();
 
         return services;

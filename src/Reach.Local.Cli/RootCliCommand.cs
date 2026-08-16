@@ -7,7 +7,7 @@ internal sealed record RootCliCommand
 {
     private readonly RootCommand _root;
 
-    public RootCliCommand(IEnumerable<ICliCommand> commands)
+    public RootCliCommand(IEnumerable<IRootCliCommand> commands)
     {
         var rootCommand = new RootCommand();
 

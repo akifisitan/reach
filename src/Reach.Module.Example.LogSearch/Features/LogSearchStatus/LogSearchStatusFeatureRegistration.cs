@@ -6,7 +6,7 @@ internal static class LogSearchStatusFeatureRegistration
     {
         services.AddFeature(feature =>
             feature
-                .WithCliCommand<LogSearchStatusCliCommand>()
+                .WithChildCliCommand<LogSearchStatusCliCommand>()
                 .WithJson<LogSearchStatusJsonRegistration>()
                 .WithCliCommandHandler<LogSearchStatusCliCommandHandler>()
                 .WithRpcHandler<LogSearchStatusHandler>()
