@@ -3,13 +3,7 @@ using Reach.Relay;
 
 namespace Reach.Hosting;
 
-public interface IRelaySetupCoordinator
-{
-    Task EnsureSetup(CancellationToken cancellationToken = default);
-    Task RunSetup(CancellationToken cancellationToken = default);
-}
-
-public sealed class RelaySetupCoordinator : IRelaySetupCoordinator
+public sealed class RelaySetupCoordinator
 {
     private readonly string _appBasePath;
     private readonly IConsoleAttacher _consoleAttacher;

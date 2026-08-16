@@ -41,7 +41,7 @@ public static class ReachDaemonRunner
         {
             host.Services.ValidateMessageGraph();
 
-            var setupCoordinator = host.Services.GetRequiredService<IRelaySetupCoordinator>();
+            var setupCoordinator = host.Services.GetRequiredService<RelaySetupCoordinator>();
 
             await setupCoordinator.EnsureSetup();
 
@@ -57,7 +57,7 @@ public static class ReachDaemonRunner
 
             try
             {
-                var setupCoordinator = host.Services.GetRequiredService<IRelaySetupCoordinator>();
+                var setupCoordinator = host.Services.GetRequiredService<RelaySetupCoordinator>();
 
                 await setupCoordinator.RunSetup();
 

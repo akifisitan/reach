@@ -31,6 +31,9 @@ public sealed class ConfluenceRelaySetup : IRelaySetup
 
     public string Name => "confluence";
 
+    // why does this do what it does?
+    // should just try to connect to both relays and fail with an error?
+    // also we should read the relay config from its own confluence.json instead of the default config.json
     public bool IsComplete(string appDataBasePath)
     {
         try

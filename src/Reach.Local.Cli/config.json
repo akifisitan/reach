@@ -5,9 +5,6 @@
       "Polly": "Error"
     }
   },
-  "AppOptions": {
-    "DebugMode": false
-  },
   "ReachLoggingOptions": {
     "OpenLogFileOnStart": false
   }

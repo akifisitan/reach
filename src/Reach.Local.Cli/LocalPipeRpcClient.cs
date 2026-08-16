@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.IO.Pipes;
 using Reach.Local.Contracts;
 using Reach.Module;
@@ -10,25 +9,20 @@ internal sealed class LocalPipeRpcClient : IRpcClient
 {
     private readonly ILogger<LocalPipeRpcClient> _logger;
     private readonly IRpcPayloadSerializer _payloadSerializer;
-    private readonly LocalPipeRpcClientOptions _options;
 
     public LocalPipeRpcClient(
         ILogger<LocalPipeRpcClient> logger,
-        IRpcPayloadSerializer payloadSerializer,
-        IOptions<LocalPipeRpcClientOptions> options
+        IRpcPayloadSerializer payloadSerializer
     )
     {
         _logger = logger;
         _payloadSerializer = payloadSerializer;
-        _options = options.Value;
     }
 
     public async Task<TOut> Invoke<TIn, TOut>(TIn payload, CancellationToken cancellationToken)
         where TIn : RpcPayload
         where TOut : RpcResult
     {
-        await EnsureServerRunning().ConfigureAwait(false);
-
         await using var connection = await CreateConnection(cancellationToken: cancellationToken)
             .ConfigureAwait(false);
 
@@ -91,54 +85,6 @@ internal sealed class LocalPipeRpcClient : IRpcClient
         _logger.ZLogInformation($"Started listening to rpc");
 
         return new(rpc, pipe);
-    }
-
-    private async Task EnsureServerRunning()
-    {
-        Exception exception;
-
-        try
-        {
-            await CheckConnection(CancellationToken.None).ConfigureAwait(false);
-
-            return;
-        }
-        catch (Exception ex)
-        {
-            if (ex is TimeoutException)
-            {
-                _logger.ZLogError($"An error occurred while connecting to the local server");
-            }
-            else
-            {
-                _logger.ZLogError(ex, $"An error occurred while connecting to the local server");
-            }
-
-            exception = ex;
-        }
-
-        if (_options.ShouldNotBootServer)
-        {
-            throw exception;
-        }
-
-        var psi = new ProcessStartInfo
-        {
-            UseShellExecute = true,
-            FileName = _options.ServerBinaryPath,
-            CreateNoWindow = true,
-            WindowStyle = ProcessWindowStyle.Hidden,
-        };
-
-        using var process = Process.Start(psi);
-
-        if (process?.Id is null)
-        {
-            throw new Exception(
-                $"Could not start server process at {_options.ServerBinaryPath}",
-                exception
-            );
-        }
     }
 
     private sealed class RpcConnection : IAsyncDisposable

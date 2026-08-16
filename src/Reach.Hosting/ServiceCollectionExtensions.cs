@@ -36,7 +36,7 @@ public static class ServiceCollectionExtensions
         );
         services.AddSingleton<ISingleAppInstanceLock, SingleAppInstanceLock>();
         services.AddSingleton<IConsoleAttacher, ConsoleAttacher>();
-        services.AddSingleton<IRelaySetupCoordinator>(sp => new RelaySetupCoordinator(
+        services.AddSingleton(sp => new RelaySetupCoordinator(
             basePath,
             sp.GetRequiredService<IConsoleAttacher>(),
             sp.GetServices<IRelaySetup>()
