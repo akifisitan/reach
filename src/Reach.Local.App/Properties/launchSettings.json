@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+  "profiles": {
+    "Reach.Local.App Serve": {
+      "commandName": "Project",
+      "commandLineArgs": "serve"
+    },
+    "Reach.Local.App Echo": {
+      "commandName": "Project",
+      "commandLineArgs": "echo -m \"hello world\""
+    },
+    "Reach.Local.App Search": {
+      "commandName": "Project",
+      "commandLineArgs": "search --help"
+    }
+  }
+}

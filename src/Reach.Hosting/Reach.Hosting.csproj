@@ -12,7 +12,6 @@
     <PackageReference Include="Polly.Extensions" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Reach.Infra.NativeConsole\Reach.Infra.NativeConsole.csproj" />
     <ProjectReference Include="..\Reach.Infra.Persistence\Reach.Infra.Persistence.csproj" />
     <ProjectReference Include="..\Reach.Infra.DurableQueue\Reach.Infra.DurableQueue.csproj" />
     <ProjectReference Include="..\Reach.Relay.Abstractions\Reach.Relay.Abstractions.csproj" />

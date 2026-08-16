@@ -1,4 +1,3 @@
-using Reach.Infra.NativeConsole;
 using Reach.Relay;
 
 namespace Reach.Hosting;
@@ -6,17 +5,11 @@ namespace Reach.Hosting;
 public sealed class RelaySetupCoordinator
 {
     private readonly string _appBasePath;
-    private readonly IConsoleAttacher _consoleAttacher;
     private readonly IReadOnlyList<IRelaySetup> _relaySetupList;
 
-    public RelaySetupCoordinator(
-        string appBasePath,
-        IConsoleAttacher consoleAttacher,
-        IEnumerable<IRelaySetup> relaySetupList
-    )
+    public RelaySetupCoordinator(string appBasePath, IEnumerable<IRelaySetup> relaySetupList)
     {
         _appBasePath = appBasePath;
-        _consoleAttacher = consoleAttacher;
         _relaySetupList = relaySetupList.ToList();
     }
 
@@ -41,8 +34,6 @@ public sealed class RelaySetupCoordinator
 
     private async Task Run(IRelaySetup setup, CancellationToken cancellationToken)
     {
-        _consoleAttacher.EnsureAttached();
-
         var exitCode = await setup.Run(_appBasePath, cancellationToken).ConfigureAwait(false);
 
         if (exitCode != 0)

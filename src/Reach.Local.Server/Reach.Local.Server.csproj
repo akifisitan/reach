@@ -1,10 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <AssemblyName>reachld</AssemblyName>
+    <OutputType>Library</OutputType>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <InvariantGlobalization>true</InvariantGlobalization>
-    <PublishAot>true</PublishAot>
     <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
   </PropertyGroup>
   <ItemGroup>
@@ -18,10 +16,5 @@
     <ProjectReference Include="..\Reach.Infra.DurableQueue\Reach.Infra.DurableQueue.csproj" />
     <ProjectReference Include="..\Reach.Hosting\Reach.Hosting.csproj" />
     <ProjectReference Include="..\Reach.Local.Contracts\Reach.Local.Contracts.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="config.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
 </Project>

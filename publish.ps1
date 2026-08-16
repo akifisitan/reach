@@ -11,8 +11,7 @@ $ErrorActionPreference = 'Stop'
 $commonPublishProperties = @()
 
 $projects = @(
-    'src/Reach.Local.Cli/Reach.Local.Cli.csproj',
-    'src/Reach.Local.Server/Reach.Local.Server.csproj',
+    'src/Reach.Local.App/Reach.Local.App.csproj',
     'src/Reach.Remote.Agent/Reach.Remote.Agent.csproj'
 )
 

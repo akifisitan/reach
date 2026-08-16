@@ -26,7 +26,7 @@ internal sealed record RootCliCommand
         _root = rootCommand;
     }
 
-    public Task Invoke(string[] args)
+    public Task<int> Invoke(string[] args)
     {
         return _root.Parse(args).InvokeAsync();
     }

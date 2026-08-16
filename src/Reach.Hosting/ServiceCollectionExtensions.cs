@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json;
 using Reach.Infra.DurableQueue;
-using Reach.Infra.NativeConsole;
 using Reach.Infra.Persistence;
 using Reach.Module;
 using Reach.Module.Example.Echo;
@@ -35,10 +34,9 @@ public static class ServiceCollectionExtensions
             sp.GetRequiredService<JsonPayloadSerializer>()
         );
         services.AddSingleton<ISingleAppInstanceLock, SingleAppInstanceLock>();
-        services.AddSingleton<IConsoleAttacher, ConsoleAttacher>();
+
         services.AddSingleton(sp => new RelaySetupCoordinator(
             basePath,
-            sp.GetRequiredService<IConsoleAttacher>(),
             sp.GetServices<IRelaySetup>()
         ));
 

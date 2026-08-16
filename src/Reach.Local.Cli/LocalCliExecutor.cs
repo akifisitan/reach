@@ -9,5 +9,5 @@ internal sealed class LocalCliExecutor
         _rootCliCommand = rootCliCommand;
     }
 
-    public Task Execute(string[] args) => _rootCliCommand.Invoke(args);
+    public Task<int> Execute(string[] args) => _rootCliCommand.Invoke(args);
 }

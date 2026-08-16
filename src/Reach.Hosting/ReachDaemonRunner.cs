@@ -7,7 +7,7 @@ namespace Reach.Hosting;
 
 public static class ReachDaemonRunner
 {
-    public static async Task Run(
+    public static async Task<int> Run(
         string[] args,
         ReachAppPaths paths,
         Action<IServiceCollection, IConfiguration, ReachAppPaths> configureServices
@@ -31,9 +31,13 @@ public static class ReachDaemonRunner
 
             if (!appLock.TryAcquire(paths.LockFilePath))
             {
-                logger.ZLogInformation($"There's already a running instance, exiting...");
+                const string message = "There's already a running instance.";
 
-                return;
+                logger.ZLogError($"{message}");
+
+                await Console.Error.WriteLineAsync(message);
+
+                return 2;
             }
         }
 
@@ -50,6 +54,8 @@ public static class ReachDaemonRunner
             await RunStartupChecks(host.Services);
 
             await host.RunAsync();
+
+            return 0;
         }
         catch (RelaySetupRequiredException ex)
         {
@@ -64,25 +70,27 @@ public static class ReachDaemonRunner
                 await RunStartupChecks(host.Services);
 
                 await host.RunAsync();
+
+                return 0;
             }
             catch (Exception setupEx)
             {
                 Console.WriteLine($"Setup failed: {setupEx.Message}");
 
-                Environment.ExitCode = 1;
+                return 1;
             }
         }
         catch (OptionsValidationException ex)
         {
             logger.ZLogError($"Configuration error: {ex.Message}");
 
-            Environment.ExitCode = 1;
+            return 1;
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Setup failed: {ex.Message}");
 
-            Environment.ExitCode = 1;
+            return 1;
         }
     }
 
