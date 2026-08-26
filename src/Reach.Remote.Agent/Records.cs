@@ -11,6 +11,8 @@ internal sealed record AppOptions
 
 internal sealed record ExecutorOptions
 {
+    public const string SectionName = "ExecutorOptions";
+
     public int ProcessorCount { get; set; }
     public int RetryConsumerCount { get; set; }
     public int PosterCount { get; set; }

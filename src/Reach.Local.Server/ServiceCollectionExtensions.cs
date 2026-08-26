@@ -39,15 +39,6 @@ internal static class ServiceCollectionExtensions
         services.AddSingleton<LocalPipeRpcServer>();
         services.AddSingleton<RelayCommandResultQueueProcessor>();
         services.AddSingleton<RemoteRelayPoller>();
-        services
-            .AddOptions<ServerExecutorOptions>()
-            .Configure(x =>
-            {
-                x.QueueProcessorCount = 1;
-                x.RetryQueueProcessorCount = 1;
-            })
-            .WithValidator<ServerExecutorOptions, ServerExecutorOptionsValidator>();
-
         services.AddHostedService<LocalServerHostedService>();
 
         return services;
@@ -132,6 +123,11 @@ internal static class ServiceCollectionExtensions
             {
                 x.DbPath = Path.Combine(basePath, "db", "reach.db");
             });
+
+        services
+            .AddOptions<ServerExecutorOptions>()
+            .Bind(configuration.GetSection(ServerExecutorOptions.SectionName))
+            .WithValidator<ServerExecutorOptions, ServerExecutorOptionsValidator>();
 
         return services;
     }

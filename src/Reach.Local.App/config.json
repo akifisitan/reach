@@ -12,6 +12,10 @@
   "ReachLoggingOptions": {
     "OpenLogFileOnStart": true
   },
+  "ServerExecutorOptions": {
+    "QueueProcessorCount": 1,
+    "RetryQueueProcessorCount": 1
+  },
   "Chaos": {
     "Enabled": false,
     "Retry": {

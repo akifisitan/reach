@@ -12,6 +12,11 @@
   "ReachLoggingOptions": {
     "OpenLogFileOnStart": true
   },
+  "ExecutorOptions": {
+    "ProcessorCount": 1,
+    "RetryConsumerCount": 1,
+    "PosterCount": 1
+  },
   "Chaos": {
     "Enabled": false,
     "Retry": {

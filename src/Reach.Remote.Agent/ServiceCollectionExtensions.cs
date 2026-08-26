@@ -118,12 +118,7 @@ internal static class ServiceCollectionExtensions
 
         services
             .AddOptions<ExecutorOptions>()
-            .Configure(x =>
-            {
-                x.ProcessorCount = 1;
-                x.RetryConsumerCount = 1;
-                x.PosterCount = 1;
-            })
+            .Bind(configuration.GetSection(ExecutorOptions.SectionName))
             .WithValidator<ExecutorOptions, ExecutorOptionsValidator>();
 
         services
@@ -146,7 +141,8 @@ internal static class ServiceCollectionExtensions
             .Configure(x =>
             {
                 x.DbPath = Path.Combine(basePath, "db", "reach.db");
-            });
+            })
+            .WithValidator<DbConnectionFactoryOptions, DbConnectionFactoryOptionsValidator>();
 
         return services;
     }

@@ -21,6 +21,7 @@ internal static class ServiceCollectionExtensions
         services.AddSingleton<IRpcClient, LocalPipeRpcClient>();
         services.AddSingleton<LocalCliExecutor>();
         services.AddSingleton<RootCliCommand>();
+
         return services;
     }
 
