@@ -19,8 +19,18 @@ indent_size = 4
 
 # Remove unnecessary import
 dotnet_diagnostic.IDE0005.severity = warning
+# 'var' preferences
+dotnet_diagnostic.IDE0007.severity = warning
+dotnet_diagnostic.IDE0008.severity = warning
+csharp_style_var_for_built_in_types = true
+csharp_style_var_when_type_is_apparent = true
+csharp_style_var_elsewhere = true
 # Collection initialization can be simplified
 dotnet_diagnostic.IDE0028.severity = silent
+# Use local function instead of lambda
+dotnet_diagnostic.IDE0039.severity = silent
+# Remove unnecessary value assignment
+dotnet_diagnostic.IDE0059.severity = silent
 # 'new' expression can be simplified
 dotnet_diagnostic.IDE0090.severity = silent
 # Use 'nameof'
@@ -37,20 +47,14 @@ dotnet_diagnostic.IDE0305.severity = silent
 dotnet_diagnostic.IDE0037.severity = silent
 # Deconstruct variable declaration
 dotnet_diagnostic.IDE0042.severity = silent
-
 # Use file-scoped namespace
 dotnet_diagnostic.IDE0160.severity = error
 dotnet_diagnostic.IDE0161.severity = error
 csharp_style_namespace_declarations = file_scoped:error
-
 # Formatting rule (Disabled as formatting is handled by CSharpier)
 dotnet_diagnostic.IDE0055.severity = none
 
 # https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/quality-rules/maintainability-warnings
-
-# Do not directly await a Task
-dotnet_diagnostic.CA2007.severity = warning
-dotnet_code_quality.CA2007.output_kind = DynamicallyLinkedLibrary
 
 # Avoid excessive inheritance
 dotnet_diagnostic.CA1501.severity = error
@@ -215,5 +219,32 @@ dotnet_diagnostic.CA1874.severity = warning
 dotnet_diagnostic.CA1875.severity = warning
 # Use Path.Combine or Path.Join overloads
 dotnet_diagnostic.CA1877.severity = suggestion
+
+# https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/quality-rules/reliability-warnings
+
+# Do not directly await a Task
+dotnet_diagnostic.CA2007.severity = warning
+dotnet_code_quality.CA2007.output_kind = DynamicallyLinkedLibrary
+# Do not create tasks without passing a TaskScheduler
+dotnet_diagnostic.CA2008.severity = warning
+# Do not assign property within its setter
+dotnet_diagnostic.CA2011.severity = warning
+# Use ValueTasks correctly
+dotnet_diagnostic.CA2012.severity = warning
+# Forward the CancellationToken parameter to methods that take one
+dotnet_diagnostic.CA2016.severity = warning
+# Parameter count mismatch
+dotnet_diagnostic.CA2017.severity = warning
+# Invalid braces in message template
+dotnet_diagnostic.CA2023.severity = warning
+# Do not pass 'IDisposable' instances into unawaited tasks
+dotnet_diagnostic.CA2025.severity = warning
+
+# https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/quality-rules/usage-warnings
+
+# Rethrow to preserve stack details
+dotnet_diagnostic.CA2200.severity = warning
+# Template should be a static expression
+dotnet_diagnostic.CA2254.severity = warning
 
 # dotnet analyzers end
