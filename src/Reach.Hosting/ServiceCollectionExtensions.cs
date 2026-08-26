@@ -49,7 +49,7 @@ public static class ServiceCollectionExtensions
             sp.GetRequiredService<JsonPayloadSerializer>()
         );
 
-        //services.AddConfluenceRelay(configuration, ReachAppPaths.SharedPath);
+        //services.AddConfluenceRelay(ReachAppPaths.SharedPath);
         services.AddLocalFileRelay(configuration, ReachAppPaths.SharedPath);
 
         services.AddPersistence();

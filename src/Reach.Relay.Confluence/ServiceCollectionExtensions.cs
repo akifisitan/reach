@@ -1,5 +1,4 @@
 using Reach.Infra.Credentials;
-using Reach.Options;
 
 namespace Reach.Relay.Confluence;
 
@@ -7,10 +6,10 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddConfluenceRelay(
         this IServiceCollection services,
-        IConfiguration configuration,
         string basePath
     )
     {
+        services.AddSingleton(new ConfluenceConfigurationStore(basePath));
         services.AddSingleton<ConfluenceCommentRelay>();
         services.AddSingleton<ILocalRelay>(sp => sp.GetRequiredService<ConfluenceCommentRelay>());
         services.AddSingleton<IRemoteRelay>(sp => sp.GetRequiredService<ConfluenceCommentRelay>());
@@ -31,11 +30,6 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IRelaySetup, ConfluenceRelaySetup>();
 
         services.AddSingleton<IStartupCheck, ConfluenceStartupCheck>();
-
-        services
-            .AddOptions<ConfluenceOptions>()
-            .Bind(configuration.GetSection(ConfluenceOptions.SectionName))
-            .WithValidator<ConfluenceOptions, ConfluenceOptionsValidator>();
 
         return services;
     }

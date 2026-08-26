@@ -14,12 +14,12 @@ public sealed class ConfluenceStartupCheck : IStartupCheck
 
     public ConfluenceStartupCheck(
         IConfluenceHttpClientFactory httpClientFactory,
-        IOptions<ConfluenceOptions> options,
+        ConfluenceConfigurationStore configurationStore,
         ILogger<ConfluenceStartupCheck> logger
     )
     {
         _httpClientFactory = httpClientFactory;
-        _options = options.Value;
+        _options = configurationStore.Current;
         _logger = logger;
     }
 
@@ -49,6 +49,7 @@ public sealed class ConfluenceStartupCheck : IStartupCheck
                 ex
             );
         }
+        // TODO: is this really a good way to go about it? what if its down with 500 but also needs setup?
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
         {
             _logger.ZLogWarning(

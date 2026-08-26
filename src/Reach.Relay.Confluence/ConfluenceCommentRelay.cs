@@ -19,21 +19,23 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
     private readonly IConfluenceHttpClientFactory _confluenceHttpClientFactory;
     private readonly ILogger<ConfluenceCommentRelay> _logger;
     private readonly IRelayPayloadSerializer _payloadSerializer;
-    private readonly ConfluenceOptions _options;
+    private readonly ConfluenceConfigurationStore _store;
     private readonly IRelayCursorStorage _cursorStorage;
+
+    private ConfluenceOptions Options => _store.Current;
 
     public ConfluenceCommentRelay(
         IConfluenceHttpClientFactory confluenceHttpClientFactory,
         ILogger<ConfluenceCommentRelay> logger,
         IRelayPayloadSerializer payloadSerializer,
-        IOptions<ConfluenceOptions> options,
+        ConfluenceConfigurationStore configurationStore,
         IRelayCursorStorage cursorStorage
     )
     {
         _confluenceHttpClientFactory = confluenceHttpClientFactory;
         _logger = logger;
         _payloadSerializer = payloadSerializer;
-        _options = options.Value;
+        _store = configurationStore;
         _cursorStorage = cursorStorage;
     }
 
@@ -46,7 +48,7 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
 
         _logger.ZLogTrace($"Sending payload from local to remote: {payload}");
 
-        await CreateComment(payload, _options.LocalToRemotePageId, cancellationToken)
+        await CreateComment(payload, Options.LocalToRemotePageId, cancellationToken)
             .ConfigureAwait(false);
 
         return new(new(value.Id));
@@ -61,7 +63,7 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
 
         _logger.ZLogTrace($"Sending payload from remote to local: {payload}");
 
-        await CreateComment(payload, _options.RemoteToLocalPageId, cancellationToken)
+        await CreateComment(payload, Options.RemoteToLocalPageId, cancellationToken)
             .ConfigureAwait(false);
 
         return new();
@@ -73,7 +75,7 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
     )
     {
         return InnerPoll<RelayCommand>(
-            _options.LocalToRemotePageId,
+            Options.LocalToRemotePageId,
             LocalToRemoteCursorName,
             cancellationToken
         );
@@ -85,7 +87,7 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
     )
     {
         return InnerPoll<RelayCommandResult>(
-            _options.RemoteToLocalPageId,
+            Options.RemoteToLocalPageId,
             RemoteToLocalCursorName,
             cancellationToken
         );
@@ -103,7 +105,7 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
 
         var pageOffset = previousCursor?.PageOffset ?? 0;
 
-        var pollDelayMs = _options.PollDelayMs;
+        var pollDelayMs = Options.PollDelayMs;
 
         var consecutiveFailures = 0;
 
@@ -339,7 +341,7 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
         var query = HttpUtility.ParseQueryString(string.Empty);
 
         query.Add("start", start.ToString());
-        query.Add("limit", _options.BatchLimit.ToString());
+        query.Add("limit", Options.BatchLimit.ToString());
         query.Add("location", "footer");
         query.Add("expand", "history,body.view");
 

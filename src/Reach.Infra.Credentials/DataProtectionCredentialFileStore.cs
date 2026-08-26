@@ -48,8 +48,19 @@ public sealed class DataProtectionCredentialFileStore : ICredentialFileStore
             EnsureDirectory(directory);
         }
 
-        File.WriteAllText(_filePath, _protector.Protect(secret));
-        RestrictFile(_filePath);
+        var temporaryFilePath = $"{_filePath}.{Guid.NewGuid():N}.tmp";
+
+        try
+        {
+            File.WriteAllText(temporaryFilePath, _protector.Protect(secret));
+            RestrictFile(temporaryFilePath);
+            File.Move(temporaryFilePath, _filePath, overwrite: true);
+        }
+        finally
+        {
+            File.Delete(temporaryFilePath);
+        }
+
         RestrictKeyFiles();
     }
 

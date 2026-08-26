@@ -33,11 +33,15 @@ public sealed record OptionsValidationFailure(
     IReadOnlyList<string> Failures
 );
 
-public sealed class AggregateOptionsValidationException(
-    IReadOnlyList<OptionsValidationFailure> failures
-) : Exception(CreateMessage(failures))
+public sealed class AggregateOptionsValidationException : Exception
 {
-    public IReadOnlyList<OptionsValidationFailure> Failures { get; } = failures;
+    public IReadOnlyList<OptionsValidationFailure> Failures { get; }
+
+    public AggregateOptionsValidationException(IReadOnlyList<OptionsValidationFailure> failures)
+        : base(CreateMessage(failures))
+    {
+        Failures = failures;
+    }
 
     private static string CreateMessage(IReadOnlyList<OptionsValidationFailure> failures)
     {

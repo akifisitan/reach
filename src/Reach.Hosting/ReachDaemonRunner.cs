@@ -51,14 +51,15 @@ public static class ReachDaemonRunner
             }
         }
 
+        // TODO: this is very confusing let's simplify the control flow here
         try
         {
-            ValidateOptions(host.Services);
-            host.Services.ValidateMessageGraph();
-
             var setupCoordinator = host.Services.GetRequiredService<RelaySetupCoordinator>();
 
             await setupCoordinator.EnsureSetup();
+
+            ValidateOptions(host.Services);
+            host.Services.ValidateMessageGraph();
 
             host.Services.GetRequiredService<DatabaseInitializer>().Initialize();
 

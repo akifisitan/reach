@@ -1,21 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="HtmlAgilityPack" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
-    <PackageReference Include="Microsoft.Extensions.Options" />
-    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
     <PackageReference Include="ZLogger" />
     <PackageReference Include="FluentValidation" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Reach.Cli.Abstractions\Reach.Cli.Abstractions.csproj" />
-    <ProjectReference Include="..\Reach.Options\Reach.Options.csproj" />
     <ProjectReference Include="..\Reach.Infra.Credentials\Reach.Infra.Credentials.csproj" />
-    <ProjectReference Include="..\Reach.Infra.JsonConfig\Reach.Infra.JsonConfig.csproj" />
     <ProjectReference Include="..\Reach.Relay.Abstractions\Reach.Relay.Abstractions.csproj" />
   </ItemGroup>
 </Project>

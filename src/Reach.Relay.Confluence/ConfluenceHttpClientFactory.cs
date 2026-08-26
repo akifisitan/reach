@@ -12,15 +12,16 @@ public interface IConfluenceHttpClientFactory
 public sealed class ConfluenceHttpClientFactory : IConfluenceHttpClientFactory
 {
     private readonly IConfluenceUserCredentialProvider _confluenceUserCredentialsProvider;
-    private readonly ConfluenceOptions _options;
+    private readonly ConfluenceConfigurationStore _store;
+    private ConfluenceOptions Options => _store.Current;
 
     public ConfluenceHttpClientFactory(
         IConfluenceUserCredentialProvider confluenceUserCredentialsProvider,
-        IOptions<ConfluenceOptions> options
+        ConfluenceConfigurationStore configurationStore
     )
     {
         _confluenceUserCredentialsProvider = confluenceUserCredentialsProvider;
-        _options = options.Value;
+        _store = configurationStore;
     }
 
     private static readonly SocketsHttpHandler httpHandler = new()
@@ -34,10 +35,10 @@ public sealed class ConfluenceHttpClientFactory : IConfluenceHttpClientFactory
     private AuthenticationHeaderValue? _cachedAuthenticationHeaderValue;
 
     public HttpClient CreateClient() =>
-        CreateClient(_confluenceUserCredentialsProvider.GetCredential(), _options.BaseUrl);
+        CreateClient(_confluenceUserCredentialsProvider.GetCredential(), Options.BaseUrl);
 
     public HttpClient CreateClient(ConfluenceUserCredential credential) =>
-        CreateClient(credential, _options.BaseUrl);
+        CreateClient(credential, Options.BaseUrl);
 
     private HttpClient CreateClient(ConfluenceUserCredential credential, string baseUrl)
     {

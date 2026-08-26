@@ -12,9 +12,6 @@
   "ReachLoggingOptions": {
     "OpenLogFileOnStart": true
   },
-  "Confluence": {
-
-  },
   "Chaos": {
     "Enabled": false,
     "Retry": {

@@ -4,11 +4,12 @@ namespace Reach.Cli.Console;
 
 public sealed class ConsolePrompter : IConsolePrompter
 {
-    public string PromptText(string label)
+    public string PromptText(string label, string? defaultValue = null)
     {
         while (true)
         {
-            System.Console.Write($"{label}: ");
+            var defaultLabel = defaultValue is null ? string.Empty : $" [{defaultValue}]";
+            System.Console.Write($"{label}{defaultLabel}: ");
 
             var input = System.Console.ReadLine()?.Trim();
 
@@ -17,11 +18,16 @@ public sealed class ConsolePrompter : IConsolePrompter
                 return input;
             }
 
+            if (defaultValue is not null)
+            {
+                return defaultValue;
+            }
+
             System.Console.WriteLine("Value cannot be empty.");
         }
     }
 
-    public string PromptSecret(string label)
+    public string PromptSecret(string label, bool allowEmpty = false)
     {
         while (true)
         {
@@ -62,6 +68,11 @@ public sealed class ConsolePrompter : IConsolePrompter
             if (builder.Length > 0)
             {
                 return builder.ToString();
+            }
+
+            if (allowEmpty)
+            {
+                return string.Empty;
             }
 
             System.Console.WriteLine("Value cannot be empty.");
