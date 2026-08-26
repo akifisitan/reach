@@ -1,5 +1,7 @@
 using System.Diagnostics;
 using System.Text.Json;
+using Reach.Cli;
+using Reach.Cli.Console;
 using Reach.Infra.DurableQueue;
 using Reach.Infra.Persistence;
 using Reach.Module;
@@ -19,6 +21,9 @@ public static class ServiceCollectionExtensions
         string basePath
     )
     {
+        services.AddSingleton<IConsolePrompter, ConsolePrompter>();
+        services.AddSingleton<IConsoleWriter, ConsoleWriter>();
+
         services.AddSingleton(sp =>
             WireJsonExtensions.CreateJsonSerializerOptions(
                 sp.GetServices<IWireJsonRegistration>().ToList()

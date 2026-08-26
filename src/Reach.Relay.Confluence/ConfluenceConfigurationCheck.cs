@@ -1,5 +1,3 @@
-using System.Net;
-
 namespace Reach.Relay.Confluence;
 
 internal static class ConfluenceConfigurationCheck
@@ -11,24 +9,17 @@ internal static class ConfluenceConfigurationCheck
         CancellationToken cancellationToken
     )
     {
-        using var currentUserResponse = await httpClient
+        using var response = await httpClient
             .GetAsync("confluence/rest/api/user/current", cancellationToken)
             .ConfigureAwait(false);
 
-        currentUserResponse.EnsureSuccessStatusCode();
+        response.EnsureSuccessStatusCode();
 
-        await EnsurePageExists(httpClient, localToRemotePageId, cancellationToken)
+        await Task.WhenAll(
+                EnsurePageExists(httpClient, localToRemotePageId, cancellationToken),
+                EnsurePageExists(httpClient, remoteToLocalPageId, cancellationToken)
+            )
             .ConfigureAwait(false);
-        await EnsurePageExists(httpClient, remoteToLocalPageId, cancellationToken)
-            .ConfigureAwait(false);
-    }
-
-    public static bool IsConfigurationError(HttpRequestException ex)
-    {
-        return ex.StatusCode
-            is HttpStatusCode.Unauthorized
-                or HttpStatusCode.Forbidden
-                or HttpStatusCode.NotFound;
     }
 
     private static async Task EnsurePageExists(

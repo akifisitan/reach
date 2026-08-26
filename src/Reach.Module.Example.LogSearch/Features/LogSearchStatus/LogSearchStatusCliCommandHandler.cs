@@ -1,3 +1,5 @@
+using Reach.Cli;
+
 namespace Reach.Module.Example.LogSearch.Features.LogSearchStatus;
 
 internal sealed class LogSearchStatusCliCommandHandler

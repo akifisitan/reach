@@ -4,17 +4,18 @@
     <File Path="Directory.Build.props" />
     <File Path="Directory.Packages.props" />
   </Folder>
+  <Project Path="src/Reach.Cli.Abstractions/Reach.Cli.Abstractions.csproj" />
+  <Project Path="src/Reach.Cli.Console/Reach.Cli.Console.csproj" />
   <Project Path="src/Reach.Hosting/Reach.Hosting.csproj" />
   <Project Path="src/Reach.Infra.CommandResultOutbox/Reach.Infra.CommandResultOutbox.csproj" />
+  <Project Path="src/Reach.Infra.Credentials/Reach.Infra.Credentials.csproj" />
   <Project Path="src/Reach.Infra.DurableQueue/Reach.Infra.DurableQueue.csproj" />
+  <Project Path="src/Reach.Infra.JsonConfig/Reach.Infra.JsonConfig.csproj" />
   <Project Path="src/Reach.Infra.Persistence/Reach.Infra.Persistence.csproj" />
   <Project Path="src/Reach.Local.Cli/Reach.Local.Cli.csproj" />
   <Project Path="src/Reach.Local.App/Reach.Local.App.csproj" />
   <Project Path="src/Reach.Local.Server/Reach.Local.Server.csproj" />
   <Project Path="src/Reach.Local.Contracts/Reach.Local.Contracts.csproj" />
-  <Project Path="src/Reach.Infra.ConsolePrompt/Reach.Infra.ConsolePrompt.csproj" />
-  <Project Path="src/Reach.Infra.Credentials/Reach.Infra.Credentials.csproj" />
-  <Project Path="src/Reach.Infra.JsonConfig/Reach.Infra.JsonConfig.csproj" />
   <Project Path="src/Reach.Module.Abstractions/Reach.Module.Abstractions.csproj" />
   <Project Path="src/Reach.Module.Example.Echo/Reach.Module.Example.Echo.csproj" />
   <Project Path="src/Reach.Module.Example.LogSearch/Reach.Module.Example.LogSearch.csproj" />

@@ -10,4 +10,10 @@ internal static class HttpExtensions
             {
                 StatusCode: HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden,
             };
+
+    public static bool IsConfigurationError(this HttpRequestException ex) =>
+        ex.StatusCode
+            is HttpStatusCode.Unauthorized
+                or HttpStatusCode.Forbidden
+                or HttpStatusCode.NotFound;
 }

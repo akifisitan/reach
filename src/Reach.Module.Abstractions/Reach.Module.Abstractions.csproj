@@ -8,5 +8,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Reach.Relay.Abstractions\Reach.Relay.Abstractions.csproj" />
+    <ProjectReference Include="..\Reach.Cli.Abstractions\Reach.Cli.Abstractions.csproj" />
   </ItemGroup>
 </Project>

@@ -23,7 +23,7 @@ public sealed class ConfluenceStartupCheck : IStartupCheck
         _logger = logger;
     }
 
-    public async Task Check(CancellationToken cancellationToken = default)
+    public async Task Check(CancellationToken cancellationToken)
     {
         try
         {
@@ -42,7 +42,7 @@ public sealed class ConfluenceStartupCheck : IStartupCheck
 
             _logger.ZLogInformation($"Confluence relay configuration verified");
         }
-        catch (HttpRequestException ex) when (ConfluenceConfigurationCheck.IsConfigurationError(ex))
+        catch (HttpRequestException ex) when (ex.IsConfigurationError())
         {
             throw new RelaySetupRequiredException(
                 $"Confluence relay is misconfigured ({(int)ex.StatusCode!} {ex.StatusCode}).",

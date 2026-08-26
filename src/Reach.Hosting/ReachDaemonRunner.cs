@@ -109,7 +109,7 @@ public static class ReachDaemonRunner
     {
         foreach (var startupCheck in services.GetServices<IStartupCheck>())
         {
-            await startupCheck.Check();
+            await startupCheck.Check(CancellationToken.None);
         }
     }
 

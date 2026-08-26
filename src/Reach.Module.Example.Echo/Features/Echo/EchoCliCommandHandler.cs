@@ -1,3 +1,5 @@
+using Reach.Cli;
+
 namespace Reach.Module.Example.Echo.Features.Echo;
 
 internal sealed class EchoCliCommandHandler

@@ -12,8 +12,8 @@
     <PackageReference Include="FluentValidation" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Reach.Cli.Abstractions\Reach.Cli.Abstractions.csproj" />
     <ProjectReference Include="..\Reach.Options\Reach.Options.csproj" />
-    <ProjectReference Include="..\Reach.Infra.ConsolePrompt\Reach.Infra.ConsolePrompt.csproj" />
     <ProjectReference Include="..\Reach.Infra.Credentials\Reach.Infra.Credentials.csproj" />
     <ProjectReference Include="..\Reach.Infra.JsonConfig\Reach.Infra.JsonConfig.csproj" />
     <ProjectReference Include="..\Reach.Relay.Abstractions\Reach.Relay.Abstractions.csproj" />

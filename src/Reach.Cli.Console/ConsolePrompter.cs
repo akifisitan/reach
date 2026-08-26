@@ -1,12 +1,6 @@
 using System.Text;
 
-namespace Reach.Infra.ConsolePrompt;
-
-public interface IConsolePrompter
-{
-    string PromptText(string label);
-    string PromptSecret(string label);
-}
+namespace Reach.Cli.Console;
 
 public sealed class ConsolePrompter : IConsolePrompter
 {
@@ -14,16 +8,16 @@ public sealed class ConsolePrompter : IConsolePrompter
     {
         while (true)
         {
-            Console.Write($"{label}: ");
+            System.Console.Write($"{label}: ");
 
-            var input = Console.ReadLine()?.Trim();
+            var input = System.Console.ReadLine()?.Trim();
 
             if (!string.IsNullOrEmpty(input))
             {
                 return input;
             }
 
-            Console.WriteLine("Value cannot be empty.");
+            System.Console.WriteLine("Value cannot be empty.");
         }
     }
 
@@ -31,17 +25,17 @@ public sealed class ConsolePrompter : IConsolePrompter
     {
         while (true)
         {
-            Console.Write($"{label}: ");
+            System.Console.Write($"{label}: ");
 
             var builder = new StringBuilder();
 
             while (true)
             {
-                var key = Console.ReadKey(intercept: true);
+                var key = System.Console.ReadKey(intercept: true);
 
                 if (key.Key == ConsoleKey.Enter)
                 {
-                    Console.WriteLine();
+                    System.Console.WriteLine();
                     break;
                 }
 
@@ -50,7 +44,7 @@ public sealed class ConsolePrompter : IConsolePrompter
                     if (builder.Length > 0)
                     {
                         builder.Remove(builder.Length - 1, 1);
-                        Console.Write("\b \b");
+                        System.Console.Write("\b \b");
                     }
 
                     continue;
@@ -62,7 +56,7 @@ public sealed class ConsolePrompter : IConsolePrompter
                 }
 
                 builder.Append(key.KeyChar);
-                Console.Write('*');
+                System.Console.Write('*');
             }
 
             if (builder.Length > 0)
@@ -70,7 +64,7 @@ public sealed class ConsolePrompter : IConsolePrompter
                 return builder.ToString();
             }
 
-            Console.WriteLine("Value cannot be empty.");
+            System.Console.WriteLine("Value cannot be empty.");
         }
     }
 }

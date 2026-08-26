@@ -1,7 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using Reach.Infra.ConsolePrompt;
+using Reach.Cli;
 using Reach.Infra.Credentials;
 using Reach.Infra.JsonConfig;
 
@@ -14,17 +14,20 @@ public sealed class ConfluenceRelaySetup : IRelaySetup
     internal const string CredentialKeyDirectoryName = "credential-keys";
     internal const string CredentialPurpose = "Reach.ConfluenceCredential.v1";
 
-    private readonly IConsolePrompter _prompter;
+    private readonly IConsolePrompter _consolePrompter;
+    private readonly IConsoleWriter _consoleWriter;
     private readonly ICredentialFileStore _credentialStore;
     private readonly IConfluenceHttpClientFactory _httpClientFactory;
 
     public ConfluenceRelaySetup(
-        IConsolePrompter prompter,
+        IConsolePrompter consolePrompter,
+        IConsoleWriter consoleWriter,
         ICredentialFileStore credentialStore,
         IConfluenceHttpClientFactory httpClientFactory
     )
     {
-        _prompter = prompter;
+        _consolePrompter = consolePrompter;
+        _consoleWriter = consoleWriter;
         _credentialStore = credentialStore;
         _httpClientFactory = httpClientFactory;
     }
@@ -63,20 +66,20 @@ public sealed class ConfluenceRelaySetup : IRelaySetup
 
     public async Task<int> Run(string basePath, CancellationToken cancellationToken)
     {
-        //Console.WriteLine($"Confluence URL (set at build time): {BaseUrl}");
-        Console.WriteLine();
+        //_consoleWriter.WriteLine($"Confluence URL (set at build time): {BaseUrl}");
+        _consoleWriter.WriteLine();
 
-        Console.WriteLine(
+        _consoleWriter.WriteLine(
             "Create two Confluence pages first: one for commands (local -> remote), one for results (remote -> local)."
         );
 
         var localToRemotePageId = PromptPageId("Commands (local -> remote) page ID");
         var remoteToLocalPageId = PromptPageId("Results (remote -> local) page ID");
 
-        var personalAccessToken = _prompter.PromptSecret("Confluence personal access token");
+        var personalAccessToken = _consolePrompter.PromptSecret("Confluence personal access token");
 
-        Console.WriteLine();
-        Console.WriteLine("Validating against Confluence...");
+        _consoleWriter.WriteLine();
+        _consoleWriter.WriteLine("Validating against Confluence...");
 
         var validationError = await Validate(
                 personalAccessToken,
@@ -88,7 +91,7 @@ public sealed class ConfluenceRelaySetup : IRelaySetup
 
         if (validationError is not null)
         {
-            Console.WriteLine($"Validation failed: {validationError}");
+            _consoleWriter.WriteLine($"Validation failed: {validationError}");
 
             return 1;
         }
@@ -112,10 +115,10 @@ public sealed class ConfluenceRelaySetup : IRelaySetup
             }
         );
 
-        Console.WriteLine("Credential saved (protected for current user)");
-        Console.WriteLine($"Configuration saved to {configFilePath}");
+        _consoleWriter.WriteLine("Credential saved (protected for current user)");
+        _consoleWriter.WriteLine($"Configuration saved to {configFilePath}");
 
-        Console.WriteLine("Setup complete.");
+        _consoleWriter.WriteLine("Setup complete.");
 
         return 0;
     }
@@ -141,7 +144,7 @@ public sealed class ConfluenceRelaySetup : IRelaySetup
 
             return null;
         }
-        catch (HttpRequestException ex) when (ConfluenceConfigurationCheck.IsConfigurationError(ex))
+        catch (HttpRequestException ex) when (ex.IsConfigurationError())
         {
             return ex.StatusCode == HttpStatusCode.NotFound
                 ? "one or more pages were not found. Check the page IDs."
@@ -161,12 +164,12 @@ public sealed class ConfluenceRelaySetup : IRelaySetup
     {
         while (true)
         {
-            if (long.TryParse(_prompter.PromptText(label), out var pageId) && pageId > 0)
+            if (long.TryParse(_consolePrompter.PromptText(label), out var pageId) && pageId > 0)
             {
                 return pageId;
             }
 
-            Console.WriteLine("Enter a positive numeric page ID.");
+            _consoleWriter.WriteLine("Enter a positive numeric page ID.");
         }
     }
 }
