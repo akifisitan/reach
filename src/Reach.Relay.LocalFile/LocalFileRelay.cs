@@ -8,19 +8,21 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
     private const string LocalToRemoteCursorName = "localfile.local_to_remote";
     private const string RemoteToLocalCursorName = "localfile.remote_to_local";
 
-    private readonly LocalFileRelayOptions _options;
+    private readonly LocalFileConfigurationStore _store;
     private readonly IRelayPayloadSerializer _payloadSerializer;
     private readonly ILogger<LocalFileRelay> _logger;
     private readonly IRelayCursorStorage _cursorStorage;
 
+    private LocalFileRelayOptions Options => _store.Current;
+
     public LocalFileRelay(
-        IOptions<LocalFileRelayOptions> options,
+        LocalFileConfigurationStore configurationStore,
         IRelayPayloadSerializer payloadSerializer,
         ILogger<LocalFileRelay> logger,
         IRelayCursorStorage cursorStorage
     )
     {
-        _options = options.Value;
+        _store = configurationStore;
         _payloadSerializer = payloadSerializer;
         _logger = logger;
         _cursorStorage = cursorStorage;
@@ -33,7 +35,7 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
     {
         var payload = _payloadSerializer.Serialize(value);
 
-        await CreateLogEntry(payload, _options.LocalToRemoteFilePath, cancellationToken)
+        await CreateLogEntry(payload, Options.LocalToRemoteFilePath, cancellationToken)
             .ConfigureAwait(false);
 
         return new(new(value.Id));
@@ -46,7 +48,7 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
     {
         var payload = _payloadSerializer.Serialize(value);
 
-        await CreateLogEntry(payload, _options.RemoteToLocalFilePath, cancellationToken)
+        await CreateLogEntry(payload, Options.RemoteToLocalFilePath, cancellationToken)
             .ConfigureAwait(false);
 
         return new();
@@ -58,7 +60,7 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
     )
     {
         return InnerPoll<RelayCommand>(
-            _options.LocalToRemoteFilePath,
+            Options.LocalToRemoteFilePath,
             LocalToRemoteCursorName,
             options,
             cancellationToken
@@ -71,7 +73,7 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
     )
     {
         return InnerPoll<RelayCommandResult>(
-            _options.RemoteToLocalFilePath,
+            Options.RemoteToLocalFilePath,
             RemoteToLocalCursorName,
             options,
             cancellationToken
@@ -94,7 +96,7 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
 
         HashSet<string> processedEntries = [];
 
-        var pollDelayMs = _options.PollDelayMs;
+        var pollDelayMs = Options.PollDelayMs;
 
         while (!cancellationToken.IsCancellationRequested)
         {
@@ -113,7 +115,9 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
 
                 cursor = defaultCursor;
 
-                await _cursorStorage.Store(cursorName, cursor, cancellationToken);
+                await _cursorStorage
+                    .Store(cursorName, cursor, cancellationToken)
+                    .ConfigureAwait(false);
 
                 continue;
             }

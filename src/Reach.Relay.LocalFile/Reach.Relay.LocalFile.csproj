@@ -12,6 +12,7 @@
     <PackageReference Include="FluentValidation" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Reach.Cli.Abstractions\Reach.Cli.Abstractions.csproj" />
     <ProjectReference Include="..\Reach.Options\Reach.Options.csproj" />
     <ProjectReference Include="..\Reach.Relay.Abstractions\Reach.Relay.Abstractions.csproj" />
   </ItemGroup>
