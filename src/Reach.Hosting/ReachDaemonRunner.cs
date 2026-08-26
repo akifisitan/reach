@@ -46,7 +46,7 @@ public static class ReachDaemonRunner
                 const string message = "There's already a running instance.";
 
                 logger.ZLogError($"{message}");
-                await Console.Error.WriteLineAsync(message);
+                await Console.Error.WriteLineAsync(message).ConfigureAwait(false);
                 return 2;
             }
         }
@@ -57,33 +57,40 @@ public static class ReachDaemonRunner
             ValidateOptions(host.Services);
             host.Services.ValidateMessageGraph();
 
-            await RunStartupChecks(host.Services, applicationLifetime.ApplicationStopping);
+            await RunStartupChecks(host.Services, applicationLifetime.ApplicationStopping)
+                .ConfigureAwait(false);
 
             host.Services.GetRequiredService<DatabaseInitializer>().Initialize();
-            await host.RunAsync();
+            await host.RunAsync().ConfigureAwait(false);
 
             return 0;
         }
         catch (RelayConfigurationException ex)
         {
             logger.ZLogError(ex, $"Relay configuration is invalid");
-            await Console.Error.WriteLineAsync(
-                $"Relay configuration is invalid: {ex.Message}{Environment.NewLine}Run `{relaySetupCommand}`."
-            );
+            await Console
+                .Error.WriteLineAsync(
+                    $"Relay configuration is invalid: {ex.Message}{Environment.NewLine}Run `{relaySetupCommand}`."
+                )
+                .ConfigureAwait(false);
             return 3;
         }
         catch (RelaySetupRequiredException ex)
         {
             logger.ZLogError(ex, $"Relay setup is required");
-            await Console.Error.WriteLineAsync(
-                $"Relay setup is required: {ex.Message}{Environment.NewLine}Run `{relaySetupCommand}`."
-            );
+            await Console
+                .Error.WriteLineAsync(
+                    $"Relay setup is required: {ex.Message}{Environment.NewLine}Run `{relaySetupCommand}`."
+                )
+                .ConfigureAwait(false);
             return 4;
         }
         catch (RelayUnavailableException ex)
         {
             logger.ZLogError(ex, $"Relay is unavailable");
-            await Console.Error.WriteLineAsync($"Relay is unavailable: {ex.Message}");
+            await Console
+                .Error.WriteLineAsync($"Relay is unavailable: {ex.Message}")
+                .ConfigureAwait(false);
             return 5;
         }
         catch (AggregateOptionsValidationException ex)
@@ -94,7 +101,9 @@ public static class ReachDaemonRunner
         catch (Exception ex)
         {
             logger.ZLogError(ex, $"Application startup failed");
-            await Console.Error.WriteLineAsync($"Application startup failed: {ex.Message}");
+            await Console
+                .Error.WriteLineAsync($"Application startup failed: {ex.Message}")
+                .ConfigureAwait(false);
             return 1;
         }
     }
@@ -106,7 +115,7 @@ public static class ReachDaemonRunner
     {
         foreach (var startupCheck in services.GetServices<IStartupCheck>())
         {
-            await startupCheck.Check(cancellationToken);
+            await startupCheck.Check(cancellationToken).ConfigureAwait(false);
         }
     }
 

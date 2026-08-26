@@ -64,71 +64,86 @@ public sealed class SqliteCommandResultOutboxStore : ICommandResultOutboxStore
         CancellationToken cancellationToken
     )
     {
-        await using var connection = await _dbConnectionFactory.CreateConnection(cancellationToken);
-        await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+        var connection = await _dbConnectionFactory
+            .CreateConnection(cancellationToken)
+            .ConfigureAwait(false);
+        await using var connectionScope = connection.ConfigureAwait(false);
+        var transaction = await connection
+            .BeginTransactionAsync(cancellationToken)
+            .ConfigureAwait(false);
+        await using var transactionScope = transaction.ConfigureAwait(false);
 
         try
         {
-            await connection.ExecuteAsync(
-                $"""
-                INSERT INTO {_sqliteOptions.TableName}(command_id, status, result_data, creation_time, try_count, last_try_time, next_try_time, posted_time, poison_time, poison_error)
-                VALUES ($CommandId, $Status, $ResultData, $CreationTime, 0, NULL, NULL, NULL, NULL, NULL)
-                """,
-                new
-                {
-                    CommandId = command.Id,
-                    Status = CommandResultOutboxStatus.Pending,
-                    ResultData = _payloadSerializer.Serialize(result),
-                    CreationTime = DateTimeOffset.Now.ToIsoString(),
-                },
-                transaction: transaction
-            );
+            await connection
+                .ExecuteAsync(
+                    $"""
+                    INSERT INTO {_sqliteOptions.TableName}(command_id, status, result_data, creation_time, try_count, last_try_time, next_try_time, posted_time, poison_time, poison_error)
+                    VALUES ($CommandId, $Status, $ResultData, $CreationTime, 0, NULL, NULL, NULL, NULL, NULL)
+                    """,
+                    new
+                    {
+                        CommandId = command.Id,
+                        Status = CommandResultOutboxStatus.Pending,
+                        ResultData = _payloadSerializer.Serialize(result),
+                        CreationTime = DateTimeOffset.Now.ToIsoString(),
+                    },
+                    transaction: transaction
+                )
+                .ConfigureAwait(false);
         }
         catch (SqliteException ex) when (ex.SqliteErrorCode == 19)
         {
             _logger.ZLogDebug($"Result outbox entry already exists for {command.Id}");
         }
 
-        await _commandQueue.Complete(command, connection, transaction, cancellationToken);
+        await _commandQueue
+            .Complete(command, connection, transaction, cancellationToken)
+            .ConfigureAwait(false);
 
-        await transaction.CommitAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
     }
 
     public async Task<CommandResultOutboxItem?> PickPending(CancellationToken cancellationToken)
     {
-        await using var connection = await _dbConnectionFactory.CreateConnection(cancellationToken);
+        var connection = await _dbConnectionFactory
+            .CreateConnection(cancellationToken)
+            .ConfigureAwait(false);
+        await using var connectionScope = connection.ConfigureAwait(false);
 
         var now = DateTimeOffset.Now;
-        var record = await connection.QuerySingleOrDefaultAsync<DbCommandResultOutboxRecord>(
-            $"""
-            WITH next_record AS (
-                SELECT command_id
-                FROM {_sqliteOptions.TableName}
-                WHERE (
-                    status = $PendingStatus
-                    AND (next_try_time IS NULL OR next_try_time <= $Now)
+        var record = await connection
+            .QuerySingleOrDefaultAsync<DbCommandResultOutboxRecord>(
+                $"""
+                WITH next_record AS (
+                    SELECT command_id
+                    FROM {_sqliteOptions.TableName}
+                    WHERE (
+                        status = $PendingStatus
+                        AND (next_try_time IS NULL OR next_try_time <= $Now)
+                    )
+                    OR (
+                        status = $ProcessingStatus
+                        AND last_try_time <= $ProcessingExpiredBefore
+                    )
+                    ORDER BY creation_time
+                    LIMIT 1
                 )
-                OR (
-                    status = $ProcessingStatus
-                    AND last_try_time <= $ProcessingExpiredBefore
-                )
-                ORDER BY creation_time
-                LIMIT 1
+                UPDATE {_sqliteOptions.TableName}
+                SET status = $NextStatus, try_count = try_count + 1, last_try_time = $Now, next_try_time = NULL
+                WHERE command_id = (SELECT command_id FROM next_record)
+                RETURNING command_id, result_data;
+                """,
+                new
+                {
+                    PendingStatus = CommandResultOutboxStatus.Pending,
+                    ProcessingStatus = CommandResultOutboxStatus.Processing,
+                    NextStatus = CommandResultOutboxStatus.Processing,
+                    Now = now.ToIsoString(),
+                    ProcessingExpiredBefore = now.Subtract(_options.ProcessingLease).ToIsoString(),
+                }
             )
-            UPDATE {_sqliteOptions.TableName}
-            SET status = $NextStatus, try_count = try_count + 1, last_try_time = $Now, next_try_time = NULL
-            WHERE command_id = (SELECT command_id FROM next_record)
-            RETURNING command_id, result_data;
-            """,
-            new
-            {
-                PendingStatus = CommandResultOutboxStatus.Pending,
-                ProcessingStatus = CommandResultOutboxStatus.Processing,
-                NextStatus = CommandResultOutboxStatus.Processing,
-                Now = now.ToIsoString(),
-                ProcessingExpiredBefore = now.Subtract(_options.ProcessingLease).ToIsoString(),
-            }
-        );
+            .ConfigureAwait(false);
 
         if (record is null)
         {
@@ -150,7 +165,8 @@ public sealed class SqliteCommandResultOutboxStore : ICommandResultOutboxStore
         }
         catch (Exception ex)
         {
-            await MarkPoisoned(record.CommandId, ex.Message, cancellationToken);
+            await MarkPoisoned(record.CommandId, ex.Message, cancellationToken)
+                .ConfigureAwait(false);
 
             throw;
         }
@@ -158,35 +174,45 @@ public sealed class SqliteCommandResultOutboxStore : ICommandResultOutboxStore
 
     public async Task MarkPosted(string commandId, CancellationToken cancellationToken)
     {
-        await using var connection = await _dbConnectionFactory.CreateConnection(cancellationToken);
+        var connection = await _dbConnectionFactory
+            .CreateConnection(cancellationToken)
+            .ConfigureAwait(false);
+        await using var connectionScope = connection.ConfigureAwait(false);
 
-        await connection.ExecuteAsync(
-            $"""
-            UPDATE {_sqliteOptions.TableName}
-            SET status = $Status, posted_time = $PostedTime, next_try_time = NULL
-            WHERE command_id = $CommandId
-            """,
-            new
-            {
-                CommandId = commandId,
-                Status = CommandResultOutboxStatus.Posted,
-                PostedTime = DateTimeOffset.Now.ToIsoString(),
-            }
-        );
+        await connection
+            .ExecuteAsync(
+                $"""
+                UPDATE {_sqliteOptions.TableName}
+                SET status = $Status, posted_time = $PostedTime, next_try_time = NULL
+                WHERE command_id = $CommandId
+                """,
+                new
+                {
+                    CommandId = commandId,
+                    Status = CommandResultOutboxStatus.Posted,
+                    PostedTime = DateTimeOffset.Now.ToIsoString(),
+                }
+            )
+            .ConfigureAwait(false);
     }
 
     public async Task MarkPendingForRetry(string commandId, CancellationToken cancellationToken)
     {
-        await using var connection = await _dbConnectionFactory.CreateConnection(cancellationToken);
+        var connection = await _dbConnectionFactory
+            .CreateConnection(cancellationToken)
+            .ConfigureAwait(false);
+        await using var connectionScope = connection.ConfigureAwait(false);
 
-        var record = await connection.QuerySingleAsync<DbOutboxRetryRecord>(
-            $"""
-            SELECT try_count
-            FROM {_sqliteOptions.TableName}
-            WHERE command_id = $CommandId
-            """,
-            new { CommandId = commandId }
-        );
+        var record = await connection
+            .QuerySingleAsync<DbOutboxRetryRecord>(
+                $"""
+                SELECT try_count
+                FROM {_sqliteOptions.TableName}
+                WHERE command_id = $CommandId
+                """,
+                new { CommandId = commandId }
+            )
+            .ConfigureAwait(false);
 
         var retryDelay = _options.RetryBaseDelay * Math.Pow(2, Math.Min(record.TryCount - 1, 10));
 
@@ -195,19 +221,21 @@ public sealed class SqliteCommandResultOutboxStore : ICommandResultOutboxStore
             retryDelay = _options.RetryMaxDelay;
         }
 
-        await connection.ExecuteAsync(
-            $"""
-            UPDATE {_sqliteOptions.TableName}
-            SET status = $Status, next_try_time = $NextTryTime
-            WHERE command_id = $CommandId
-            """,
-            new
-            {
-                CommandId = commandId,
-                Status = CommandResultOutboxStatus.Pending,
-                NextTryTime = DateTimeOffset.Now.Add(retryDelay).ToIsoString(),
-            }
-        );
+        await connection
+            .ExecuteAsync(
+                $"""
+                UPDATE {_sqliteOptions.TableName}
+                SET status = $Status, next_try_time = $NextTryTime
+                WHERE command_id = $CommandId
+                """,
+                new
+                {
+                    CommandId = commandId,
+                    Status = CommandResultOutboxStatus.Pending,
+                    NextTryTime = DateTimeOffset.Now.Add(retryDelay).ToIsoString(),
+                }
+            )
+            .ConfigureAwait(false);
     }
 
     private async Task MarkPoisoned(
@@ -216,21 +244,26 @@ public sealed class SqliteCommandResultOutboxStore : ICommandResultOutboxStore
         CancellationToken cancellationToken
     )
     {
-        await using var connection = await _dbConnectionFactory.CreateConnection(cancellationToken);
+        var connection = await _dbConnectionFactory
+            .CreateConnection(cancellationToken)
+            .ConfigureAwait(false);
+        await using var connectionScope = connection.ConfigureAwait(false);
 
-        await connection.ExecuteAsync(
-            $"""
-            UPDATE {_sqliteOptions.TableName}
-            SET status = $Status, poison_time = $PoisonTime, poison_error = $PoisonError
-            WHERE command_id = $CommandId
-            """,
-            new
-            {
-                CommandId = commandId,
-                Status = CommandResultOutboxStatus.Poisoned,
-                PoisonTime = DateTimeOffset.Now.ToIsoString(),
-                PoisonError = errorMessage,
-            }
-        );
+        await connection
+            .ExecuteAsync(
+                $"""
+                UPDATE {_sqliteOptions.TableName}
+                SET status = $Status, poison_time = $PoisonTime, poison_error = $PoisonError
+                WHERE command_id = $CommandId
+                """,
+                new
+                {
+                    CommandId = commandId,
+                    Status = CommandResultOutboxStatus.Poisoned,
+                    PoisonTime = DateTimeOffset.Now.ToIsoString(),
+                    PoisonError = errorMessage,
+                }
+            )
+            .ConfigureAwait(false);
     }
 }

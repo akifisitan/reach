@@ -13,7 +13,7 @@ internal sealed class FileSearcher
     {
         _logger.ZLogInformation($"Searching in file for {query}...");
 
-        await Task.Delay(Random.Shared.Next(1500, 5000), cancellationToken);
+        await Task.Delay(Random.Shared.Next(1500, 5000), cancellationToken).ConfigureAwait(false);
 
         var result = new SearchFileResult(Guid.NewGuid().ToString(), Random.Shared.Next(1, 999999));
 

@@ -21,7 +21,9 @@ internal sealed class EchoPollHandler : RpcHandler<EchoPollPayload, EchoPollResu
         CancellationToken cancellationToken
     )
     {
-        var storedValue = await _resultStore.GetValue(payload.CorrelationId, cancellationToken);
+        var storedValue = await _resultStore
+            .GetValue(payload.CorrelationId, cancellationToken)
+            .ConfigureAwait(false);
 
         if (storedValue is null)
         {

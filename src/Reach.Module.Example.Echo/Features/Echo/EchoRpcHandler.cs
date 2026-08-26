@@ -27,7 +27,7 @@ internal sealed class EchoRpcHandler : RemoteCommandRpcHandler<EchoPayload, Echo
 
         _logger.ZLogInformation($"[{id}] Preparing {command} for remote submission");
 
-        await _resultStore.Insert(id, cancellationToken);
+        await _resultStore.Insert(id, cancellationToken).ConfigureAwait(false);
 
         return command;
     }
@@ -38,6 +38,8 @@ internal sealed class EchoRpcHandler : RemoteCommandRpcHandler<EchoPayload, Echo
         CancellationToken cancellationToken
     )
     {
-        await _resultStore.TrySetAsFailed(command.Id, exception.Message, cancellationToken);
+        await _resultStore
+            .TrySetAsFailed(command.Id, exception.Message, cancellationToken)
+            .ConfigureAwait(false);
     }
 }

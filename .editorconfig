@@ -48,6 +48,10 @@ dotnet_diagnostic.IDE0055.severity = none
 
 # https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/quality-rules/maintainability-warnings
 
+# Do not directly await a Task
+dotnet_diagnostic.CA2007.severity = warning
+dotnet_code_quality.CA2007.output_kind = DynamicallyLinkedLibrary
+
 # Avoid excessive inheritance
 dotnet_diagnostic.CA1501.severity = error
 # Avoid excessive complexity

@@ -29,10 +29,9 @@ internal sealed class LogSearchStatusCliCommandHandler
         {
             var payload = new LogSearchStatusPayload(cliPayload.CorrelationId);
 
-            var result = await _localClient.Invoke<LogSearchStatusPayload, LogSearchStatusResult>(
-                payload,
-                cancellationToken
-            );
+            var result = await _localClient
+                .Invoke<LogSearchStatusPayload, LogSearchStatusResult>(payload, cancellationToken)
+                .ConfigureAwait(false);
 
             _consoleWriter.WriteLine($"Result: {result}");
 

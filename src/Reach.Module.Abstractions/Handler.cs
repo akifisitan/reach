@@ -50,7 +50,7 @@ public abstract class Handler<TPayload, TResult, TBasePayload, TBaseResult>
     public async Task<TBaseResult> Handle(
         TBasePayload payload,
         CancellationToken cancellationToken
-    ) => await Handle((TPayload)payload, cancellationToken);
+    ) => await Handle((TPayload)payload, cancellationToken).ConfigureAwait(false);
 
     protected abstract Task<TResult> Handle(TPayload payload, CancellationToken cancellationToken);
 }

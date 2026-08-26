@@ -22,7 +22,9 @@ internal sealed class SearchFileCommandHandler
     {
         _logger.ZLogInformation($"Running server execute for {command}");
 
-        var result = await _fileSearcher.Search(command.Query, cancellationToken);
+        var result = await _fileSearcher
+            .Search(command.Query, cancellationToken)
+            .ConfigureAwait(false);
 
         return new SearchFileCommandResult(command.Id, result.Content, result.LineNumber);
     }

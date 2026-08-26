@@ -16,7 +16,7 @@ internal sealed class EchoCommandResultHandler : RelayCommandResultHandler<EchoC
         CancellationToken cancellationToken
     )
     {
-        await _resultStore.TrySetAsComplete(result, cancellationToken);
+        await _resultStore.TrySetAsComplete(result, cancellationToken).ConfigureAwait(false);
 
         return new();
     }

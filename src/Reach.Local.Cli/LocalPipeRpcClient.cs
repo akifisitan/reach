@@ -23,8 +23,9 @@ internal sealed class LocalPipeRpcClient : IRpcClient
         where TIn : RpcPayload
         where TOut : RpcResult
     {
-        await using var connection = await CreateConnection(cancellationToken: cancellationToken)
+        var connection = await CreateConnection(cancellationToken: cancellationToken)
             .ConfigureAwait(false);
+        await using var connectionScope = connection.ConfigureAwait(false);
 
         var serializedPayload = _payloadSerializer.Serialize((RpcPayload)payload);
 
@@ -41,11 +42,12 @@ internal sealed class LocalPipeRpcClient : IRpcClient
 
     public async Task<bool> CheckConnection(CancellationToken cancellationToken)
     {
-        await using var connection = await CreateConnection(
+        var connection = await CreateConnection(
                 connectionTimeoutMs: 100,
                 cancellationToken: cancellationToken
             )
             .ConfigureAwait(false);
+        await using var connectionScope = connection.ConfigureAwait(false);
 
         var result = await connection
             .Rpc.InvokeWithCancellationAsync<bool>(

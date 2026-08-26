@@ -34,7 +34,7 @@ internal sealed class LogSearchStartHandler
 
         _logger.ZLogInformation($"[{command.Id}] Preparing {command} for remote submission");
 
-        await _resultStore.Insert(id, cancellationToken);
+        await _resultStore.Insert(id, cancellationToken).ConfigureAwait(false);
 
         return command;
     }
@@ -45,6 +45,8 @@ internal sealed class LogSearchStartHandler
         CancellationToken cancellationToken
     )
     {
-        await _resultStore.TrySetAsFailed(command.Id, exception.Message, cancellationToken);
+        await _resultStore
+            .TrySetAsFailed(command.Id, exception.Message, cancellationToken)
+            .ConfigureAwait(false);
     }
 }

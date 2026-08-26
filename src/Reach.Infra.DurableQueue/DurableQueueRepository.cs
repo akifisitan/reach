@@ -69,24 +69,29 @@ internal sealed class DurableQueueRepository : IDurableQueueRepository
 
     public async Task Enqueue(EnqueueRecord item, CancellationToken cancellationToken)
     {
-        await using var connection = await _dbConnectionFactory.CreateConnection(cancellationToken);
+        var connection = await _dbConnectionFactory
+            .CreateConnection(cancellationToken)
+            .ConfigureAwait(false);
+        await using var connectionScope = connection.ConfigureAwait(false);
 
         try
         {
-            await connection.ExecuteAsync(
-                $"""
-                INSERT INTO {_tableName}(id, status, event_data, creation_time, try_count, last_try_time, next_try_time, completion_time)
-                VALUES ($Id, $Status, $EventData, $CreationTime, $TryCount, NULL, NULL, NULL)
-                """,
-                new
-                {
-                    Id = item.Id,
-                    Status = QueueRecordStatus.New,
-                    EventData = item.Data,
-                    CreationTime = DateTimeOffset.Now.ToIsoString(),
-                    TryCount = 0,
-                }
-            );
+            await connection
+                .ExecuteAsync(
+                    $"""
+                    INSERT INTO {_tableName}(id, status, event_data, creation_time, try_count, last_try_time, next_try_time, completion_time)
+                    VALUES ($Id, $Status, $EventData, $CreationTime, $TryCount, NULL, NULL, NULL)
+                    """,
+                    new
+                    {
+                        Id = item.Id,
+                        Status = QueueRecordStatus.New,
+                        EventData = item.Data,
+                        CreationTime = DateTimeOffset.Now.ToIsoString(),
+                        TryCount = 0,
+                    }
+                )
+                .ConfigureAwait(false);
         }
         catch (SqliteException ex) when (ex.SqliteErrorCode == 19)
         {
@@ -96,75 +101,88 @@ internal sealed class DurableQueueRepository : IDurableQueueRepository
 
     public async Task<QueueRecord?> Pick(CancellationToken cancellationToken)
     {
-        await using var connection = await _dbConnectionFactory.CreateConnection(cancellationToken);
+        var connection = await _dbConnectionFactory
+            .CreateConnection(cancellationToken)
+            .ConfigureAwait(false);
+        await using var connectionScope = connection.ConfigureAwait(false);
 
-        var result = await connection.QuerySingleOrDefaultAsync<DbQueueRecord>(
-            $"""
-            WITH next_record AS (
-                SELECT {TableColumns}
-                FROM {_tableName}
-                WHERE 1=1
-                AND status = $Status
-                AND creation_time >= $CreationTime
-                AND try_count = 0
-                ORDER BY id
-                LIMIT 1
+        var result = await connection
+            .QuerySingleOrDefaultAsync<DbQueueRecord>(
+                $"""
+                WITH next_record AS (
+                    SELECT {TableColumns}
+                    FROM {_tableName}
+                    WHERE 1=1
+                    AND status = $Status
+                    AND creation_time >= $CreationTime
+                    AND try_count = 0
+                    ORDER BY id
+                    LIMIT 1
+                )
+                UPDATE {_tableName}
+                SET status = $NextStatus, try_count = 1, last_try_time = $NextLastTryTime, next_try_time = NULL
+                WHERE id = (SELECT id FROM next_record)
+                RETURNING {TableColumns};
+                """,
+                new
+                {
+                    Status = QueueRecordStatus.New,
+                    CreationTime = DateTimeOffset.Now.Subtract(TimeSpan.FromDays(1)).ToIsoString(),
+                    NextStatus = QueueRecordStatus.Processing,
+                    NextLastTryTime = DateTimeOffset.Now.ToIsoString(),
+                }
             )
-            UPDATE {_tableName}
-            SET status = $NextStatus, try_count = 1, last_try_time = $NextLastTryTime, next_try_time = NULL
-            WHERE id = (SELECT id FROM next_record)
-            RETURNING {TableColumns};
-            """,
-            new
-            {
-                Status = QueueRecordStatus.New,
-                CreationTime = DateTimeOffset.Now.Subtract(TimeSpan.FromDays(1)).ToIsoString(),
-                NextStatus = QueueRecordStatus.Processing,
-                NextLastTryTime = DateTimeOffset.Now.ToIsoString(),
-            }
-        );
+            .ConfigureAwait(false);
 
         return result?.ToQueueRecord();
     }
 
     public async Task<QueueRecord?> PickForRetry(CancellationToken cancellationToken)
     {
-        await using var connection = await _dbConnectionFactory.CreateConnection(cancellationToken);
+        var connection = await _dbConnectionFactory
+            .CreateConnection(cancellationToken)
+            .ConfigureAwait(false);
+        await using var connectionScope = connection.ConfigureAwait(false);
 
-        var result = await connection.QuerySingleOrDefaultAsync<DbQueueRecord>(
-            $"""
-            WITH next_record AS (
-                SELECT id
-                FROM {_tableName}
-                WHERE 1=1
-                AND status = $Status
-                AND next_try_time <= $NextTryTime
-                AND try_count < {_maxTryCount}
-                ORDER BY creation_time
-                LIMIT 1
+        var result = await connection
+            .QuerySingleOrDefaultAsync<DbQueueRecord>(
+                $"""
+                WITH next_record AS (
+                    SELECT id
+                    FROM {_tableName}
+                    WHERE 1=1
+                    AND status = $Status
+                    AND next_try_time <= $NextTryTime
+                    AND try_count < {_maxTryCount}
+                    ORDER BY creation_time
+                    LIMIT 1
+                )
+                UPDATE {_tableName}
+                SET status = $UpdatedStatus, last_try_time = $UpdatedLastTryTime, try_count = try_count + 1
+                WHERE id = (SELECT id FROM next_record)
+                RETURNING {TableColumns};
+                """,
+                new
+                {
+                    Status = QueueRecordStatus.Error,
+                    NextTryTime = DateTimeOffset.Now.ToIsoString(),
+                    UpdatedStatus = QueueRecordStatus.Processing,
+                    UpdatedLastTryTime = DateTimeOffset.Now.ToIsoString(),
+                }
             )
-            UPDATE {_tableName}
-            SET status = $UpdatedStatus, last_try_time = $UpdatedLastTryTime, try_count = try_count + 1
-            WHERE id = (SELECT id FROM next_record)
-            RETURNING {TableColumns};
-            """,
-            new
-            {
-                Status = QueueRecordStatus.Error,
-                NextTryTime = DateTimeOffset.Now.ToIsoString(),
-                UpdatedStatus = QueueRecordStatus.Processing,
-                UpdatedLastTryTime = DateTimeOffset.Now.ToIsoString(),
-            }
-        );
+            .ConfigureAwait(false);
 
         return result?.ToQueueRecord();
     }
 
     public async Task Complete(string id, CancellationToken cancellationToken)
     {
-        await using var connection = await _dbConnectionFactory.CreateConnection(cancellationToken);
+        var connection = await _dbConnectionFactory
+            .CreateConnection(cancellationToken)
+            .ConfigureAwait(false);
+        await using var connectionScope = connection.ConfigureAwait(false);
 
-        await Complete(id, connection, transaction: null, cancellationToken);
+        await Complete(id, connection, transaction: null, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task Complete(
@@ -174,71 +192,85 @@ internal sealed class DurableQueueRepository : IDurableQueueRepository
         CancellationToken cancellationToken
     )
     {
-        await connection.ExecuteAsync(
-            $"""
-            UPDATE {_tableName}
-            SET status = $Status, completion_time = $CompletionTime
-            WHERE id = $Id
-            """,
-            new
-            {
-                Id = id,
-                Status = QueueRecordStatus.Success,
-                CompletionTime = DateTimeOffset.Now.ToIsoString(),
-            },
-            transaction: transaction
-        );
-    }
-
-    public async Task Fail(string id, CancellationToken cancellationToken)
-    {
-        await using var connection = await _dbConnectionFactory.CreateConnection(cancellationToken);
-
-        await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
-
-        var item = await connection.QuerySingleAsync<DbQueueRecord>(
-            $"""
-            SELECT {TableColumns}
-            FROM {_tableName}
-            WHERE id = $Id
-            """,
-            new { Id = id },
-            transaction: transaction
-        );
-
-        if (item.TryCount >= _maxTryCount)
-        {
-            await connection.ExecuteAsync(
+        await connection
+            .ExecuteAsync(
                 $"""
                 UPDATE {_tableName}
-                SET status = $Status, next_try_time = NULL
-                WHERE id = $Id
-                """,
-                new { Id = id, Status = QueueRecordStatus.Expired },
-                transaction: transaction
-            );
-        }
-        else
-        {
-            await connection.ExecuteAsync(
-                $"""
-                UPDATE {_tableName}
-                SET status = $Status, next_try_time = $NextTryTime
+                SET status = $Status, completion_time = $CompletionTime
                 WHERE id = $Id
                 """,
                 new
                 {
                     Id = id,
-                    Status = QueueRecordStatus.Error,
-                    NextTryTime = DateTimeOffset
-                        .Now.Add(TimeSpan.FromSeconds(10 * item.TryCount))
-                        .ToIsoString(),
+                    Status = QueueRecordStatus.Success,
+                    CompletionTime = DateTimeOffset.Now.ToIsoString(),
                 },
                 transaction: transaction
-            );
+            )
+            .ConfigureAwait(false);
+    }
+
+    public async Task Fail(string id, CancellationToken cancellationToken)
+    {
+        var connection = await _dbConnectionFactory
+            .CreateConnection(cancellationToken)
+            .ConfigureAwait(false);
+        await using var connectionScope = connection.ConfigureAwait(false);
+
+        var transaction = await connection
+            .BeginTransactionAsync(cancellationToken)
+            .ConfigureAwait(false);
+        await using var transactionScope = transaction.ConfigureAwait(false);
+
+        var item = await connection
+            .QuerySingleAsync<DbQueueRecord>(
+                $"""
+                SELECT {TableColumns}
+                FROM {_tableName}
+                WHERE id = $Id
+                """,
+                new { Id = id },
+                transaction: transaction
+            )
+            .ConfigureAwait(false);
+
+        if (item.TryCount >= _maxTryCount)
+        {
+            await connection
+                .ExecuteAsync(
+                    $"""
+                    UPDATE {_tableName}
+                    SET status = $Status, next_try_time = NULL
+                    WHERE id = $Id
+                    """,
+                    new { Id = id, Status = QueueRecordStatus.Expired },
+                    transaction: transaction
+                )
+                .ConfigureAwait(false);
+        }
+        else
+        {
+            await connection
+                .ExecuteAsync(
+                    $"""
+                    UPDATE {_tableName}
+                    SET status = $Status, next_try_time = $NextTryTime
+                    WHERE id = $Id
+                    """,
+                    new
+                    {
+                        Id = id,
+                        Status = QueueRecordStatus.Error,
+                        NextTryTime = DateTimeOffset
+                            .Now.Add(TimeSpan.FromSeconds(10 * item.TryCount))
+                            .ToIsoString(),
+                    },
+                    transaction: transaction
+                )
+                .ConfigureAwait(false);
         }
 
-        await transaction.CommitAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
     }
 }
 

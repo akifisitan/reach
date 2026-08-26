@@ -34,10 +34,12 @@ internal sealed class LogSearchStartCliCommandHandler
                 payload.EndTime
             );
 
-            var result = await _rpcClient.Invoke<
-                LogSearchStartPayload,
-                RemoteCommandSubmissionResult
-            >(startPayload, cancellationToken);
+            var result = await _rpcClient
+                .Invoke<LogSearchStartPayload, RemoteCommandSubmissionResult>(
+                    startPayload,
+                    cancellationToken
+                )
+                .ConfigureAwait(false);
 
             if (result is RemoteCommandSubmissionResult.Failed failed)
             {

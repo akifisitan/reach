@@ -18,7 +18,7 @@ public abstract class RemoteCommandRpcHandler<TPayload, TCommand>
     protected sealed override async Task<RemoteCommandRequest> Handle(
         TPayload payload,
         CancellationToken cancellationToken
-    ) => new(await PrepareCommand(payload, cancellationToken));
+    ) => new(await PrepareCommand(payload, cancellationToken).ConfigureAwait(false));
 
     Task IRemoteCommandRpcHandler.HandleSubmissionFailure(
         RelayCommand command,

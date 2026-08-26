@@ -34,15 +34,15 @@ internal sealed class RemoteRelayPoller
         {
             try
             {
-                await using var enumerator = _relay
+                var enumerator = _relay
                     .PollFromRemote(cancellationToken: cancellationToken)
                     .GetAsyncEnumerator(cancellationToken);
+                await using var enumeratorScope = enumerator.ConfigureAwait(false);
 
                 while (
-                    await _chaosPipeline.ExecuteAsync(
-                        _ => enumerator.MoveNextAsync(),
-                        cancellationToken
-                    )
+                    await _chaosPipeline
+                        .ExecuteAsync(_ => enumerator.MoveNextAsync(), cancellationToken)
+                        .ConfigureAwait(false)
                 )
                 {
                     var delivery = enumerator.Current;
@@ -50,12 +50,12 @@ internal sealed class RemoteRelayPoller
 
                     _logger.ZLogDebug($"Received result from remote: {result}");
 
-                    if (!await EnqueueResult(result, cancellationToken))
+                    if (!await EnqueueResult(result, cancellationToken).ConfigureAwait(false))
                     {
                         break;
                     }
 
-                    if (!await Commit(delivery, cancellationToken))
+                    if (!await Commit(delivery, cancellationToken).ConfigureAwait(false))
                     {
                         break;
                     }
@@ -70,7 +70,8 @@ internal sealed class RemoteRelayPoller
                 _logger.ZLogWarning(ex, $"An error occurred while polling from remote");
             }
 
-            await Task.Delay(Random.Shared.Next(2000, 2200), cancellationToken);
+            await Task.Delay(Random.Shared.Next(2000, 2200), cancellationToken)
+                .ConfigureAwait(false);
         }
     }
 
@@ -81,13 +82,15 @@ internal sealed class RemoteRelayPoller
     {
         try
         {
-            await _retryPipeline.ExecuteAsync(
-                async ct =>
-                {
-                    await _queue.Enqueue(result, ct);
-                },
-                cancellationToken
-            );
+            await _retryPipeline
+                .ExecuteAsync(
+                    async ct =>
+                    {
+                        await _queue.Enqueue(result, ct).ConfigureAwait(false);
+                    },
+                    cancellationToken
+                )
+                .ConfigureAwait(false);
 
             _logger.ZLogInformation($"Queued result {result.CommandId} from remote relay");
 
@@ -118,7 +121,7 @@ internal sealed class RemoteRelayPoller
     {
         try
         {
-            await delivery.Commit(cancellationToken);
+            await delivery.Commit(cancellationToken).ConfigureAwait(false);
 
             return true;
         }

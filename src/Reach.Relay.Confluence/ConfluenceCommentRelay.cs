@@ -101,7 +101,9 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
         [EnumeratorCancellation] CancellationToken cancellationToken
     )
     {
-        var previousCursor = await _cursorStorage.Retrieve(cursorName, cancellationToken);
+        var previousCursor = await _cursorStorage
+            .Retrieve(cursorName, cancellationToken)
+            .ConfigureAwait(false);
 
         var lastSeenCommentId = previousCursor?.CurrentIndex ?? 0;
 
@@ -193,11 +195,13 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
 
                     lastSeenCommentId = Math.Max(lastSeenCommentId, commentId);
 
-                    await _cursorStorage.Store(
-                        cursorName,
-                        new RelayCursor(lastSeenCommentId, DateTimeOffset.Now, pageOffset),
-                        cancellationToken
-                    );
+                    await _cursorStorage
+                        .Store(
+                            cursorName,
+                            new RelayCursor(lastSeenCommentId, DateTimeOffset.Now, pageOffset),
+                            cancellationToken
+                        )
+                        .ConfigureAwait(false);
 
                     continue;
                 }
@@ -217,7 +221,9 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
                             $"Set {nameof(lastSeenCommentId)} to {lastSeenCommentId}"
                         );
 
-                        await _cursorStorage.Store(cursorName, nextCursor, ct);
+                        await _cursorStorage
+                            .Store(cursorName, nextCursor, ct)
+                            .ConfigureAwait(false);
                     }
                 );
             }

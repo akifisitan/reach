@@ -43,32 +43,22 @@ internal sealed class RelayCursorRepository : IRelayCursorStorage, IDbInitializa
 
     public async Task Store(string name, RelayCursor cursor, CancellationToken cancellationToken)
     {
-        await using var connection = await _dbConnectionFactory.CreateConnection(cancellationToken);
+        var connection = await _dbConnectionFactory
+            .CreateConnection(cancellationToken)
+            .ConfigureAwait(false);
+        await using var connectionScope = connection.ConfigureAwait(false);
 
-        await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+        var transaction = await connection
+            .BeginTransactionAsync(cancellationToken)
+            .ConfigureAwait(false);
+        await using var transactionScope = transaction.ConfigureAwait(false);
 
-        var rows = await connection.ExecuteAsync(
-            $"""
-            UPDATE {_tableName}
-            SET creation_time = $CreationTime, current_index = $CurrentIndex, page_offset = $PageOffset
-            WHERE name = $Name
-            """,
-            new
-            {
-                Name = name,
-                CreationTime = cursor.CreationTime.ToIsoString(),
-                CurrentIndex = cursor.CurrentIndex,
-                PageOffset = cursor.PageOffset,
-            },
-            transaction: transaction
-        );
-
-        if (rows == 0)
-        {
-            await connection.ExecuteAsync(
+        var rows = await connection
+            .ExecuteAsync(
                 $"""
-                INSERT INTO {_tableName}(name, creation_time, current_index, page_offset)
-                VALUES ($Name, $CreationTime, $CurrentIndex, $PageOffset)
+                UPDATE {_tableName}
+                SET creation_time = $CreationTime, current_index = $CurrentIndex, page_offset = $PageOffset
+                WHERE name = $Name
                 """,
                 new
                 {
@@ -78,25 +68,50 @@ internal sealed class RelayCursorRepository : IRelayCursorStorage, IDbInitializa
                     PageOffset = cursor.PageOffset,
                 },
                 transaction: transaction
-            );
+            )
+            .ConfigureAwait(false);
+
+        if (rows == 0)
+        {
+            await connection
+                .ExecuteAsync(
+                    $"""
+                    INSERT INTO {_tableName}(name, creation_time, current_index, page_offset)
+                    VALUES ($Name, $CreationTime, $CurrentIndex, $PageOffset)
+                    """,
+                    new
+                    {
+                        Name = name,
+                        CreationTime = cursor.CreationTime.ToIsoString(),
+                        CurrentIndex = cursor.CurrentIndex,
+                        PageOffset = cursor.PageOffset,
+                    },
+                    transaction: transaction
+                )
+                .ConfigureAwait(false);
         }
 
-        await transaction.CommitAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
     }
 
     public async Task<RelayCursor?> Retrieve(string name, CancellationToken cancellationToken)
     {
-        await using var connection = await _dbConnectionFactory.CreateConnection(cancellationToken);
+        var connection = await _dbConnectionFactory
+            .CreateConnection(cancellationToken)
+            .ConfigureAwait(false);
+        await using var connectionScope = connection.ConfigureAwait(false);
 
-        var result = await connection.QuerySingleOrDefaultAsync<DbRelayCursor>(
-            $"""
-            SELECT {TableColumns}
-            FROM {_tableName}
-            WHERE name = $Name
-            LIMIT 1
-            """,
-            new { Name = name }
-        );
+        var result = await connection
+            .QuerySingleOrDefaultAsync<DbRelayCursor>(
+                $"""
+                SELECT {TableColumns}
+                FROM {_tableName}
+                WHERE name = $Name
+                LIMIT 1
+                """,
+                new { Name = name }
+            )
+            .ConfigureAwait(false);
 
         return result?.ToRelayCursor();
     }

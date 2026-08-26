@@ -49,14 +49,21 @@ internal sealed class RemoteCommandCoordinator
 
         try
         {
-            await _retryPipeline.ExecuteAsync(
-                async retryToken =>
-                    await _relayPostChaosPipeline.ExecuteAsync(
-                        async relayToken => await _relay.PostToRemote(request.Command, relayToken),
-                        retryToken
-                    ),
-                cancellationToken
-            );
+            await _retryPipeline
+                .ExecuteAsync(
+                    async retryToken =>
+                        await _relayPostChaosPipeline
+                            .ExecuteAsync(
+                                async relayToken =>
+                                    await _relay
+                                        .PostToRemote(request.Command, relayToken)
+                                        .ConfigureAwait(false),
+                                retryToken
+                            )
+                            .ConfigureAwait(false),
+                    cancellationToken
+                )
+                .ConfigureAwait(false);
 
             _logger.ZLogInformation($"[{request.CorrelationId}] Remote command accepted by relay");
 
@@ -70,7 +77,7 @@ internal sealed class RemoteCommandCoordinator
         {
             _logger.ZLogError(ex, $"[{request.CorrelationId}] Failed to submit remote command");
 
-            await Compensate(handler, request.Command, ex);
+            await Compensate(handler, request.Command, ex).ConfigureAwait(false);
 
             return new RemoteCommandSubmissionResult.Failed(
                 request.CorrelationId,
@@ -90,11 +97,9 @@ internal sealed class RemoteCommandCoordinator
     {
         try
         {
-            await handler.HandleSubmissionFailure(
-                command,
-                submissionException,
-                CancellationToken.None
-            );
+            await handler
+                .HandleSubmissionFailure(command, submissionException, CancellationToken.None)
+                .ConfigureAwait(false);
         }
         catch (Exception ex)
         {

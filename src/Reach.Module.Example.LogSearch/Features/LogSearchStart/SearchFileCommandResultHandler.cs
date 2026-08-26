@@ -24,7 +24,7 @@ internal sealed class SearchFileCommandResultHandler
     {
         _logger.ZLogInformation($"Received search result for id: {result.CommandId}");
 
-        if (!await _resultStore.TrySetAsComplete(result, cancellationToken))
+        if (!await _resultStore.TrySetAsComplete(result, cancellationToken).ConfigureAwait(false))
         {
             _logger.ZLogError($"Result with id: {result.CommandId} not found");
 

@@ -25,9 +25,11 @@ public sealed class ResilientRelayPoster
         CancellationToken cancellationToken
     )
     {
-        return await _retryPipeline.ExecuteAsync(
-            async ct => await _localRelay.PostToRemote(command, ct),
-            cancellationToken
-        );
+        return await _retryPipeline
+            .ExecuteAsync(
+                async ct => await _localRelay.PostToRemote(command, ct).ConfigureAwait(false),
+                cancellationToken
+            )
+            .ConfigureAwait(false);
     }
 }

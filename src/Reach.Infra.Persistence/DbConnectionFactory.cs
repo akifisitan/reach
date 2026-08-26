@@ -38,7 +38,7 @@ public sealed class DbConnectionFactory
 
         _logger.ZLogTrace($"Opening database connection");
 
-        await connection.OpenAsync(cancellationToken);
+        await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
 
         return connection;
     }

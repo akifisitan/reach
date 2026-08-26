@@ -29,14 +29,14 @@ internal sealed class DurableQueue<T> : IDurableQueue<T>
 
     public async Task<T?> Pick(CancellationToken cancellationToken)
     {
-        var item = await _repository.Pick(cancellationToken);
+        var item = await _repository.Pick(cancellationToken).ConfigureAwait(false);
 
         return item is null ? default : _serializer.Deserialize<T>(item.EventData);
     }
 
     public async Task<T?> PickForRetry(CancellationToken cancellationToken)
     {
-        var item = await _repository.PickForRetry(cancellationToken);
+        var item = await _repository.PickForRetry(cancellationToken).ConfigureAwait(false);
 
         return item is null ? default : _serializer.Deserialize<T>(item.EventData);
     }

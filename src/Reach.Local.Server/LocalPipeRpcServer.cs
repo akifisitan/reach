@@ -31,7 +31,7 @@ internal sealed class LocalPipeRpcServer
 
             try
             {
-                await pipe.WaitForConnectionAsync(cancellationToken);
+                await pipe.WaitForConnectionAsync(cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -42,7 +42,7 @@ internal sealed class LocalPipeRpcServer
                     _logger.ZLogError(ex, $"An error occurred while waiting for connection");
                 }
 
-                await pipe.DisposeAsync();
+                await pipe.DisposeAsync().ConfigureAwait(false);
 
                 throw;
             }
@@ -55,7 +55,7 @@ internal sealed class LocalPipeRpcServer
 
     private async Task HandleClient(NamedPipeServerStream pipe)
     {
-        await using var _ = pipe;
+        await using var _ = pipe.ConfigureAwait(false);
 
         using var rpc = new JsonRpc(
             new LengthHeaderMessageHandler(pipe, pipe, LocalRpcShared.CreateFormatter())
@@ -68,7 +68,7 @@ internal sealed class LocalPipeRpcServer
 
         _logger.ZLogDebug($"Connected to client");
 
-        await rpc.Completion;
+        await rpc.Completion.ConfigureAwait(false);
 
         _logger.ZLogDebug($"Disconnected from client");
     }

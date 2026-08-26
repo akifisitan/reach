@@ -29,14 +29,18 @@ internal sealed class RpcTarget
     {
         var value = _payloadSerializer.Deserialize<RpcPayload>(payload);
 
-        var result = await _chaosPipeline.ExecuteAsync(
-            async ct => await _handlerDispatcher.Handle(value, ct),
-            cancellationToken
-        );
+        var result = await _chaosPipeline
+            .ExecuteAsync(
+                async ct => await _handlerDispatcher.Handle(value, ct).ConfigureAwait(false),
+                cancellationToken
+            )
+            .ConfigureAwait(false);
 
         if (result is RemoteCommandRequest request)
         {
-            result = await _remoteCommandCoordinator.Submit(request, cancellationToken);
+            result = await _remoteCommandCoordinator
+                .Submit(request, cancellationToken)
+                .ConfigureAwait(false);
         }
 
         return _payloadSerializer.Serialize(result);

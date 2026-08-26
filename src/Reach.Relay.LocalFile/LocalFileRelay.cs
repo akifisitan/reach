@@ -92,7 +92,9 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
             DateTimeOffset.Now.Subtract(TimeSpan.FromDays(1)),
             0
         );
-        var cursor = await _cursorStorage.Retrieve(cursorName, cancellationToken) ?? defaultCursor;
+        var cursor =
+            await _cursorStorage.Retrieve(cursorName, cancellationToken).ConfigureAwait(false)
+            ?? defaultCursor;
 
         HashSet<string> processedEntries = [];
 
@@ -182,7 +184,9 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
                         0
                     );
 
-                    await _cursorStorage.Store(cursorName, skippedCursor, cancellationToken);
+                    await _cursorStorage
+                        .Store(cursorName, skippedCursor, cancellationToken)
+                        .ConfigureAwait(false);
 
                     cursor = skippedCursor;
 
@@ -205,7 +209,9 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
                     command,
                     async ct =>
                     {
-                        await _cursorStorage.Store(cursorName, nextCursor, ct);
+                        await _cursorStorage
+                            .Store(cursorName, nextCursor, ct)
+                            .ConfigureAwait(false);
                         cursor = nextCursor;
                     }
                 );

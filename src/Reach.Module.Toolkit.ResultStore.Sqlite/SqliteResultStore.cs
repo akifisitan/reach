@@ -55,22 +55,27 @@ public sealed class SqliteResultStore<TResult> : IResultStore<TResult>, IDbIniti
 
     public async Task Insert(string id, CancellationToken cancellationToken)
     {
-        await using var connection = await _dbConnectionFactory.CreateConnection(cancellationToken);
+        var connection = await _dbConnectionFactory
+            .CreateConnection(cancellationToken)
+            .ConfigureAwait(false);
+        await using var connectionScope = connection.ConfigureAwait(false);
 
         try
         {
-            await connection.ExecuteAsync(
-                $"""
-                INSERT INTO {_tableName}(id, status, result_data, error_message, creation_time, completion_time)
-                VALUES ($Id, $Status, NULL, NULL, $CreationTime, NULL)
-                """,
-                new
-                {
-                    Id = id,
-                    Status = ResultStoreStatus.Ongoing,
-                    CreationTime = DateTimeOffset.Now.ToIsoString(),
-                }
-            );
+            await connection
+                .ExecuteAsync(
+                    $"""
+                    INSERT INTO {_tableName}(id, status, result_data, error_message, creation_time, completion_time)
+                    VALUES ($Id, $Status, NULL, NULL, $CreationTime, NULL)
+                    """,
+                    new
+                    {
+                        Id = id,
+                        Status = ResultStoreStatus.Ongoing,
+                        CreationTime = DateTimeOffset.Now.ToIsoString(),
+                    }
+                )
+                .ConfigureAwait(false);
         }
         catch (SqliteException ex) when (ex.SqliteErrorCode == 19)
         {
@@ -83,17 +88,22 @@ public sealed class SqliteResultStore<TResult> : IResultStore<TResult>, IDbIniti
         CancellationToken cancellationToken
     )
     {
-        await using var connection = await _dbConnectionFactory.CreateConnection(cancellationToken);
+        var connection = await _dbConnectionFactory
+            .CreateConnection(cancellationToken)
+            .ConfigureAwait(false);
+        await using var connectionScope = connection.ConfigureAwait(false);
 
-        var result = await connection.QuerySingleOrDefaultAsync<DbResultStoreEntry>(
-            $"""
-            SELECT {TableColumns}
-            FROM {_tableName}
-            WHERE id = $Id
-            LIMIT 1
-            """,
-            new { Id = id }
-        );
+        var result = await connection
+            .QuerySingleOrDefaultAsync<DbResultStoreEntry>(
+                $"""
+                SELECT {TableColumns}
+                FROM {_tableName}
+                WHERE id = $Id
+                LIMIT 1
+                """,
+                new { Id = id }
+            )
+            .ConfigureAwait(false);
 
         return result?.ToEntry(_payloadSerializer.Deserialize<TResult>);
     }
@@ -104,22 +114,27 @@ public sealed class SqliteResultStore<TResult> : IResultStore<TResult>, IDbIniti
 
         var data = _payloadSerializer.Serialize(result);
 
-        await using var connection = await _dbConnectionFactory.CreateConnection(cancellationToken);
+        var connection = await _dbConnectionFactory
+            .CreateConnection(cancellationToken)
+            .ConfigureAwait(false);
+        await using var connectionScope = connection.ConfigureAwait(false);
 
-        var rows = await connection.ExecuteAsync(
-            $"""
-            UPDATE {_tableName}
-            SET status = $Status, result_data = $ResultData, error_message = NULL, completion_time = $CompletionTime
-            WHERE id = $Id
-            """,
-            new
-            {
-                Id = result.CommandId,
-                Status = ResultStoreStatus.Complete,
-                ResultData = data,
-                CompletionTime = DateTimeOffset.Now.ToIsoString(),
-            }
-        );
+        var rows = await connection
+            .ExecuteAsync(
+                $"""
+                UPDATE {_tableName}
+                SET status = $Status, result_data = $ResultData, error_message = NULL, completion_time = $CompletionTime
+                WHERE id = $Id
+                """,
+                new
+                {
+                    Id = result.CommandId,
+                    Status = ResultStoreStatus.Complete,
+                    ResultData = data,
+                    CompletionTime = DateTimeOffset.Now.ToIsoString(),
+                }
+            )
+            .ConfigureAwait(false);
 
         return rows > 0;
     }
@@ -130,22 +145,27 @@ public sealed class SqliteResultStore<TResult> : IResultStore<TResult>, IDbIniti
         CancellationToken cancellationToken
     )
     {
-        await using var connection = await _dbConnectionFactory.CreateConnection(cancellationToken);
+        var connection = await _dbConnectionFactory
+            .CreateConnection(cancellationToken)
+            .ConfigureAwait(false);
+        await using var connectionScope = connection.ConfigureAwait(false);
 
-        var rows = await connection.ExecuteAsync(
-            $"""
-            UPDATE {_tableName}
-            SET status = $Status, error_message = $ErrorMessage, completion_time = $CompletionTime
-            WHERE id = $Id
-            """,
-            new
-            {
-                Id = id,
-                Status = ResultStoreStatus.Failed,
-                ErrorMessage = error,
-                CompletionTime = DateTimeOffset.Now.ToIsoString(),
-            }
-        );
+        var rows = await connection
+            .ExecuteAsync(
+                $"""
+                UPDATE {_tableName}
+                SET status = $Status, error_message = $ErrorMessage, completion_time = $CompletionTime
+                WHERE id = $Id
+                """,
+                new
+                {
+                    Id = id,
+                    Status = ResultStoreStatus.Failed,
+                    ErrorMessage = error,
+                    CompletionTime = DateTimeOffset.Now.ToIsoString(),
+                }
+            )
+            .ConfigureAwait(false);
 
         return rows > 0;
     }

@@ -27,10 +27,12 @@ internal sealed class EchoCliCommandHandler
     {
         try
         {
-            var result = await _rpcClient.Invoke<EchoPayload, RemoteCommandSubmissionResult>(
-                new EchoPayload(payload.Message),
-                cancellationToken
-            );
+            var result = await _rpcClient
+                .Invoke<EchoPayload, RemoteCommandSubmissionResult>(
+                    new EchoPayload(payload.Message),
+                    cancellationToken
+                )
+                .ConfigureAwait(false);
 
             if (result is RemoteCommandSubmissionResult.Failed failed)
             {
@@ -48,14 +50,17 @@ internal sealed class EchoCliCommandHandler
 
             while (true)
             {
-                var pollResult = await _rpcClient.Invoke<EchoPollPayload, EchoPollResult>(
-                    new EchoPollPayload(accepted.CorrelationId),
-                    cancellationToken
-                );
+                var pollResult = await _rpcClient
+                    .Invoke<EchoPollPayload, EchoPollResult>(
+                        new EchoPollPayload(accepted.CorrelationId),
+                        cancellationToken
+                    )
+                    .ConfigureAwait(false);
 
                 if (pollResult is EchoPollResult.Ongoing)
                 {
-                    await Task.Delay(TimeSpan.FromMilliseconds(payload.PollMs), cancellationToken);
+                    await Task.Delay(TimeSpan.FromMilliseconds(payload.PollMs), cancellationToken)
+                        .ConfigureAwait(false);
 
                     continue;
                 }

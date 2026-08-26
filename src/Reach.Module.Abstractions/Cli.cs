@@ -41,10 +41,9 @@ public static class CliCommandExtensions
         command.SetAction(
             async (parseResult, cancellationToken) =>
             {
-                var result = await handlerDispatcher.Handle(
-                    payloadFactory(parseResult),
-                    cancellationToken
-                );
+                var result = await handlerDispatcher
+                    .Handle(payloadFactory(parseResult), cancellationToken)
+                    .ConfigureAwait(false);
 
                 return result.StatusCode;
             }

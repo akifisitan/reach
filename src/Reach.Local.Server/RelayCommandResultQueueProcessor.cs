@@ -33,16 +33,16 @@ internal sealed class RelayCommandResultQueueProcessor
     {
         while (!cancellationToken.IsCancellationRequested)
         {
-            var value = await PickFromQueue(isForRetry, cancellationToken);
+            var value = await PickFromQueue(isForRetry, cancellationToken).ConfigureAwait(false);
 
             if (value is null)
             {
                 continue;
             }
 
-            var isSuccess = await Process(value, cancellationToken);
+            var isSuccess = await Process(value, cancellationToken).ConfigureAwait(false);
 
-            await UpdateResult(isSuccess, value, cancellationToken);
+            await UpdateResult(isSuccess, value, cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -54,12 +54,13 @@ internal sealed class RelayCommandResultQueueProcessor
         try
         {
             var value = isForRetry
-                ? await _queue.PickForRetry(cancellationToken)
-                : await _queue.Pick(cancellationToken);
+                ? await _queue.PickForRetry(cancellationToken).ConfigureAwait(false)
+                : await _queue.Pick(cancellationToken).ConfigureAwait(false);
 
             if (value is null)
             {
-                await Task.Delay(Random.Shared.Next(1500, 1700), cancellationToken);
+                await Task.Delay(Random.Shared.Next(1500, 1700), cancellationToken)
+                    .ConfigureAwait(false);
 
                 return null;
             }
@@ -76,7 +77,8 @@ internal sealed class RelayCommandResultQueueProcessor
         {
             _logger.ZLogError(ex, $"An error occurred while picking from the queue");
 
-            await Task.Delay(Random.Shared.Next(2050, 2200), cancellationToken);
+            await Task.Delay(Random.Shared.Next(2050, 2200), cancellationToken)
+                .ConfigureAwait(false);
 
             return null;
         }
@@ -86,10 +88,12 @@ internal sealed class RelayCommandResultQueueProcessor
     {
         try
         {
-            await _chaosPipeline.ExecuteAsync(
-                async ct => await _handlerDispatcher.Handle(value, ct),
-                cancellationToken
-            );
+            await _chaosPipeline
+                .ExecuteAsync(
+                    async ct => await _handlerDispatcher.Handle(value, ct).ConfigureAwait(false),
+                    cancellationToken
+                )
+                .ConfigureAwait(false);
 
             _logger.ZLogDebug($"Processed result successfully {value.CommandId}");
 
@@ -115,24 +119,26 @@ internal sealed class RelayCommandResultQueueProcessor
     {
         try
         {
-            await _retryPipeline.ExecuteAsync(
-                async ct =>
-                {
-                    if (isSuccess)
+            await _retryPipeline
+                .ExecuteAsync(
+                    async ct =>
                     {
-                        await _queue.Complete(value, ct);
+                        if (isSuccess)
+                        {
+                            await _queue.Complete(value, ct).ConfigureAwait(false);
 
-                        _logger.ZLogDebug($"Updated result {value.CommandId} as complete");
-                    }
-                    else
-                    {
-                        await _queue.Fail(value, ct);
+                            _logger.ZLogDebug($"Updated result {value.CommandId} as complete");
+                        }
+                        else
+                        {
+                            await _queue.Fail(value, ct).ConfigureAwait(false);
 
-                        _logger.ZLogDebug($"Updated result {value.CommandId} as failed");
-                    }
-                },
-                cancellationToken
-            );
+                            _logger.ZLogDebug($"Updated result {value.CommandId} as failed");
+                        }
+                    },
+                    cancellationToken
+                )
+                .ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
