@@ -8,7 +8,7 @@ using Reach.Module;
 using Reach.Module.Example.Echo;
 using Reach.Module.Example.LogSearch;
 using Reach.Relay;
-using Reach.Relay.LocalFile;
+using Reach.Relay.Confluence;
 using ZLogger.Formatters;
 
 namespace Reach.Hosting;
@@ -40,17 +40,11 @@ public static class ServiceCollectionExtensions
         );
         services.AddSingleton<ISingleAppInstanceLock, SingleAppInstanceLock>();
 
-        services.AddSingleton(sp => new RelaySetupCoordinator(
-            basePath,
-            sp.GetServices<IRelaySetup>()
-        ));
-
         services.AddSingleton<IDurableQueueDataSerializer>(sp =>
             sp.GetRequiredService<JsonPayloadSerializer>()
         );
 
-        //services.AddConfluenceRelay(ReachAppPaths.SharedPath);
-        services.AddLocalFileRelay(configuration, ReachAppPaths.SharedPath);
+        services.AddConfluenceRelay(ReachAppPaths.SharedPath);
 
         services.AddPersistence();
 

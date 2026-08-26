@@ -3,25 +3,6 @@ using FluentValidation;
 
 namespace Reach.Relay.Confluence;
 
-public sealed class ConfluenceOptionsBuilder
-{
-    public string BaseUrl { get; set; } = string.Empty;
-    public long LocalToRemotePageId { get; set; }
-    public long RemoteToLocalPageId { get; set; }
-    public int PollDelayMs { get; set; } = 5000;
-    public int BatchLimit { get; set; } = 100;
-
-    public ConfluenceOptions Build() =>
-        new()
-        {
-            BaseUrl = BaseUrl,
-            LocalToRemotePageId = LocalToRemotePageId,
-            RemoteToLocalPageId = RemoteToLocalPageId,
-            BatchLimit = BatchLimit,
-            PollDelayMs = PollDelayMs,
-        };
-}
-
 public sealed record ConfluenceOptions
 {
     public required string BaseUrl { get; init; }
@@ -29,6 +10,14 @@ public sealed record ConfluenceOptions
     public required long RemoteToLocalPageId { get; init; }
     public int PollDelayMs { get; init; } = 5000;
     public int BatchLimit { get; init; } = 100;
+
+    public static ConfluenceOptions Empty { get; } =
+        new()
+        {
+            BaseUrl = string.Empty,
+            LocalToRemotePageId = 0,
+            RemoteToLocalPageId = 0,
+        };
 
     internal static bool TryNormalizeBaseUrl(
         [NotNullWhen(true)] string? value,

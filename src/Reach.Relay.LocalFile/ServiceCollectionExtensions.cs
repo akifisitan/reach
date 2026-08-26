@@ -6,10 +6,15 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddLocalFileRelay(
         this IServiceCollection services,
-        IConfiguration configuration,
         string basePath
     )
     {
+        if (services.Any(x => x.ServiceType == typeof(IRelayRegistration)))
+        {
+            throw new InvalidOperationException("A relay has already been registered.");
+        }
+
+        services.AddSingleton<IRelayRegistration>(new RelayRegistration("local-file"));
         services.AddSingleton<LocalFileRelay>();
         services.AddSingleton<ILocalRelay>(sp => sp.GetRequiredService<LocalFileRelay>());
         services.AddSingleton<IRemoteRelay>(sp => sp.GetRequiredService<LocalFileRelay>());

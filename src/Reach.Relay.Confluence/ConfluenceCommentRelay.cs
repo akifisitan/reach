@@ -76,7 +76,7 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
     {
         return InnerPoll<RelayCommand>(
             Options.LocalToRemotePageId,
-            LocalToRemoteCursorName,
+            GetCursorName(LocalToRemoteCursorName, Options.LocalToRemotePageId),
             cancellationToken
         );
     }
@@ -88,10 +88,12 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
     {
         return InnerPoll<RelayCommandResult>(
             Options.RemoteToLocalPageId,
-            RemoteToLocalCursorName,
+            GetCursorName(RemoteToLocalCursorName, Options.RemoteToLocalPageId),
             cancellationToken
         );
     }
+
+    private static string GetCursorName(string direction, long pageId) => $"{direction}.{pageId}";
 
     private async IAsyncEnumerable<RelayDelivery<TOut>> InnerPoll<TOut>(
         long pageId,

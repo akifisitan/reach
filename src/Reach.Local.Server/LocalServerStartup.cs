@@ -9,6 +9,16 @@ public static class LocalServerStartup
         return ReachDaemonRunner.Run(
             args,
             ReachAppPaths.LocalServer(),
+            "reach setup relay",
+            (services, configuration, paths) => services.AddApplication(configuration, paths)
+        );
+    }
+
+    public static Task<int> SetupRelay(string[] args)
+    {
+        return ReachRelaySetupRunner.Run(
+            args,
+            ReachAppPaths.LocalServer(),
             (services, configuration, paths) => services.AddApplication(configuration, paths)
         );
     }

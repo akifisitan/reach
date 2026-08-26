@@ -11,13 +11,13 @@ public static class ReachDaemonRunner
     public static async Task<int> Run(
         string[] args,
         ReachAppPaths paths,
+        string relaySetupCommand,
         Action<IServiceCollection, IConfiguration, ReachAppPaths> configureServices
     )
     {
         var builder = Host.CreateApplicationBuilder(args);
 
         builder.Configuration.ConfigureReachConfiguration(paths.AppDataBasePath);
-
         configureServices(builder.Services, builder.Configuration, paths);
 
         using var host = builder.Build();
@@ -37,6 +37,8 @@ public static class ReachDaemonRunner
 
         if (paths.LockFilePath is not null)
         {
+            Directory.CreateDirectory(Path.GetDirectoryName(paths.LockFilePath)!);
+
             var appLock = host.Services.GetRequiredService<ISingleAppInstanceLock>();
 
             if (!appLock.TryAcquire(paths.LockFilePath))
@@ -44,73 +46,79 @@ public static class ReachDaemonRunner
                 const string message = "There's already a running instance.";
 
                 logger.ZLogError($"{message}");
-
                 await Console.Error.WriteLineAsync(message);
-
                 return 2;
             }
         }
 
-        // TODO: this is very confusing let's simplify the control flow here
         try
         {
-            var setupCoordinator = host.Services.GetRequiredService<RelaySetupCoordinator>();
-
-            await setupCoordinator.EnsureSetup();
-
+            ValidateRelayRegistration(host.Services);
             ValidateOptions(host.Services);
             host.Services.ValidateMessageGraph();
 
+            await RunStartupChecks(host.Services, applicationLifetime.ApplicationStopping);
+
             host.Services.GetRequiredService<DatabaseInitializer>().Initialize();
-
-            await RunStartupChecks(host.Services);
-
             await host.RunAsync();
 
             return 0;
         }
+        catch (RelayConfigurationException ex)
+        {
+            logger.ZLogError(ex, $"Relay configuration is invalid");
+            await Console.Error.WriteLineAsync(
+                $"Relay configuration is invalid: {ex.Message}{Environment.NewLine}Run `{relaySetupCommand}`."
+            );
+            return 3;
+        }
         catch (RelaySetupRequiredException ex)
         {
-            logger.ZLogError($"Relay setup required: {ex.Message}");
-
-            try
-            {
-                var setupCoordinator = host.Services.GetRequiredService<RelaySetupCoordinator>();
-
-                await setupCoordinator.RunSetup();
-
-                await RunStartupChecks(host.Services);
-
-                await host.RunAsync();
-
-                return 0;
-            }
-            catch (Exception setupEx)
-            {
-                Console.WriteLine($"Setup failed: {setupEx.Message}");
-
-                return 1;
-            }
+            logger.ZLogError(ex, $"Relay setup is required");
+            await Console.Error.WriteLineAsync(
+                $"Relay setup is required: {ex.Message}{Environment.NewLine}Run `{relaySetupCommand}`."
+            );
+            return 4;
+        }
+        catch (RelayUnavailableException ex)
+        {
+            logger.ZLogError(ex, $"Relay is unavailable");
+            await Console.Error.WriteLineAsync($"Relay is unavailable: {ex.Message}");
+            return 5;
         }
         catch (AggregateOptionsValidationException ex)
         {
             logger.ZLogError($"Configuration error: {ex.Message}");
-
             return 1;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Setup failed: {ex.Message}");
-
+            logger.ZLogError(ex, $"Application startup failed");
+            await Console.Error.WriteLineAsync($"Application startup failed: {ex.Message}");
             return 1;
         }
     }
 
-    private static async Task RunStartupChecks(IServiceProvider services)
+    private static async Task RunStartupChecks(
+        IServiceProvider services,
+        CancellationToken cancellationToken
+    )
     {
         foreach (var startupCheck in services.GetServices<IStartupCheck>())
         {
-            await startupCheck.Check(CancellationToken.None);
+            await startupCheck.Check(cancellationToken);
+        }
+    }
+
+    private static void ValidateRelayRegistration(IServiceProvider services)
+    {
+        var registrations = services.GetServices<IRelayRegistration>().ToList();
+
+        if (registrations.Count != 1)
+        {
+            throw new InvalidOperationException(
+                $"Expected exactly one relay registration, but found {registrations.Count}."
+            );
         }
     }
 

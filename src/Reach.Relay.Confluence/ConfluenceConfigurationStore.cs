@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
 namespace Reach.Relay.Confluence;
@@ -14,7 +15,6 @@ public sealed class ConfluenceConfigurationStore
     public string FilePath { get; }
     public ConfluenceOptions Current
     {
-        // TODO: should we document this instead of eating the null check penalty each time or is it negligible?
         get =>
             field
             ?? throw new InvalidOperationException(
@@ -23,11 +23,11 @@ public sealed class ConfluenceConfigurationStore
         private set;
     }
 
-    public bool TryLoad(out string error)
+    public bool TryLoad([NotNullWhen(false)] out string? errorMessage)
     {
         if (!File.Exists(FilePath))
         {
-            error = $"Configuration file not found at '{FilePath}'.";
+            errorMessage = $"Configuration file not found at '{FilePath}'.";
             return false;
         }
 
@@ -40,7 +40,7 @@ public sealed class ConfluenceConfigurationStore
 
             if (options is null)
             {
-                error = "Configuration must contain a JSON object.";
+                errorMessage = "Configuration must contain a JSON object.";
                 return false;
             }
 
@@ -48,7 +48,7 @@ public sealed class ConfluenceConfigurationStore
 
             if (!validationResult.IsValid)
             {
-                error = string.Join(
+                errorMessage = string.Join(
                     Environment.NewLine,
                     validationResult.Errors.Select(x => $"{x.PropertyName}: {x.ErrorMessage}")
                 );
@@ -61,13 +61,13 @@ public sealed class ConfluenceConfigurationStore
             };
 
             Current = options;
-            error = string.Empty;
+            errorMessage = null;
             return true;
         }
         catch (Exception ex)
             when (ex is JsonException or IOException or UnauthorizedAccessException)
         {
-            error = ex.Message;
+            errorMessage = ex.Message;
             return false;
         }
     }

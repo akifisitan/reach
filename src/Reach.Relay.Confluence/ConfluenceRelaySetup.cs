@@ -35,74 +35,38 @@ public sealed class ConfluenceRelaySetup : IRelaySetup
 
     public string Name => "confluence";
 
-    public bool IsComplete(string appDataBasePath)
+    public async Task<int> Run(CancellationToken cancellationToken)
     {
-        if (!_configurationStore.TryLoad(out _))
-        {
-            return false;
-        }
-
-        try
-        {
-            return !string.IsNullOrWhiteSpace(_credentialStore.Load());
-        }
-        catch (Exception ex)
-            when (ex
-                    is CryptographicException
-                        or IOException
-                        or InvalidOperationException
-                        or UnauthorizedAccessException
-            )
-        {
-            return false;
-        }
-    }
-
-    public async Task<int> Run(string basePath, CancellationToken cancellationToken)
-    {
-        var (result, options) = LoadExistingOptions();
+        var options = LoadExistingOptions();
         var personalAccessToken = LoadExistingCredential();
 
-        if (result == LoadExistingOptionsResult.Invalid)
+        if (options is null)
         {
             return 1;
         }
 
         _consoleWriter.WriteLine();
         _consoleWriter.WriteLine(
-            "Create two Confluence pages first: one for commands (local -> remote), one for results (remote -> local)."
+            "Create two Confluence pages: one for commands (local -> remote), one for results (remote -> local)."
         );
 
         while (true)
         {
-            options =
-                result == LoadExistingOptionsResult.Override
-                    ? new()
-                    {
-                        BaseUrl = PromptBaseUrl(options.BaseUrl),
-                        LocalToRemotePageId = PromptPageId(
-                            "Commands (local -> remote) page ID",
-                            options.LocalToRemotePageId
-                        ),
-                        RemoteToLocalPageId = PromptDistinctPageId(
-                            "Results (remote -> local) page ID",
-                            options.RemoteToLocalPageId,
-                            options.LocalToRemotePageId
-                        ),
-                    }
-                    : options with
-                    {
-                        BaseUrl = PromptBaseUrl(options.BaseUrl),
-                        LocalToRemotePageId = PromptPageId(
-                            "Commands (local -> remote) page ID",
-                            options.LocalToRemotePageId
-                        ),
-                        RemoteToLocalPageId = PromptDistinctPageId(
-                            "Results (remote -> local) page ID",
-                            options.RemoteToLocalPageId,
-                            options.LocalToRemotePageId
-                        ),
-                    };
+            cancellationToken.ThrowIfCancellationRequested();
+
+            options = options with
+            {
+                BaseUrl = PromptBaseUrl(options.BaseUrl),
+                LocalToRemotePageId = PromptPageId(
+                    "Commands (local -> remote) page ID",
+                    options.LocalToRemotePageId
+                ),
+                RemoteToLocalPageId = PromptDistinctPageId(
+                    "Results (remote -> local) page ID",
+                    options.RemoteToLocalPageId,
+                    options.LocalToRemotePageId
+                ),
+            };
 
             personalAccessToken = PromptCredential(personalAccessToken);
 
@@ -123,7 +87,6 @@ public sealed class ConfluenceRelaySetup : IRelaySetup
 
         cancellationToken.ThrowIfCancellationRequested();
 
-        // TODO: what is the point in validating here again after it was already validated with confluence?
         var json = _configurationStore.Serialize(options);
 
         _credentialStore.Save(personalAccessToken);
@@ -178,32 +141,25 @@ public sealed class ConfluenceRelaySetup : IRelaySetup
         }
     }
 
-    private enum LoadExistingOptionsResult
+    private ConfluenceOptions? LoadExistingOptions()
     {
-        Invalid = 0,
-        Success = 1,
-        Override = 2,
-    }
-
-    private (LoadExistingOptionsResult Result, ConfluenceOptions Options) LoadExistingOptions()
-    {
-        if (_configurationStore.TryLoad(out var error))
+        if (_configurationStore.TryLoad(out var errorMessage))
         {
-            return (LoadExistingOptionsResult.Success, _configurationStore.Current);
+            return _configurationStore.Current;
         }
 
         if (!File.Exists(_configurationStore.FilePath))
         {
-            return (LoadExistingOptionsResult.Invalid, default!);
+            return ConfluenceOptions.Empty;
         }
 
         _consoleWriter.WriteLine(
-            $"Confluence configuration at '{_configurationStore.FilePath}' is invalid:{Environment.NewLine}{error}"
+            $"Confluence configuration at '{_configurationStore.FilePath}' is invalid:{Environment.NewLine}{errorMessage}"
         );
 
         return IsConfirmed("Overwrite the invalid configuration? Type 'yes' to continue")
-            ? (LoadExistingOptionsResult.Override, default!)
-            : (LoadExistingOptionsResult.Invalid, default!);
+            ? ConfluenceOptions.Empty
+            : null;
     }
 
     private string? LoadExistingCredential()
