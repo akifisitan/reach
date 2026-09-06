@@ -23,8 +23,8 @@ public abstract record RelayCommandResult(string CommandId)
 
 public interface IRelayPayloadSerializer
 {
-    string Serialize<T>(T value);
-    T Deserialize<T>(string payload);
+    byte[] Serialize<T>(T value);
+    T Deserialize<T>(ReadOnlySpan<byte> payload);
 }
 
 public interface IRelayCursorStorage

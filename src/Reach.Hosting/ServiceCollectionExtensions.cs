@@ -35,6 +35,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IRelayPayloadSerializer>(sp =>
             sp.GetRequiredService<JsonPayloadSerializer>()
         );
+        services.AddSingleton<IPersistencePayloadSerializer>(sp =>
+            sp.GetRequiredService<JsonPayloadSerializer>()
+        );
         services.AddSingleton<IRpcPayloadSerializer>(sp =>
             sp.GetRequiredService<JsonPayloadSerializer>()
         );

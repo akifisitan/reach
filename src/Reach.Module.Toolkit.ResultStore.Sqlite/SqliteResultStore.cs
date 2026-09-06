@@ -11,7 +11,7 @@ public sealed class SqliteResultStore<TResult> : IResultStore<TResult>, IDbIniti
 {
     private readonly DbConnectionFactory _dbConnectionFactory;
     private readonly ILogger<SqliteResultStore<TResult>> _logger;
-    private readonly IRelayPayloadSerializer _payloadSerializer;
+    private readonly IPersistencePayloadSerializer _payloadSerializer;
     private readonly string _tableName;
 
     private const string TableColumns =
@@ -23,7 +23,7 @@ public sealed class SqliteResultStore<TResult> : IResultStore<TResult>, IDbIniti
         DbConnectionFactory dbConnectionFactory,
         ILogger<SqliteResultStore<TResult>> logger,
         IOptions<SqliteResultStoreOptions> options,
-        IRelayPayloadSerializer payloadSerializer
+        IPersistencePayloadSerializer payloadSerializer
     )
     {
         _dbConnectionFactory = dbConnectionFactory;

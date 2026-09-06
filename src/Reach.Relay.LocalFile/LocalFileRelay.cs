@@ -10,6 +10,7 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
 
     private readonly LocalFileConfigurationStore _store;
     private readonly IRelayPayloadSerializer _payloadSerializer;
+    private readonly IRelayTextEncoding _textEncoding;
     private readonly ILogger<LocalFileRelay> _logger;
     private readonly IRelayCursorStorage _cursorStorage;
 
@@ -18,12 +19,14 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
     public LocalFileRelay(
         LocalFileConfigurationStore configurationStore,
         IRelayPayloadSerializer payloadSerializer,
+        IRelayTextEncoding textEncoding,
         ILogger<LocalFileRelay> logger,
         IRelayCursorStorage cursorStorage
     )
     {
         _store = configurationStore;
         _payloadSerializer = payloadSerializer;
+        _textEncoding = textEncoding;
         _logger = logger;
         _cursorStorage = cursorStorage;
     }
@@ -33,7 +36,7 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
         CancellationToken cancellationToken
     )
     {
-        var payload = _payloadSerializer.Serialize(value);
+        var payload = _textEncoding.Encode(_payloadSerializer.Serialize(value));
 
         await CreateLogEntry(payload, Options.LocalToRemoteFilePath, cancellationToken)
             .ConfigureAwait(false);
@@ -46,7 +49,7 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
         CancellationToken cancellationToken
     )
     {
-        var payload = _payloadSerializer.Serialize(value);
+        var payload = _textEncoding.Encode(_payloadSerializer.Serialize(value));
 
         await CreateLogEntry(payload, Options.RemoteToLocalFilePath, cancellationToken)
             .ConfigureAwait(false);
@@ -166,11 +169,9 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
 
                 try
                 {
-                    var base64Text = resultContent.Payload;
+                    var payload = _textEncoding.Decode(resultContent.Payload);
 
-                    var jsonText = base64Text.DecodeBase64();
-
-                    command = _payloadSerializer.Deserialize<TOut>(jsonText);
+                    command = _payloadSerializer.Deserialize<TOut>(payload);
                 }
                 catch (Exception ex)
                 {
@@ -261,17 +262,11 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
         CancellationToken cancellationToken
     )
     {
-        var base64Text = text.EncodeBase64();
-
         await File.AppendAllLinesAsync(
                 filePath,
                 [
                     JsonSerializer.Serialize(
-                        new Storage(
-                            Guid.CreateVersion7().ToString("N"),
-                            base64Text,
-                            DateTimeOffset.Now
-                        ),
+                        new Storage(Guid.CreateVersion7().ToString("N"), text, DateTimeOffset.Now),
                         LocalFileJsonSerializerContext.Default.Storage
                     ),
                 ],

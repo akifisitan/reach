@@ -19,6 +19,7 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
     private readonly IConfluenceHttpClientFactory _confluenceHttpClientFactory;
     private readonly ILogger<ConfluenceCommentRelay> _logger;
     private readonly IRelayPayloadSerializer _payloadSerializer;
+    private readonly IRelayTextEncoding _textEncoding;
     private readonly ConfluenceConfigurationStore _store;
     private readonly IRelayCursorStorage _cursorStorage;
 
@@ -28,6 +29,7 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
         IConfluenceHttpClientFactory confluenceHttpClientFactory,
         ILogger<ConfluenceCommentRelay> logger,
         IRelayPayloadSerializer payloadSerializer,
+        IRelayTextEncoding textEncoding,
         ConfluenceConfigurationStore configurationStore,
         IRelayCursorStorage cursorStorage
     )
@@ -35,6 +37,7 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
         _confluenceHttpClientFactory = confluenceHttpClientFactory;
         _logger = logger;
         _payloadSerializer = payloadSerializer;
+        _textEncoding = textEncoding;
         _store = configurationStore;
         _cursorStorage = cursorStorage;
     }
@@ -44,7 +47,7 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
         CancellationToken cancellationToken
     )
     {
-        var payload = _payloadSerializer.Serialize(value);
+        var payload = _textEncoding.Encode(_payloadSerializer.Serialize(value));
 
         _logger.ZLogTrace($"Sending payload from local to remote: {payload}");
 
@@ -59,7 +62,7 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
         CancellationToken cancellationToken
     )
     {
-        var payload = _payloadSerializer.Serialize(value);
+        var payload = _textEncoding.Encode(_payloadSerializer.Serialize(value));
 
         _logger.ZLogTrace($"Sending payload from remote to local: {payload}");
 
@@ -181,11 +184,11 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
 
                 try
                 {
-                    var base64Text = resultContent.Body.View.Value.GetHtmlInnerText();
+                    var text = resultContent.Body.View.Value.GetHtmlInnerText();
 
-                    var jsonText = base64Text.DecodeBase64();
+                    var payload = _textEncoding.Decode(text);
 
-                    command = _payloadSerializer.Deserialize<TOut>(jsonText);
+                    command = _payloadSerializer.Deserialize<TOut>(payload);
 
                     ArgumentNullException.ThrowIfNull(command);
                 }
@@ -238,16 +241,11 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
         CancellationToken cancellationToken
     )
     {
-        var base64Text = text.EncodeBase64();
-
         var request = new CreateContentRequest(
             Type: "comment",
             Container: new CreateContentRequestContainer(Id: pageId, Type: "page"),
             Body: new CreateContentRequestBody(
-                Storage: new CreateContentRequestBodyStorage(
-                    Value: base64Text,
-                    Representation: "storage"
-                )
+                Storage: new CreateContentRequestBodyStorage(Value: text, Representation: "storage")
             )
         );
 
@@ -353,14 +351,7 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
         query.Add("location", "footer");
         query.Add("expand", "history,body.view");
 
-        var uriBuilder = new UriBuilder(
-            $"{httpClient.BaseAddress}confluence/rest/api/content/{pageId}/child/comment"
-        )
-        {
-            Query = query.ToString(),
-        };
-
-        var uri = uriBuilder.Uri;
+        var uri = $"/confluence/rest/api/content/{pageId}/child/comment?{query}";
 
         using var responseMessage = await httpClient
             .GetAsync(uri, cancellationToken)

@@ -11,7 +11,7 @@ public sealed class SqliteCommandResultOutboxStore : ICommandResultOutboxStore
     private readonly DbConnectionFactory _dbConnectionFactory;
     private readonly IDurableQueue<RelayCommand> _commandQueue;
     private readonly ILogger<SqliteCommandResultOutboxStore> _logger;
-    private readonly IRelayPayloadSerializer _payloadSerializer;
+    private readonly IPersistencePayloadSerializer _payloadSerializer;
     private readonly CommandResultOutboxOptions _options;
     private readonly SqliteCommandResultOutboxOptions _sqliteOptions;
 
@@ -19,7 +19,7 @@ public sealed class SqliteCommandResultOutboxStore : ICommandResultOutboxStore
         DbConnectionFactory dbConnectionFactory,
         IDurableQueue<RelayCommand> commandQueue,
         ILogger<SqliteCommandResultOutboxStore> logger,
-        IRelayPayloadSerializer payloadSerializer,
+        IPersistencePayloadSerializer payloadSerializer,
         IOptions<CommandResultOutboxOptions> options,
         IOptions<SqliteCommandResultOutboxOptions> sqliteOptions
     )

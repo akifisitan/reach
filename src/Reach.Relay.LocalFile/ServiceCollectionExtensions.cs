@@ -17,6 +17,10 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<LocalFileRelay>();
         services.AddSingleton<ILocalRelay>(sp => sp.GetRequiredService<LocalFileRelay>());
         services.AddSingleton<IRemoteRelay>(sp => sp.GetRequiredService<LocalFileRelay>());
+        services.AddSingleton<IRelayTextEncoding>(
+            new BrotliCompressedRelayTextEncoding(new Base64RelayTextEncoding())
+        );
+        //services.AddSingleton<IRelayTextEncoding>(new Utf8RelayTextEncoding());
 
         services.AddSingleton<IRelaySetup, LocalFileRelaySetup>();
         services.AddSingleton<IStartupCheck, LocalFileStartupCheck>();

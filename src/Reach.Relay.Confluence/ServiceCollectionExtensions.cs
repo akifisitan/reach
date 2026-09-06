@@ -20,6 +20,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ILocalRelay>(sp => sp.GetRequiredService<ConfluenceCommentRelay>());
         services.AddSingleton<IRemoteRelay>(sp => sp.GetRequiredService<ConfluenceCommentRelay>());
         services.AddSingleton<IConfluenceHttpClientFactory, ConfluenceHttpClientFactory>();
+        services.AddSingleton<IRelayTextEncoding>(
+            new BrotliCompressedRelayTextEncoding(new Base64RelayTextEncoding())
+        );
 
         services.AddSingleton<ICredentialFileStore>(
             new DataProtectionCredentialFileStore(
