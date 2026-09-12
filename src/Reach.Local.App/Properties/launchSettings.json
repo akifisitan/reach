@@ -9,9 +9,9 @@
       "commandName": "Project",
       "commandLineArgs": "echo -m \"hello world\""
     },
-    "Reach.Local.App Search": {
+    "Reach.Local.App Search Start": {
       "commandName": "Project",
-      "commandLineArgs": "search --help"
+      "commandLineArgs": "search start -s myserver -q hello"
     },
     "Reach.Local Setup Relay": {
       "commandName": "Project",

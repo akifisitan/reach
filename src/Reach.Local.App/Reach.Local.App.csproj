@@ -2,14 +2,30 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <AssemblyName>reach</AssemblyName>
+    <Configurations>Debug;DebugServer;DebugCli;Release</Configurations>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <InvariantGlobalization>true</InvariantGlobalization>
     <PublishAot>true</PublishAot>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'DebugServer' Or '$(Configuration)' == 'DebugCli'">
+    <DefineConstants>$(DefineConstants);DEBUG</DefineConstants>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>portable</DebugType>
+    <Optimize>false</Optimize>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Reach.Local.Cli\Reach.Local.Cli.csproj" />
     <ProjectReference Include="..\Reach.Local.Server\Reach.Local.Server.csproj" />
   </ItemGroup>
+  <Target
+    Name="UseDebugProjectReferences"
+    AfterTargets="IncludeTransitiveProjectReferences"
+    Condition="'$(Configuration)' == 'DebugServer' Or '$(Configuration)' == 'DebugCli'"
+  >
+    <ItemGroup>
+      <ProjectReference Update="@(ProjectReference)" AdditionalProperties="Configuration=Debug" />
+    </ItemGroup>
+  </Target>
   <ItemGroup>
     <Content Include="config.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

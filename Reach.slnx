@@ -1,4 +1,14 @@
 <Solution>
+  <Configurations>
+    <BuildType Name="Debug" />
+    <BuildType Name="DebugServer" />
+    <BuildType Name="DebugCli" />
+    <BuildType Name="Release" />
+    <ProjectType>
+      <BuildType Solution="DebugServer|*" Project="Debug" />
+      <BuildType Solution="DebugCli|*" Project="Debug" />
+    </ProjectType>
+  </Configurations>
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
     <File Path="Directory.Build.props" />
@@ -12,7 +22,10 @@
   <Project Path="src/Reach.Infra.DurableQueue/Reach.Infra.DurableQueue.csproj" />
   <Project Path="src/Reach.Infra.Persistence/Reach.Infra.Persistence.csproj" />
   <Project Path="src/Reach.Local.Cli/Reach.Local.Cli.csproj" />
-  <Project Path="src/Reach.Local.App/Reach.Local.App.csproj" />
+  <Project Path="src/Reach.Local.App/Reach.Local.App.csproj">
+    <BuildType Solution="DebugServer|*" Project="DebugServer" />
+    <BuildType Solution="DebugCli|*" Project="DebugCli" />
+  </Project>
   <Project Path="src/Reach.Local.Server/Reach.Local.Server.csproj" />
   <Project Path="src/Reach.Local.Contracts/Reach.Local.Contracts.csproj" />
   <Project Path="src/Reach.Module.Abstractions/Reach.Module.Abstractions.csproj" />
