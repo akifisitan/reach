@@ -8,7 +8,7 @@ using Reach.Module;
 using Reach.Module.Example.Echo;
 using Reach.Module.Example.LogSearch;
 using Reach.Relay;
-using Reach.Relay.Confluence;
+using Reach.Relay.LocalFile;
 using ZLogger.Formatters;
 
 namespace Reach.Hosting;
@@ -47,7 +47,8 @@ public static class ServiceCollectionExtensions
             sp.GetRequiredService<JsonPayloadSerializer>()
         );
 
-        services.AddConfluenceRelay(ReachAppPaths.SharedPath);
+        //services.AddConfluenceRelay(ReachAppPaths.SharedPath);
+        services.AddLocalFileRelay(ReachAppPaths.SharedPath);
 
         services.AddPersistence();
 

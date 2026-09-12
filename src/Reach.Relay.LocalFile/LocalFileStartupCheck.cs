@@ -44,16 +44,12 @@ public sealed class LocalFileStartupCheck : IStartupCheck
         }
 
         _logger.ZLogInformation($"Local-file relay configuration verified");
+
         return Task.CompletedTask;
     }
 
     private static void CheckFile(string filePath)
     {
-        if (!File.Exists(filePath))
-        {
-            throw new FileNotFoundException("Relay file not found.", filePath);
-        }
-
         using (File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)) { }
         using (File.Open(filePath, FileMode.Append, FileAccess.Write, FileShare.Read)) { }
     }

@@ -37,7 +37,7 @@ public sealed class LocalFileConfigurationStore
         {
             var options = JsonSerializer.Deserialize(
                 File.ReadAllText(FilePath),
-                LocalFileJsonSerializerContext.Default.LocalFileRelayOptions
+                LocalFileOptionsJsonSerializerContext.Default.LocalFileRelayOptions
             );
 
             if (options is null)
@@ -93,7 +93,7 @@ public sealed class LocalFileConfigurationStore
 
         return JsonSerializer.Serialize(
             options,
-            LocalFileJsonSerializerContext.Default.LocalFileRelayOptions
+            LocalFileOptionsJsonSerializerContext.Default.LocalFileRelayOptions
         );
     }
 

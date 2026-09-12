@@ -28,6 +28,12 @@ public sealed class LocalFileOptionsValidator : AbstractValidator<LocalFileRelay
         RuleFor(x => x.LocalToRemoteFilePath).NotEmpty();
         RuleFor(x => x.RemoteToLocalFilePath).NotEmpty();
         RuleFor(x => x.PollDelayMs).InclusiveBetween(500, 60_000);
+        RuleFor(x => x.LocalToRemoteFilePath)
+            .Must(x => !string.IsNullOrWhiteSpace(Path.GetExtension(x)))
+            .WithMessage("Relay file path must have an extension.");
+        RuleFor(x => x.RemoteToLocalFilePath)
+            .Must(x => !string.IsNullOrWhiteSpace(Path.GetExtension(x)))
+            .WithMessage("Relay file path must have an extension.");
         RuleFor(x => x)
             .Must(x =>
                 !string.Equals(

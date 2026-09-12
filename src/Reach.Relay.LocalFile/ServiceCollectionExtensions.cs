@@ -21,6 +21,7 @@ public static class ServiceCollectionExtensions
             new BrotliCompressedRelayTextEncoding(new Base64RelayTextEncoding())
         );
         //services.AddSingleton<IRelayTextEncoding>(new Utf8RelayTextEncoding());
+        //services.AddSingleton<IRelayTextEncoding>(new Base64RelayTextEncoding());
 
         services.AddSingleton<IRelaySetup, LocalFileRelaySetup>();
         services.AddSingleton<IStartupCheck, LocalFileStartupCheck>();

@@ -10,7 +10,7 @@
     "DebugMode": false
   },
   "ReachLoggingOptions": {
-    "OpenLogFileOnStart": true
+    "OpenLogFileOnStart": false
   },
   "ServerExecutorOptions": {
     "QueueProcessorCount": 1,

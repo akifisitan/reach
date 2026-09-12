@@ -19,8 +19,8 @@
     <ProjectReference Include="..\Reach.Infra.DurableQueue\Reach.Infra.DurableQueue.csproj" />
     <ProjectReference Include="..\Reach.Relay.Abstractions\Reach.Relay.Abstractions.csproj" />
     <!-- Hosting contains 1 relay + n modules -->
-    <ProjectReference Include="..\Reach.Relay.Confluence\Reach.Relay.Confluence.csproj" />
-    <!--<ProjectReference Include="..\Reach.Relay.LocalFile\Reach.Relay.LocalFile.csproj" />-->
+    <!--<ProjectReference Include="..\Reach.Relay.Confluence\Reach.Relay.Confluence.csproj" />-->
+    <ProjectReference Include="..\Reach.Relay.LocalFile\Reach.Relay.LocalFile.csproj" />
     <!-- Modules -->
     <ProjectReference Include="..\Reach.Module.Example.Echo\Reach.Module.Example.Echo.csproj" />
     <ProjectReference Include="..\Reach.Module.Example.LogSearch\Reach.Module.Example.LogSearch.csproj" />

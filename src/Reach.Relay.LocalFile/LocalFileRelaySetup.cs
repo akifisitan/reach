@@ -45,7 +45,6 @@ public sealed class LocalFileRelaySetup : IRelaySetup
                 options.RemoteToLocalFilePath,
                 options.LocalToRemoteFilePath
             ),
-            PollDelayMs = PromptPollDelay(options.PollDelayMs),
         };
 
         if (HasContent(options.LocalToRemoteFilePath) || HasContent(options.RemoteToLocalFilePath))
@@ -131,24 +130,6 @@ public sealed class LocalFileRelaySetup : IRelaySetup
             }
 
             _consoleWriter.WriteLine("The two relay file paths must be different.");
-        }
-    }
-
-    private int PromptPollDelay(int currentValue)
-    {
-        while (true)
-        {
-            var value = _consolePrompter.PromptText(
-                "Polling delay in milliseconds",
-                currentValue.ToString()
-            );
-
-            if (int.TryParse(value, out var pollDelay) && pollDelay is >= 500 and <= 60_000)
-            {
-                return pollDelay;
-            }
-
-            _consoleWriter.WriteLine("Enter a value from 500 through 60000.");
         }
     }
 

@@ -12,6 +12,10 @@
     "Reach.Local.App Search": {
       "commandName": "Project",
       "commandLineArgs": "search --help"
+    },
+    "Reach.Local Setup Relay": {
+      "commandName": "Project",
+      "commandLineArgs": "setup relay"
     }
   }
 }
