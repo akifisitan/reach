@@ -39,14 +39,12 @@ internal sealed class LogSearchStartHandler
         return command;
     }
 
-    protected override async Task HandleSubmissionFailure(
+    protected override Task HandleSubmissionFailure(
         SearchFileCommand command,
         Exception exception,
         CancellationToken cancellationToken
     )
     {
-        await _resultStore
-            .TrySetAsFailed(command.Id, exception.Message, cancellationToken)
-            .ConfigureAwait(false);
+        return _resultStore.TrySetAsFailed(command.Id, exception.Message, cancellationToken);
     }
 }

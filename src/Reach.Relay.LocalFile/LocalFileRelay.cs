@@ -256,22 +256,21 @@ public sealed class LocalFileRelay : ILocalRelay, IRemoteRelay
         return result;
     }
 
-    private static async Task CreateLogEntry(
+    private static Task CreateLogEntry(
         string text,
         string filePath,
         CancellationToken cancellationToken
     )
     {
-        await File.AppendAllLinesAsync(
-                filePath,
-                [
-                    JsonSerializer.Serialize(
-                        new Storage(Guid.CreateVersion7().ToString("N"), text, DateTimeOffset.Now),
-                        LocalFileJsonSerializerContext.Default.Storage
-                    ),
-                ],
-                cancellationToken
-            )
-            .ConfigureAwait(false);
+        return File.AppendAllLinesAsync(
+            filePath,
+            [
+                JsonSerializer.Serialize(
+                    new Storage(Guid.CreateVersion7().ToString("N"), text, DateTimeOffset.Now),
+                    LocalFileJsonSerializerContext.Default.Storage
+                ),
+            ],
+            cancellationToken
+        );
     }
 }

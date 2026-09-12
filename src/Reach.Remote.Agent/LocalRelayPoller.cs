@@ -82,10 +82,7 @@ internal sealed class LocalRelayPoller
         try
         {
             await _retryPipeline.ExecuteAsync(
-                async ct =>
-                {
-                    await _commandQueue.Enqueue(command, ct);
-                },
+                ct => new ValueTask(_commandQueue.Enqueue(command, ct)),
                 cancellationToken
             );
 

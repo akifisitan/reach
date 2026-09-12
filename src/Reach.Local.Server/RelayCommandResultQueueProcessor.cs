@@ -90,7 +90,7 @@ internal sealed class RelayCommandResultQueueProcessor
         {
             await _chaosPipeline
                 .ExecuteAsync(
-                    async ct => await _handlerDispatcher.Handle(value, ct).ConfigureAwait(false),
+                    ct => new ValueTask<Unit>(_handlerDispatcher.Handle(value, ct)),
                     cancellationToken
                 )
                 .ConfigureAwait(false);

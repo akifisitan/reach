@@ -84,7 +84,7 @@ internal sealed class CommandResultPoster
             _logger.ZLogDebug($"Posting result {item.CommandId} to local");
 
             await _chaosPipeline.ExecuteAsync(
-                async ct => await _relay.PostToLocal(item.Result, ct),
+                ct => new ValueTask<PostToLocalResult>(_relay.PostToLocal(item.Result, ct)),
                 cancellationToken
             );
 

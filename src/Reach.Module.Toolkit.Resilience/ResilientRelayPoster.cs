@@ -20,16 +20,16 @@ public sealed class ResilientRelayPoster
         _chaosPipeline = resiliencePipelineProvider.GetDefaultRetryPipeline();
     }
 
-    public async Task<PostToRemoteResult> PostToRemote(
+    public Task<PostToRemoteResult> PostToRemote(
         RelayCommand command,
         CancellationToken cancellationToken
     )
     {
-        return await _retryPipeline
+        return _retryPipeline
             .ExecuteAsync(
-                async ct => await _localRelay.PostToRemote(command, ct).ConfigureAwait(false),
+                ct => new ValueTask<PostToRemoteResult>(_localRelay.PostToRemote(command, ct)),
                 cancellationToken
             )
-            .ConfigureAwait(false);
+            .AsTask();
     }
 }

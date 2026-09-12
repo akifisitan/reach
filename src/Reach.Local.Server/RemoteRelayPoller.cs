@@ -83,13 +83,7 @@ internal sealed class RemoteRelayPoller
         try
         {
             await _retryPipeline
-                .ExecuteAsync(
-                    async ct =>
-                    {
-                        await _queue.Enqueue(result, ct).ConfigureAwait(false);
-                    },
-                    cancellationToken
-                )
+                .ExecuteAsync(ct => new ValueTask(_queue.Enqueue(result, ct)), cancellationToken)
                 .ConfigureAwait(false);
 
             _logger.ZLogInformation($"Queued result {result.CommandId} from remote relay");

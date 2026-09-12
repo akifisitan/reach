@@ -51,16 +51,13 @@ internal sealed class RemoteCommandCoordinator
         {
             await _retryPipeline
                 .ExecuteAsync(
-                    async retryToken =>
-                        await _relayPostChaosPipeline
-                            .ExecuteAsync(
-                                async relayToken =>
-                                    await _relay
-                                        .PostToRemote(request.Command, relayToken)
-                                        .ConfigureAwait(false),
-                                retryToken
-                            )
-                            .ConfigureAwait(false),
+                    retryToken =>
+                        _relayPostChaosPipeline.ExecuteAsync(
+                            relayToken => new ValueTask<PostToRemoteResult>(
+                                _relay.PostToRemote(request.Command, relayToken)
+                            ),
+                            retryToken
+                        ),
                     cancellationToken
                 )
                 .ConfigureAwait(false);

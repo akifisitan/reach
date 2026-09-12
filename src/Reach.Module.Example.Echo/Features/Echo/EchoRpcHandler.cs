@@ -32,14 +32,12 @@ internal sealed class EchoRpcHandler : RemoteCommandRpcHandler<EchoPayload, Echo
         return command;
     }
 
-    protected override async Task HandleSubmissionFailure(
+    protected override Task HandleSubmissionFailure(
         EchoCommand command,
         Exception exception,
         CancellationToken cancellationToken
     )
     {
-        await _resultStore
-            .TrySetAsFailed(command.Id, exception.Message, cancellationToken)
-            .ConfigureAwait(false);
+        return _resultStore.TrySetAsFailed(command.Id, exception.Message, cancellationToken);
     }
 }

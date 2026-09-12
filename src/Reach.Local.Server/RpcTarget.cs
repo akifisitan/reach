@@ -31,7 +31,7 @@ internal sealed class RpcTarget
 
         var result = await _chaosPipeline
             .ExecuteAsync(
-                async ct => await _handlerDispatcher.Handle(value, ct).ConfigureAwait(false),
+                ct => new ValueTask<RpcResult>(_handlerDispatcher.Handle(value, ct)),
                 cancellationToken
             )
             .ConfigureAwait(false);

@@ -185,29 +185,27 @@ internal sealed class DurableQueueRepository : IDurableQueueRepository
         await Complete(id, connection, transaction: null, cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task Complete(
+    public Task Complete(
         string id,
         DbConnection connection,
         DbTransaction? transaction,
         CancellationToken cancellationToken
     )
     {
-        await connection
-            .ExecuteAsync(
-                $"""
-                UPDATE {_tableName}
-                SET status = $Status, completion_time = $CompletionTime
-                WHERE id = $Id
-                """,
-                new
-                {
-                    Id = id,
-                    Status = QueueRecordStatus.Success,
-                    CompletionTime = DateTimeOffset.Now.ToIsoString(),
-                },
-                transaction: transaction
-            )
-            .ConfigureAwait(false);
+        return connection.ExecuteAsync(
+            $"""
+            UPDATE {_tableName}
+            SET status = $Status, completion_time = $CompletionTime
+            WHERE id = $Id
+            """,
+            new
+            {
+                Id = id,
+                Status = QueueRecordStatus.Success,
+                CompletionTime = DateTimeOffset.Now.ToIsoString(),
+            },
+            transaction: transaction
+        );
     }
 
     public async Task Fail(string id, CancellationToken cancellationToken)
