@@ -10,7 +10,6 @@
     <WarningsNotAsErrors>IL2104;</WarningsNotAsErrors>
     <NoWarn>NU1507;CS1591;</NoWarn>
     <Version>0.0.1</Version>
-    <LibVersion>0.0.1</LibVersion>
     <IsAotCompatible>true</IsAotCompatible>
     <InterceptorsNamespaces>$(InterceptorsNamespaces);Dapper.AOT</InterceptorsNamespaces>
   </PropertyGroup>
