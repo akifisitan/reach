@@ -1,7 +1,7 @@
 using System.IO.Pipes;
+using Nerdbank.JsonRpc;
 using Reach.Local.Contracts;
 using Reach.Module;
-using StreamJsonRpc;
 
 namespace Reach.Local.Cli;
 
@@ -30,11 +30,7 @@ internal sealed class LocalPipeRpcClient : IRpcClient
         var serializedPayload = _payloadSerializer.Serialize((RpcPayload)payload);
 
         var result = await connection
-            .Rpc.InvokeWithCancellationAsync<string>(
-                LocalRpcShared.MainMethodName,
-                [serializedPayload],
-                cancellationToken
-            )
+            .Client.Invoke(serializedPayload, cancellationToken)
             .ConfigureAwait(false);
 
         return (TOut)_payloadSerializer.Deserialize<RpcResult>(result);
@@ -49,13 +45,7 @@ internal sealed class LocalPipeRpcClient : IRpcClient
             .ConfigureAwait(false);
         await using var connectionScope = connection.ConfigureAwait(false);
 
-        var result = await connection
-            .Rpc.InvokeWithCancellationAsync<bool>(
-                LocalRpcShared.HealthCheckMethodName,
-                [],
-                cancellationToken
-            )
-            .ConfigureAwait(false);
+        var result = await connection.Client.HealthCheck(cancellationToken).ConfigureAwait(false);
 
         return result;
     }
@@ -78,11 +68,9 @@ internal sealed class LocalPipeRpcClient : IRpcClient
 
         _logger.ZLogInformation($"Connected to {LocalRpcShared.PipeName}");
 
-        var rpc = new JsonRpc(
-            new LengthHeaderMessageHandler(pipe, pipe, LocalRpcShared.CreateFormatter())
-        );
+        var rpc = LocalRpcShared.CreateConnection(pipe);
 
-        rpc.StartListening();
+        rpc.Start();
 
         _logger.ZLogInformation($"Started listening to rpc");
 
@@ -91,19 +79,21 @@ internal sealed class LocalPipeRpcClient : IRpcClient
 
     private sealed class RpcConnection : IAsyncDisposable
     {
-        public JsonRpc Rpc { get; }
+        public ILocalRpc Client { get; }
+        private readonly JsonRpc _rpc;
         private readonly NamedPipeClientStream _stream;
 
         public RpcConnection(JsonRpc jsonRpc, NamedPipeClientStream stream)
         {
-            Rpc = jsonRpc;
+            _rpc = jsonRpc;
+            Client = jsonRpc.Attach<ILocalRpc>();
             _stream = stream;
         }
 
         public async ValueTask DisposeAsync()
         {
+            _rpc.Dispose();
             await _stream.DisposeAsync().ConfigureAwait(false);
-            Rpc.Dispose();
         }
     }
 }

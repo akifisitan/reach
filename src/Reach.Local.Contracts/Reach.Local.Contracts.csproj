@@ -3,6 +3,6 @@
     <OutputType>Library</OutputType>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="StreamJsonRpc" />
+    <PackageReference Include="Nerdbank.JsonRpc" />
   </ItemGroup>
 </Project>

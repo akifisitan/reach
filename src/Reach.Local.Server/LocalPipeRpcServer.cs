@@ -1,6 +1,5 @@
 using System.IO.Pipes;
 using Reach.Local.Contracts;
-using StreamJsonRpc;
 
 namespace Reach.Local.Server;
 
@@ -57,14 +56,11 @@ internal sealed class LocalPipeRpcServer
     {
         await using var _ = pipe.ConfigureAwait(false);
 
-        using var rpc = new JsonRpc(
-            new LengthHeaderMessageHandler(pipe, pipe, LocalRpcShared.CreateFormatter())
-        );
+        using var rpc = LocalRpcShared.CreateConnection(pipe);
 
-        rpc.AddLocalRpcMethod(LocalRpcShared.MainMethodName, _rpcTarget.Invoke);
-        rpc.AddLocalRpcMethod(LocalRpcShared.HealthCheckMethodName, _rpcTarget.HealthCheck);
+        rpc.AddRpcTarget<ILocalRpc>(_rpcTarget);
 
-        rpc.StartListening();
+        rpc.Start();
 
         _logger.ZLogDebug($"Connected to client");
 

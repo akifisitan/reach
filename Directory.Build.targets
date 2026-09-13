@@ -1,0 +1,12 @@
+<Project>
+  <!-- Nerdbank.Json 0.1.1066-alpha's analyzer requires Roslyn 5.9. Reach uses
+       MessagePack, so exclude only this JSON analyzer until it supports our SDK. -->
+  <Target Name="ExcludeIncompatibleJsonAnalyzer" BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <Analyzer
+        Remove="@(Analyzer)"
+        Condition="'%(Analyzer.Filename)' == 'Nerdbank.Json.Analyzers'"
+      />
+    </ItemGroup>
+  </Target>
+</Project>

@@ -1,5 +1,6 @@
+using Nerdbank.JsonRpc;
+using Nerdbank.Streams;
 using PolyType;
-using StreamJsonRpc;
 
 namespace Reach.Local.Contracts;
 
@@ -10,9 +11,17 @@ public sealed class LocalRpcShared
     public const string MainMethodName = "main";
     public const string HealthCheckMethodName = "hc";
 
-    public static IJsonRpcMessageFormatter CreateFormatter() =>
-        new NerdbankMessagePackFormatter { TypeShapeProvider = Witness.GeneratedTypeShapeProvider };
+    public static JsonRpc CreateConnection(Stream stream) =>
+        new(new JsonRpcMessagePackChannel(stream.UsePipe()));
 }
 
-[GenerateShapeFor<string>]
-internal sealed partial class Witness;
+[GenerateJsonRpcProxy]
+[GenerateShape(IncludeMethods = MethodShapeFlags.PublicInstance)]
+public partial interface ILocalRpc
+{
+    [MethodShape(Name = LocalRpcShared.MainMethodName)]
+    Task<string> Invoke(string payload, CancellationToken cancellationToken);
+
+    [MethodShape(Name = LocalRpcShared.HealthCheckMethodName)]
+    Task<bool> HealthCheck(CancellationToken cancellationToken);
+}

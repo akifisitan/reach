@@ -18,6 +18,12 @@ The `Reach.Local.App` project publishes the `reach` executable. Run `reach serve
 foreground process to host the local server; other commands connect to that process over the
 local RPC pipe.
 
+Local RPC uses Nerdbank.JsonRpc with a generated `ILocalRpc` client proxy and
+length-prefixed MessagePack over named pipes. The dependency is currently pinned to
+the prerelease `0.2.1-alpha` package. Its transitive Nerdbank.Json analyzer requires
+Roslyn 5.9, newer than the .NET 10 SDK compiler. `Directory.Build.targets` excludes
+that JSON-specific analyzer; the RPC and PolyType source generators remain enabled.
+
 ## Publishing
 
 Publish all deployable packages as single-file trimmed executables:

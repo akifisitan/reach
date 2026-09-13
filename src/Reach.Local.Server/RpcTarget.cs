@@ -1,11 +1,12 @@
 using Polly;
 using Polly.Registry;
 using Reach.Hosting;
+using Reach.Local.Contracts;
 using Reach.Module;
 
 namespace Reach.Local.Server;
 
-internal sealed class RpcTarget
+internal sealed class RpcTarget : ILocalRpc
 {
     private readonly IHandlerDispatcher<RpcPayload, RpcResult> _handlerDispatcher;
     private readonly IRpcPayloadSerializer _payloadSerializer;
@@ -46,5 +47,5 @@ internal sealed class RpcTarget
         return _payloadSerializer.Serialize(result);
     }
 
-    public bool HealthCheck() => true;
+    public Task<bool> HealthCheck(CancellationToken cancellationToken) => Task.FromResult(true);
 }
