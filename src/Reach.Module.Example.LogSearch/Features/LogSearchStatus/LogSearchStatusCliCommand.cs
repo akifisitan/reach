@@ -13,11 +13,11 @@ internal sealed class LogSearchStatusCliCommand : IChildCliCommand
         _handlerDispatcher = handlerDispatcher;
     }
 
-    public void AddTo(Command rootSearchCommand)
+    public void AddTo(Command command)
     {
         var searchStatusCommand = new Command("status", "Search status");
 
-        rootSearchCommand.Subcommands.Add(searchStatusCommand);
+        command.Subcommands.Add(searchStatusCommand);
 
         var correlationIdOption = new Option<string>("--correlation-id")
         {

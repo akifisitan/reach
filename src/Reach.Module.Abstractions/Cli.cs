@@ -14,7 +14,7 @@ public interface IRootCliCommand
 
 public interface IChildCliCommand
 {
-    void AddTo(Command parent);
+    void AddTo(Command command);
 }
 
 public abstract record CliCommandPayload;

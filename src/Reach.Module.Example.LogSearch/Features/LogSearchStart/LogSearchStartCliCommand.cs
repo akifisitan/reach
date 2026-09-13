@@ -13,11 +13,11 @@ internal sealed class LogSearchStartCliCommand : IChildCliCommand
         _handlerDispatcher = handlerDispatcher;
     }
 
-    public void AddTo(Command rootSearchCommand)
+    public void AddTo(Command command)
     {
         var searchStartCommand = new Command("start", "Search in log");
 
-        rootSearchCommand.Subcommands.Add(searchStartCommand);
+        command.Subcommands.Add(searchStartCommand);
 
         var serverNameOption = new Option<string>("--server-name", "-s")
         {
