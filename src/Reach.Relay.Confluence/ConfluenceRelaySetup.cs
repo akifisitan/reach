@@ -106,11 +106,11 @@ public sealed class ConfluenceRelaySetup : IRelaySetup
     )
     {
         using var httpClient = _httpClientFactory.CreateClient(
-            new ConfluencePersonalAccessTokenCredential(personalAccessToken)
+            new ConfluencePersonalAccessTokenCredential(personalAccessToken),
+            options.BaseUrl
         );
 
         httpClient.Timeout = TimeSpan.FromSeconds(5);
-        httpClient.BaseAddress = new Uri(options.BaseUrl);
 
         try
         {

@@ -7,6 +7,7 @@ public interface IConfluenceHttpClientFactory
 {
     HttpClient CreateClient();
     HttpClient CreateClient(ConfluenceUserCredential credential);
+    HttpClient CreateClient(ConfluenceUserCredential credential, string baseUrl);
 }
 
 public sealed class ConfluenceHttpClientFactory : IConfluenceHttpClientFactory
@@ -40,7 +41,7 @@ public sealed class ConfluenceHttpClientFactory : IConfluenceHttpClientFactory
     public HttpClient CreateClient(ConfluenceUserCredential credential) =>
         CreateClient(credential, Options.BaseUrl);
 
-    private HttpClient CreateClient(ConfluenceUserCredential credential, string baseUrl)
+    public HttpClient CreateClient(ConfluenceUserCredential credential, string baseUrl)
     {
         var httpClient = new HttpClient(httpHandler, disposeHandler: false)
         {
