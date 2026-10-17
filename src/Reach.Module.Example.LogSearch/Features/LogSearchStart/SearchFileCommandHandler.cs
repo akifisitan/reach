@@ -3,11 +3,11 @@ namespace Reach.Module.Example.LogSearch.Features.LogSearchStart;
 internal sealed class SearchFileCommandHandler
     : RelayCommandHandler<SearchFileCommand, SearchFileCommandResult>
 {
-    private readonly FileSearcher _fileSearcher;
+    private readonly IFileSearcher _fileSearcher;
     private readonly ILogger<SearchFileCommandHandler> _logger;
 
     public SearchFileCommandHandler(
-        FileSearcher fileSearcher,
+        IFileSearcher fileSearcher,
         ILogger<SearchFileCommandHandler> logger
     )
     {

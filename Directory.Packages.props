@@ -5,6 +5,7 @@
     <CentralPackageVersionOverrideEnabled>false</CentralPackageVersionOverrideEnabled>
   </PropertyGroup>
   <ItemGroup>
+    <PackageVersion Include="TUnit" Version="1.75.0" />
     <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.13" />
     <PackageVersion
       Include="Microsoft.Extensions.Options.ConfigurationExtensions"

@@ -7,6 +7,7 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddExampleEchoModule(this IServiceCollection services)
     {
+        services.AddSingleton<IEchoFormatter, EchoFormatter>();
         services.AddMemoryResultStore<EchoCommandResult>();
 
         services.AddEchoFeature();

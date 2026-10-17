@@ -8,7 +8,7 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddExampleLogSearchModule(this IServiceCollection services)
     {
-        services.AddSingleton<FileSearcher>();
+        services.AddSingleton<IFileSearcher, FileSearcher>();
         services.AddSqliteResultStore<SearchFileCommandResult>(
             "log_search_results",
             TimeSpan.FromHours(24)

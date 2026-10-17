@@ -40,4 +40,8 @@
   <Project Path="src/Reach.Relay.Confluence/Reach.Relay.Confluence.csproj" />
   <Project Path="src/Reach.Relay.LocalFile/Reach.Relay.LocalFile.csproj" />
   <Project Path="src/Reach.Remote.Agent/Reach.Remote.Agent.csproj" />
+  <Folder Name="/tests/">
+    <Project Path="tests/Reach.Module.Example.Echo.Tests/Reach.Module.Example.Echo.Tests.csproj" />
+    <Project Path="tests/Reach.Module.Example.LogSearch.Tests/Reach.Module.Example.LogSearch.Tests.csproj" />
+  </Folder>
 </Solution>

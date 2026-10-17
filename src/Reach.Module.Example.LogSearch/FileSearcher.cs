@@ -1,6 +1,11 @@
 namespace Reach.Module.Example.LogSearch;
 
-internal sealed class FileSearcher
+internal interface IFileSearcher
+{
+    Task<SearchFileResult> Search(string query, CancellationToken cancellationToken);
+}
+
+internal sealed class FileSearcher : IFileSearcher
 {
     private readonly ILogger<FileSearcher> _logger;
 

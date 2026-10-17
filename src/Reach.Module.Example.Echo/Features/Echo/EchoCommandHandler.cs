@@ -3,10 +3,12 @@ namespace Reach.Module.Example.Echo.Features.Echo;
 internal sealed class EchoCommandHandler : RelayCommandHandler<EchoCommand, EchoCommandResult>
 {
     private readonly ILogger<EchoCommandHandler> _logger;
+    private readonly IEchoFormatter _echoFormatter;
 
-    public EchoCommandHandler(ILogger<EchoCommandHandler> logger)
+    public EchoCommandHandler(ILogger<EchoCommandHandler> logger, IEchoFormatter echoFormatter)
     {
         _logger = logger;
+        _echoFormatter = echoFormatter;
     }
 
     protected override async Task<EchoCommandResult> Handle(
@@ -18,6 +20,6 @@ internal sealed class EchoCommandHandler : RelayCommandHandler<EchoCommand, Echo
 
         await Task.Delay(1500, cancellationToken).ConfigureAwait(false);
 
-        return new EchoCommandResult(command.Id, $"echo: {command.Message}");
+        return new EchoCommandResult(command.Id, _echoFormatter.Format(command.Message));
     }
 }
