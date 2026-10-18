@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Reach.Module.SoapSearch.Tests" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+    <ProjectReference Include="../Reach.Module.Abstractions/Reach.Module.Abstractions.csproj" />
+    <ProjectReference Include="../Reach.Module.Toolkit.ResultStore.Sqlite/Reach.Module.Toolkit.ResultStore.Sqlite.csproj" />
+  </ItemGroup>
+</Project>

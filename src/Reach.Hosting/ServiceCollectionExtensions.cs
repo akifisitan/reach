@@ -7,6 +7,7 @@ using Reach.Infra.Persistence;
 using Reach.Module;
 using Reach.Module.Example.Echo;
 using Reach.Module.Example.LogSearch;
+using Reach.Module.SoapSearch;
 using Reach.Relay;
 using Reach.Relay.LocalFile;
 using ZLogger.Formatters;
@@ -54,6 +55,7 @@ public static class ServiceCollectionExtensions
 
         services.AddExampleLogSearchModule();
         services.AddExampleEchoModule();
+        services.AddSoapSearchModule(configuration, basePath);
 
         return services;
     }

@@ -31,6 +31,7 @@
   <Project Path="src/Reach.Module.Abstractions/Reach.Module.Abstractions.csproj" />
   <Project Path="src/Reach.Module.Example.Echo/Reach.Module.Example.Echo.csproj" />
   <Project Path="src/Reach.Module.Example.LogSearch/Reach.Module.Example.LogSearch.csproj" />
+  <Project Path="src/Reach.Module.SoapSearch/Reach.Module.SoapSearch.csproj" />
   <Project Path="src/Reach.Module.Toolkit.ResultStore.Abstractions/Reach.Module.Toolkit.ResultStore.Abstractions.csproj" />
   <Project Path="src/Reach.Module.Toolkit.ResultStore.Memory/Reach.Module.Toolkit.ResultStore.Memory.csproj" />
   <Project Path="src/Reach.Module.Toolkit.ResultStore.Sqlite/Reach.Module.Toolkit.ResultStore.Sqlite.csproj" />
@@ -41,6 +42,7 @@
   <Project Path="src/Reach.Relay.LocalFile/Reach.Relay.LocalFile.csproj" />
   <Project Path="src/Reach.Remote.Agent/Reach.Remote.Agent.csproj" />
   <Folder Name="/tests/">
+    <Project Path="tests/Reach.Module.SoapSearch.Tests/Reach.Module.SoapSearch.Tests.csproj" />
     <Project Path="tests/Reach.Module.Example.Echo.Tests/Reach.Module.Example.Echo.Tests.csproj" />
     <Project Path="tests/Reach.Module.Example.LogSearch.Tests/Reach.Module.Example.LogSearch.Tests.csproj" />
   </Folder>
