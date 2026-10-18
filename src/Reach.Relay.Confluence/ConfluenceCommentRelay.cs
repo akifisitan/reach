@@ -1,6 +1,5 @@
 using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
-using System.Text.Json;
 using System.Web;
 
 namespace Reach.Relay.Confluence;
@@ -353,20 +352,13 @@ public sealed class ConfluenceCommentRelay : ILocalRelay, IRemoteRelay
 
         var uri = $"/confluence/rest/api/content/{pageId}/child/comment?{query}";
 
-        using var responseMessage = await httpClient
-            .GetAsync(uri, cancellationToken)
+        var response = await httpClient
+            .GetFromJsonAsync(
+                uri,
+                ConfluenceApiJsonSerializerContext.Default.GetCommentsResponse,
+                cancellationToken
+            )
             .ConfigureAwait(false);
-
-        var responseText = await responseMessage
-            .Content.ReadAsStringAsync(cancellationToken)
-            .ConfigureAwait(false);
-
-        responseMessage.EnsureSuccessStatusCode();
-
-        var response = JsonSerializer.Deserialize(
-            responseText,
-            ConfluenceApiJsonSerializerContext.Default.GetCommentsResponse
-        );
 
         ArgumentNullException.ThrowIfNull(response);
 

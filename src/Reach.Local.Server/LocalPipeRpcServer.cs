@@ -55,7 +55,7 @@ internal sealed class LocalPipeRpcServer
 
     private async Task HandleClient(NamedPipeServerStream pipe)
     {
-        await using var _ = pipe.ConfigureAwait(false);
+        await using var pipeScope = pipe.ConfigureAwait(false);
 
         using var rpc = new JsonRpc(
             new LengthHeaderMessageHandler(pipe, pipe, LocalRpcShared.CreateFormatter())
