@@ -189,7 +189,7 @@ internal sealed class SoapLogExtractorTests
         );
     }
 
-    private static async Task AssertPreserved(string original, string formatted)
+    internal static async Task AssertPreserved(string original, string formatted)
     {
         // XmlReader compares values, names, prefixes and attribute order. Literal
         // comparisons additionally catch quote, entity and empty-tag rewrites.

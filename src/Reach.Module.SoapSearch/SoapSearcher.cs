@@ -64,6 +64,7 @@ internal sealed class SoapSearcher
         var enumerator = new WinFileEnumerator(settings);
         foreach (var server in request.Servers)
         {
+            SoapSearchResult? match = null;
             var roots = new List<string>();
             if (request.Strategy != SoapSearchStrategy.Archive)
             {
@@ -113,12 +114,25 @@ internal sealed class SoapSearcher
                     try
                     {
                         var result = file.IsZip
-                            ? await SearchZip(file.FilePath, request, enumerator, cancellationToken)
+                            ? await SearchZip(
+                                    file.FilePath,
+                                    request,
+                                    enumerator,
+                                    match,
+                                    cancellationToken
+                                )
                                 .ConfigureAwait(false)
-                            : await SearchFile(file.FilePath, request.Siid, cancellationToken)
+                            : await ReadFile(
+                                    file.FilePath,
+                                    request.Siid,
+                                    match,
+                                    true,
+                                    cancellationToken
+                                )
                                 .ConfigureAwait(false);
                         errors.AddRange(result.Errors);
-                        if (result.Request is not null)
+                        match = result;
+                        if (result.Request is not null && result.Response is not null)
                         {
                             return result with { Errors = errors };
                         }
@@ -134,6 +148,17 @@ internal sealed class SoapSearcher
                     }
                 }
             }
+
+            if (match?.Request is not null)
+            {
+                errors.Add(
+                    new(
+                        server,
+                        "No complete service response in the candidate logs on this server."
+                    )
+                );
+                return match with { Outcome = SoapSearchOutcome.Partial, Errors = errors };
+            }
         }
 
         return new(
@@ -144,10 +169,18 @@ internal sealed class SoapSearcher
         );
     }
 
-    public async Task<SoapSearchResult> SearchFile(
+    public Task<SoapSearchResult> SearchFile(
         string path,
         string siid,
         CancellationToken cancellationToken = default
+    ) => ReadFile(path, siid, null, false, cancellationToken);
+
+    private async Task<SoapSearchResult> ReadFile(
+        string path,
+        string siid,
+        SoapSearchResult? previous,
+        bool includeUnpairedResponse,
+        CancellationToken cancellationToken
     )
     {
         var stream = new FileStream(
@@ -158,23 +191,27 @@ internal sealed class SoapSearcher
             4096,
             FileOptions.Asynchronous | FileOptions.SequentialScan
         );
-        await using var streamLifetime = stream.ConfigureAwait(false);
+        await using var streamScope = stream.ConfigureAwait(false);
         using var reader = new StreamReader(stream, leaveOpen: true);
-        return await _extractor
-            .Extract(reader, siid, path, cancellationToken)
-            .ConfigureAwait(false);
+        return includeUnpairedResponse
+            ? await _extractor
+                .ExtractCandidates(reader, siid, path, previous, cancellationToken)
+                .ConfigureAwait(false)
+            : await _extractor.Extract(reader, siid, path, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task<SoapSearchResult> SearchZip(
         string path,
         SoapSearchRequest request,
         WinFileEnumerator enumerator,
+        SoapSearchResult? previous,
         CancellationToken cancellationToken
     )
     {
         var archive = await ZipFile.OpenReadAsync(path, cancellationToken).ConfigureAwait(false);
-        await using var archiveLifetime = archive.ConfigureAwait(false);
+        await using var archiveScope = archive.ConfigureAwait(false);
         var errors = new List<SoapSearchError>();
+        var match = previous;
         foreach (
             var entry in enumerator.GetZipEntries(
                 archive,
@@ -188,13 +225,14 @@ internal sealed class SoapSearcher
             try
             {
                 var stream = await entry.OpenAsync(cancellationToken).ConfigureAwait(false);
-                await using var streamLifetime = stream.ConfigureAwait(false);
+                await using var streamScope = stream.ConfigureAwait(false);
                 using var reader = new StreamReader(stream, leaveOpen: true);
                 var result = await _extractor
-                    .Extract(reader, request.Siid, source, cancellationToken)
+                    .ExtractCandidates(reader, request.Siid, source, match, cancellationToken)
                     .ConfigureAwait(false);
                 errors.AddRange(result.Errors);
-                if (result.Request is not null)
+                match = result;
+                if (result.Request is not null && result.Response is not null)
                 {
                     return result with { Errors = errors };
                 }
@@ -206,11 +244,16 @@ internal sealed class SoapSearcher
             }
         }
 
-        return new(
-            null,
-            null,
-            errors.Count > 0 ? SoapSearchOutcome.IncompleteSearch : SoapSearchOutcome.NotFound,
-            errors
-        );
+        return match is not null
+            ? match with
+            {
+                Errors = errors,
+            }
+            : new(
+                null,
+                null,
+                errors.Count > 0 ? SoapSearchOutcome.IncompleteSearch : SoapSearchOutcome.NotFound,
+                errors
+            );
     }
 }

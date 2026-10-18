@@ -26,7 +26,9 @@ internal sealed class SoapSearcherTests
     }
 
     [Test]
-    public async Task StopsAtRequestFileInsteadOfPairingAcrossRotations()
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task PairsAcrossRotationsRegardlessOfScanOrder(bool responseFirst)
     {
         using var fixture = new Fixture();
         await fixture.WriteMetadata();
@@ -34,19 +36,160 @@ internal sealed class SoapSearcherTests
         await File.WriteAllTextAsync(
             Path.Combine(directory, "trace.1.log"),
             SoapLogExtractorTests.Event(
-                "target",
+                SampleSoapLog.Siid,
                 "Servis request i aldı:",
-                SoapLogExtractorTests.Envelope("request")
+                SampleSoapLog.Request
             ),
             Token
         );
         await File.WriteAllTextAsync(
             Path.Combine(directory, "trace.log"),
             SoapLogExtractorTests.Event(
+                SampleSoapLog.Siid,
+                "Servis cevap verdi:",
+                SampleSoapLog.Response
+            ),
+            Token
+        );
+        File.SetLastWriteTimeUtc(
+            Path.Combine(directory, "trace.1.log"),
+            (responseFirst ? End : Start.AddHours(1)).UtcDateTime
+        );
+        File.SetLastWriteTimeUtc(
+            Path.Combine(directory, "trace.log"),
+            (responseFirst ? Start.AddHours(1) : End).UtcDateTime
+        );
+        var result = await fixture.Searcher.Search(fixture.Request(SampleSoapLog.Siid), Token);
+        await Assert.That(result.Outcome).IsEqualTo(SoapSearchOutcome.Complete);
+        await Assert.That(result.Errors.Count).IsEqualTo(0);
+        await SoapLogExtractorTests.AssertPreserved(SampleSoapLog.Request, result.Request!);
+        await SoapLogExtractorTests.AssertPreserved(SampleSoapLog.Response, result.Response!);
+    }
+
+    [Test]
+    public async Task ReturnsPartialAfterSearchingAllCandidateLogsOnTheRequestServer()
+    {
+        using var fixture = new Fixture();
+        await fixture.WriteMetadata();
+        var directory = fixture.Live("server1");
+        await File.WriteAllTextAsync(
+            Path.Combine(directory, "trace.1.log"),
+            SoapLogExtractorTests.Event("target", "Servis request i aldı:", SampleSoapLog.Request),
+            Token
+        );
+        await File.WriteAllTextAsync(
+            Path.Combine(directory, "trace.log"),
+            SoapLogExtractorTests.Event("other", "Servis cevap verdi:", SampleSoapLog.Response),
+            Token
+        );
+        var result = await fixture.Searcher.Search(fixture.Request(), Token);
+        await Assert.That(result.Outcome).IsEqualTo(SoapSearchOutcome.Partial);
+        await Assert.That(result.Response).IsNull();
+        await SoapLogExtractorTests.AssertPreserved(SampleSoapLog.Request, result.Request!);
+        await Assert.That(result.Errors.Count).IsEqualTo(1);
+        await Assert.That(result.Errors[0].Source).IsEqualTo("server1");
+    }
+
+    [Test]
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task NeverPairsAcrossServers(bool responseFirst)
+    {
+        using var fixture = new Fixture();
+        await fixture.WriteMetadata();
+        await File.WriteAllTextAsync(
+            Path.Combine(fixture.Live("server1"), "trace.log"),
+            SoapLogExtractorTests.Event("target", "Servis request i aldı:", SampleSoapLog.Request),
+            Token
+        );
+        await File.WriteAllTextAsync(
+            Path.Combine(fixture.Live("server2"), "trace.log"),
+            SoapLogExtractorTests.Event("target", "Servis cevap verdi:", SampleSoapLog.Response),
+            Token
+        );
+        var result = await fixture.Searcher.Search(
+            fixture.Request() with
+            {
+                Servers = responseFirst ? ["server2", "server1"] : ["server1", "server2"],
+            },
+            Token
+        );
+        await Assert.That(result.Outcome).IsEqualTo(SoapSearchOutcome.Partial);
+        await Assert.That(result.Response).IsNull();
+        await SoapLogExtractorTests.AssertPreserved(SampleSoapLog.Request, result.Request!);
+    }
+
+    [Test]
+    public async Task ResponseOnlyOnOneServerDoesNotStopAnotherServersCompletePair()
+    {
+        using var fixture = new Fixture();
+        await fixture.WriteMetadata();
+        await File.WriteAllTextAsync(
+            Path.Combine(fixture.Live("server1"), "trace.log"),
+            SoapLogExtractorTests.Event(
                 "target",
                 "Servis cevap verdi:",
-                SoapLogExtractorTests.Envelope("response")
+                SoapLogExtractorTests.Envelope("wrong-server")
             ),
+            Token
+        );
+        await File.WriteAllTextAsync(
+            Path.Combine(fixture.Live("server2"), "trace.log"),
+            Pair(),
+            Token
+        );
+        var result = await fixture.Searcher.Search(
+            fixture.Request() with
+            {
+                Servers = ["server1", "server2"],
+            },
+            Token
+        );
+        await Assert.That(result.Outcome).IsEqualTo(SoapSearchOutcome.Complete);
+        await Assert
+            .That(result.Response!.Contains("wrong-server", StringComparison.Ordinal))
+            .IsFalse();
+        await Assert.That(result.Errors.Count).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task SplitResponseStillRequiresExactSiidAndServiceMarker()
+    {
+        using var fixture = new Fixture();
+        await fixture.WriteMetadata();
+        var directory = fixture.Live("server1");
+        await File.WriteAllTextAsync(
+            Path.Combine(directory, "trace.1.log"),
+            SoapLogExtractorTests.Event("target", "Servis request i aldı:", SampleSoapLog.Request),
+            Token
+        );
+        await File.WriteAllTextAsync(
+            Path.Combine(directory, "trace.log"),
+            SoapLogExtractorTests.Event(
+                "target-long",
+                "Servis cevap verdi:",
+                SoapLogExtractorTests.Envelope("wrong")
+            )
+                + SoapLogExtractorTests.Event(
+                    "TARGET",
+                    "Servis cevap verdi:",
+                    SoapLogExtractorTests.Envelope("wrong")
+                )
+                + SoapLogExtractorTests.Event(
+                    "other",
+                    "Servis cevap verdi:",
+                    SoapLogExtractorTests.Envelope("target")
+                )
+                + SoapLogExtractorTests.Event(
+                    "target",
+                    "Client response aldı:",
+                    SoapLogExtractorTests.Envelope("wrong")
+                )
+                + SoapLogExtractorTests.Event(
+                    "target",
+                    "Servis cevap verdi:",
+                    SampleSoapLog.Response
+                ),
             Token
         );
         File.SetLastWriteTimeUtc(
@@ -55,9 +198,162 @@ internal sealed class SoapSearcherTests
         );
         File.SetLastWriteTimeUtc(Path.Combine(directory, "trace.log"), End.UtcDateTime);
         var result = await fixture.Searcher.Search(fixture.Request(), Token);
+        await Assert.That(result.Outcome).IsEqualTo(SoapSearchOutcome.Complete);
+        await SoapLogExtractorTests.AssertPreserved(SampleSoapLog.Response, result.Response!);
+        await Assert.That(result.Errors.Count).IsEqualTo(0);
+    }
+
+    [Test]
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task PairsAcrossZipEntriesAndStopsBeforeMalformedLaterEvents(bool responseFirst)
+    {
+        using var fixture = new Fixture();
+        await fixture.WriteMetadata();
+        var request = SoapLogExtractorTests.Event(
+            "target",
+            "Servis request i aldı:",
+            SampleSoapLog.Request
+        );
+        var response = SoapLogExtractorTests.Event(
+            "target",
+            "Servis cevap verdi:",
+            SampleSoapLog.Response
+        );
+        var malformed = SoapLogExtractorTests.Event("target", "Servis cevap verdi:", "<broken");
+        await fixture.WriteZip(
+            "server1",
+            ("folder/trace.1.log", Start.AddHours(1), responseFirst ? response : request),
+            ("folder/trace.log", End, (responseFirst ? request : response) + malformed),
+            ("folder/trace.0.log", End.AddHours(1), malformed)
+        );
+        var result = await fixture.Searcher.Search(
+            fixture.Request() with
+            {
+                Strategy = SoapSearchStrategy.Archive,
+            },
+            Token
+        );
+        await Assert.That(result.Outcome).IsEqualTo(SoapSearchOutcome.Complete);
+        await Assert.That(result.Errors.Count).IsEqualTo(0);
+        await SoapLogExtractorTests.AssertPreserved(SampleSoapLog.Request, result.Request!);
+        await SoapLogExtractorTests.AssertPreserved(SampleSoapLog.Response, result.Response!);
+    }
+
+    [Test]
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task PairsAcrossLiveAndArchiveOnTheSameServer(bool archiveRequest)
+    {
+        using var fixture = new Fixture();
+        await fixture.WriteMetadata();
+        var request = SoapLogExtractorTests.Event(
+            "target",
+            "Servis request i aldı:",
+            SampleSoapLog.Request
+        );
+        var response = SoapLogExtractorTests.Event(
+            "target",
+            "Servis cevap verdi:",
+            SampleSoapLog.Response
+        );
+        await File.WriteAllTextAsync(
+            Path.Combine(fixture.Live("server1"), "trace.log"),
+            archiveRequest ? response : request,
+            Token
+        );
+        await fixture.WriteZip("server1", ("trace.log", End, archiveRequest ? request : response));
+        var result = await fixture.Searcher.Search(
+            fixture.Request() with
+            {
+                Strategy = SoapSearchStrategy.Both,
+            },
+            Token
+        );
+        await Assert.That(result.Outcome).IsEqualTo(SoapSearchOutcome.Complete);
+        await Assert.That(result.Errors.Count).IsEqualTo(0);
+        await SoapLogExtractorTests.AssertPreserved(SampleSoapLog.Request, result.Request!);
+        await SoapLogExtractorTests.AssertPreserved(SampleSoapLog.Response, result.Response!);
+    }
+
+    [Test]
+    public async Task DoesNotSearchExcludedRotationForAResponse()
+    {
+        using var fixture = new Fixture();
+        await fixture.WriteMetadata();
+        var directory = fixture.Live("server1");
+        await File.WriteAllTextAsync(
+            Path.Combine(directory, "trace.1.log"),
+            SoapLogExtractorTests.Event("target", "Servis request i aldı:", SampleSoapLog.Request),
+            Token
+        );
+        await File.WriteAllTextAsync(Path.Combine(directory, "trace.log"), Pair("other"), Token);
+        await File.WriteAllTextAsync(
+            Path.Combine(directory, "trace.0.log"),
+            SoapLogExtractorTests.Event("target", "Servis cevap verdi:", SampleSoapLog.Response),
+            Token
+        );
+        File.SetLastWriteTimeUtc(
+            Path.Combine(directory, "trace.1.log"),
+            Start.AddHours(1).UtcDateTime
+        );
+        File.SetLastWriteTimeUtc(Path.Combine(directory, "trace.log"), End.AddHours(1).UtcDateTime);
+        File.SetLastWriteTimeUtc(
+            Path.Combine(directory, "trace.0.log"),
+            End.AddHours(2).UtcDateTime
+        );
+        var result = await fixture.Searcher.Search(fixture.Request(), Token);
         await Assert.That(result.Outcome).IsEqualTo(SoapSearchOutcome.Partial);
-        await Assert.That(result.Request).IsNotNull();
         await Assert.That(result.Response).IsNull();
+    }
+
+    [Test]
+    public async Task RetainsExtractionErrorsButNotPerFileMissingResponseErrors()
+    {
+        using var fixture = new Fixture();
+        await fixture.WriteMetadata();
+        var directory = fixture.Live("server1");
+        await File.WriteAllTextAsync(
+            Path.Combine(directory, "trace.1.log"),
+            SoapLogExtractorTests.Event("target", "Servis request i aldı:", SampleSoapLog.Request)
+                + SoapLogExtractorTests.Event("target", "Servis cevap verdi:", "<broken"),
+            Token
+        );
+        await File.WriteAllTextAsync(
+            Path.Combine(directory, "trace.log"),
+            SoapLogExtractorTests.Event("target", "Servis cevap verdi:", SampleSoapLog.Response),
+            Token
+        );
+        File.SetLastWriteTimeUtc(
+            Path.Combine(directory, "trace.1.log"),
+            Start.AddHours(1).UtcDateTime
+        );
+        File.SetLastWriteTimeUtc(Path.Combine(directory, "trace.log"), End.UtcDateTime);
+        var result = await fixture.Searcher.Search(fixture.Request(), Token);
+        await Assert.That(result.Outcome).IsEqualTo(SoapSearchOutcome.Complete);
+        await Assert.That(result.Errors.Count).IsEqualTo(1);
+        await Assert
+            .That(result.Errors[0].LineNumber)
+            .IsEqualTo(SampleSoapLog.Request.Count(x => x == '\n') + 2);
+        await Assert
+            .That(result.Errors[0].Source.EndsWith("trace.1.log", StringComparison.Ordinal))
+            .IsTrue();
+    }
+
+    [Test]
+    public async Task SearchFileRemainsIndependentAndReturnsPartialAtItsOwnEof()
+    {
+        using var fixture = new Fixture();
+        var path = Path.Combine(fixture.Live("server1"), "trace.log");
+        await File.WriteAllTextAsync(
+            path,
+            SoapLogExtractorTests.Event("target", "Servis request i aldı:", SampleSoapLog.Request),
+            Token
+        );
+        var result = await fixture.Searcher.SearchFile(path, "target", Token);
+        await Assert.That(result.Outcome).IsEqualTo(SoapSearchOutcome.Partial);
+        await Assert.That(result.Response).IsNull();
+        await Assert.That(result.Errors.Count).IsEqualTo(1);
     }
 
     [Test]
@@ -304,6 +600,32 @@ internal sealed class SoapSearcherTests
             var directory = Path.Combine(Options.LiveServerBasePath, server, "logs");
             Directory.CreateDirectory(directory);
             return directory;
+        }
+
+        public async Task WriteZip(
+            string server,
+            params (string Name, DateTimeOffset Time, string Content)[] entries
+        )
+        {
+            var directory = Path.Combine(
+                Options.ArchiveServerBasePath,
+                "application",
+                server.ToUpperInvariant(),
+                "logs"
+            );
+            Directory.CreateDirectory(directory);
+            await using var archive = await ZipFile.OpenAsync(
+                Path.Combine(directory, "16.10.2026.zip"),
+                ZipArchiveMode.Create,
+                cancellationToken: Token
+            );
+            foreach (var item in entries)
+            {
+                var entry = archive.CreateEntry(item.Name);
+                entry.LastWriteTime = item.Time.ToLocalTime();
+                await using var writer = new StreamWriter(await entry.OpenAsync(Token));
+                await writer.WriteAsync(item.Content.AsMemory(), Token);
+            }
         }
 
         public SoapSearchRequest Request(string siid = "target") =>

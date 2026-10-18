@@ -17,18 +17,42 @@ internal sealed partial class SoapLogExtractor
     private const string RequestMarker = "Servis request i aldı:";
     private const string ResponseMarker = "Servis cevap verdi:";
 
-    public async Task<SoapSearchResult> Extract(
+    public Task<SoapSearchResult> Extract(
         TextReader reader,
         string siid,
         string source = "log",
         CancellationToken cancellationToken = default
+    ) => ExtractCore(reader, siid, source, null, false, cancellationToken);
+
+    // Candidates belong to one server. Retain responses encountered before a
+    // request because discovery order need not match event order across rotations.
+    public Task<SoapSearchResult> ExtractCandidates(
+        TextReader reader,
+        string siid,
+        string source,
+        SoapSearchResult? previous = null,
+        CancellationToken cancellationToken = default
+    ) => ExtractCore(reader, siid, source, previous, true, cancellationToken);
+
+    private async Task<SoapSearchResult> ExtractCore(
+        TextReader reader,
+        string siid,
+        string source,
+        SoapSearchResult? previous,
+        bool includeUnpairedResponse,
+        CancellationToken cancellationToken
     )
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(siid);
         cancellationToken.ThrowIfCancellationRequested();
         var errors = new List<SoapSearchError>();
-        string? request = null;
-        string? response = null;
+        var request = previous?.Request;
+        var response = previous?.Response;
+        if (request is not null && response is not null)
+        {
+            return new(request, response, SoapSearchOutcome.Complete, errors);
+        }
+
         var eventText = new EnvelopeBuffer();
         var kind = EventKind.None;
         var lineNumber = 0;
@@ -93,7 +117,8 @@ internal sealed partial class SoapLogExtractor
                         && request is null
                             ? EventKind.Request
                         : message.StartsWith(ResponseMarker, StringComparison.Ordinal)
-                        && request is not null
+                        && response is null
+                        && (request is not null || includeUnpairedResponse)
                             ? EventKind.Response
                         : EventKind.None;
                     eventLine = lineNumber;
@@ -121,12 +146,12 @@ internal sealed partial class SoapLogExtractor
         catch (Exception ex)
             when (ex is IOException or UnauthorizedAccessException or InvalidDataException)
         {
-            // Preserve a request already read before an I/O failure.
+            // Preserve complete candidates already read before an I/O failure.
             FinishEvent();
             errors.Add(new(source, ex.Message, lineNumber));
         }
 
-        if (request is not null && response is null)
+        if (request is not null && response is null && !includeUnpairedResponse)
         {
             errors.Add(
                 new(source, "No complete service response after the request in this log file.")
@@ -137,9 +162,11 @@ internal sealed partial class SoapLogExtractor
             ? response is not null
                 ? SoapSearchOutcome.Complete
                 : SoapSearchOutcome.Partial
-            : errors.Count > 0
-                ? SoapSearchOutcome.IncompleteSearch
-                : SoapSearchOutcome.NotFound;
+            : response is not null
+                ? SoapSearchOutcome.Partial
+                : errors.Count > 0
+                    ? SoapSearchOutcome.IncompleteSearch
+                    : SoapSearchOutcome.NotFound;
         return new(request, response, outcome, errors);
     }
 

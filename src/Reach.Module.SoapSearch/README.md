@@ -79,11 +79,26 @@ using ordinal, case-sensitive equality. It recognizes these message prefixes:
 - `Servis request i aldı:` for the inbound request.
 - `Servis cevap verdi:` for the service response.
 
-Downstream client calls are ignored. Once a complete request is found, only the
-remainder of that file or ZIP entry is searched for its response. A complete pair
-ends the search immediately. At EOF, a request without a complete response is
-returned with `Response = null`; other rotated files are not consulted.
-Response-only events do not stop the request search.
+Downstream client calls are ignored. The search retains the first complete inbound
+request and first complete service response for the SIID on each server. They may
+come from different rotated files, ZIP entries, or live/archive roots when using
+`Both`. A response encountered before the request is retained because discovery
+order does not guarantee event order. Candidate file and ZIP entry time filtering
+still applies; the search does not widen the requested window to find a response.
+
+A complete pair ends the search immediately, even within a file or ZIP entry.
+When the server containing the first complete request has no complete response in
+any remaining candidate source, the search returns `Partial` with `Response = null`
+and one missing-response error. It does not switch to another server's request or
+pair across servers. Response-only servers do not stop the request search, and
+their responses are discarded before searching the next server. No event-level
+timestamp comparison is made between the request and response.
+
+Standalone `SearchFile` and `Extract` retain single-file behavior: responses before
+the request are ignored, and EOF without a response returns a partial request.
+`ExtractCandidates` carries request/response candidates between independently read
+sources. Its caller must keep that state scoped to one SIID and server. It reports
+extraction errors but leaves missing-response reporting to the overall search.
 
 Results distinguish `Complete`, `Partial`, `NotFound`, and `IncompleteSearch`.
 Malformed or truncated envelopes generate extraction errors. A complete pair
@@ -115,4 +130,5 @@ The tests generate synthetic logs with multiline SOAP envelopes, downstream call
 interleaved events, and truncated requests. Search tests write these logs to temporary
 files. Extraction tests check XML values, prefixes, attributes, and literal spellings
 against the fixture envelopes. Tests also cover partial extraction, preservation,
-rotation filtering, ZIP search, error reporting, and wire serialization.
+rotation filtering, split-file and split-ZIP pairs in either scan order, live/archive
+pairs, server isolation, error reporting, and wire serialization.
